@@ -9,16 +9,15 @@ const Login = () => {
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    // Simulate successful login
-    console.log("Remember Me:", rememberMe);
-    alert("Login Successful!");
+  // Simulate successful login
+  console.log("Remember Me:", rememberMe);
+  
 
-    // Navigate to dashboard or home (if any)
-    // navigate("/dashboard");
-  };
-
+  // Navigate to dashboard or page with Nav component
+  navigate("/dashboard");
+};
   return (
     <div
       className="min-h-screen bg-cover bg-center relative flex items-center justify-start pl-35"
