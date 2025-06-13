@@ -23,13 +23,15 @@ export default function Nav() {
         <h1 className="font-bold tracking-widnr text-lg">VEHICLE DISPATCH</h1>
       </div>
 
-      <ul className="space-y-4 ml-2">
-        <li><NavItem href="#" icon={Home} label="Home" /></li>
-        <li><NavItem href="#" icon={CalendarDays} label="Calendar" /></li>
-        <li><NavItem href="#" icon={GitPullRequest} label="Requests" /></li>
-        <li><NavItem href="#" icon={UserCog} label="Management" /></li>
-        <li><NavItem href="#" icon={User} label="Profile" /></li>
-      </ul>
+    {/*change*/}
+  <ul className="list-none space-y-4 ml-2">
+  <li><NavItem href="/dashboard" icon={Home} label="Home" /></li>
+  <li><NavItem href="/dashboard/calendar" icon={CalendarDays} label="Calendar" /></li>
+  <li><NavItem href="/dashboard/requests" icon={GitPullRequest} label="Requests" /></li>
+  <li><NavItem href="/dashboard/management" icon={UserCog} label="Management" /></li>
+  <li><NavItem href="/dashboard/profile" icon={User} label="Profile" /></li>
+</ul>
+
       
     
      <div className="ml-2 flex items-center space-x-3 mt-40 p-2 border-t-2 border-white">
