@@ -40,6 +40,8 @@ const Calendar = () => {
   ];
 
   return (
+     <div className="p-6">
+      <h1 className="text-3xl font-bold mb-6">Calendar</h1>
    <div className="p-4 font-sans flex flex-col overflow-hidden h-screen">
 
       {/* Top Bar */}
@@ -50,7 +52,7 @@ const Calendar = () => {
         >
           Today
         </button>
-        <h1 className="absolute left-1/2 transform -translate-x-1/2 text-lg font-bold">
+        <h1 className="absolute left-1/2 transform -translate-x-1/2 text-2xl font-bold">
           {currentDate.toLocaleDateString('default', { month: 'long', year: 'numeric' })}
         </h1>
         <div className="z-10">
@@ -164,6 +166,7 @@ const Calendar = () => {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 };
