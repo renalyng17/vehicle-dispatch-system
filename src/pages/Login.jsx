@@ -17,7 +17,7 @@ const Login = () => {
 
   // Navigate to dashboard or page with Nav component
   // After login success
-navigate("/dashboard");
+navigate("/dashboard/home");
 
 };
   return (
