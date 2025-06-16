@@ -20,12 +20,12 @@ export default function Nav() {
       
       <div className="mb-8 flex flex-col items-center">
         <img src={logo} alt="Logo" className="w-20 h-20 rounded-full" />
-        <h1 className="font-bold tracking-widnr text-lg">VEHICLE DISPATCH</h1>
+        <h1 className="font-bold tracking-wider text-lg">VEHICLE DISPATCH</h1>
       </div>
 
     {/*change*/}
   <ul className="list-none space-y-4 ml-2">
-  <li><NavItem href="/dashboard" icon={Home} label="Home" /></li>
+  <li><NavItem href="/dashboard/Home" icon={Home} label="Home" /></li>
   <li><NavItem href="/dashboard/calendar" icon={CalendarDays} label="Calendar" /></li>
   <li><NavItem href="/dashboard/requests" icon={GitPullRequest} label="Requests" /></li>
   <li><NavItem href="/dashboard/management" icon={UserCog} label="Management" /></li>
