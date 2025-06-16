@@ -6,7 +6,7 @@ export default function NotificationBar() {
       <div></div>
 
       <div className="flex items-center space-x-4 mr-7">
-        <button className="relative hover:text-lime-200 transition duration-200">
+        <button className="relative hover:text--200 transition duration-200">
           <Bell className="w-8 h-8" />
           <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 animate-ping"></span>
         </button>
