@@ -9,7 +9,7 @@ export default function Management() {
         ? "text-green-700 border-b-2 border-green-700"
         : "text-gray-600 hover:text-green-700"
     }`;
-
+    
   return (
     <div className="p-6">
       <h1 className="text-3xl font-bold mb-6">Management</h1>
