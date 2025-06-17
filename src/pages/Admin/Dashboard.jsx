@@ -1,13 +1,13 @@
 import React from "react";
+import { Routes, Route } from "react-router-dom";
 import Nav from "../Admin/nav";
 import NotificationBar from "../Admin/NotificationBar";
-import { Routes, Route } from "react-router-dom";
 
-// Subpages
-import Calendar from "./Calendar.jsx";
-import Requests from "./Requests.jsx";
-import Management from "./Management.jsx";
-import Profile from "./Profile.jsx";
+import Home from "./Home";
+import Calendar from "./Calendar";
+import Requests from "./Requests";
+import Management from "./Management";
+import Profile from "./Profile";
 
 const Dashboard = () => {
   return (
@@ -15,15 +15,9 @@ const Dashboard = () => {
       <Nav />
       <div className="flex-1 flex flex-col">
         <NotificationBar />
-
-        <div className="p-6 bg-gray-50 flex-1">
+        <div className="p-6 bg-[#F9FFF5] flex-1">
           <Routes>
-            <Route path="/" element={
-              <>
-                <h1 className="text-3xl font-bold mb-4">Home</h1>
-                <p>Welcome to the Vehicle Dispatch System!</p>
-              </>
-            } />
+            <Route path="/home" element={<Home />} /> {/* Default route under /dashboard */}
             <Route path="calendar" element={<Calendar />} />
             <Route path="requests" element={<Requests />} />
             <Route path="management" element={<Management />} />
