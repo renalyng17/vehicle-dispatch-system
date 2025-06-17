@@ -2,10 +2,7 @@ import React, { useState } from "react";
 
 export default function Management() {
   const [activeTab, setActiveTab] = useState("vehicle");
-<<<<<<< HEAD
-=======
   const [showModal, setShowModal] = useState(false);
->>>>>>> 8a62f4317298bb4666f4087c3acc7bb736472e2b
 
   const tabClass = (tab) =>
     `py-2 px-4 text-sm font-medium ${
@@ -37,20 +34,11 @@ export default function Management() {
           DRIVER INFORMATION
         </button>
 
-<<<<<<< HEAD
-        {/* ADD button */}
-        <div className="absolute right-0 top-0">
-          <button className="py-1 px-7 bg-green-500 text-white rounded-md hover:bg-green-700 transition duration-300 flex items-center space-x-1 text-sm">
-            <span className="text-lg">+</span>
-            <span>ADD</span>
-          </button>
-        </div>
-=======
         {/* ADD button - show in VEHICLE DETAIL and DRIVER INFORMATION tabs */}
         {(activeTab === "vehicle" || activeTab === "driver") && (
           <div className="absolute right-0 top-0">
             <button
-              className="py-1 px-7 bg-green-500 text-white rounded-md hover:bg-green-700 transition duration-300 flex items-center space-x-1 text-sm"
+              className="py-0 px-5 bg-green-500 text-white rounded-md hover:bg-green-700 transition duration-300 flex items-center space-x-1 text-sm"
               onClick={() => setShowModal(true)}
             >
               <span className="text-lg">+</span>
@@ -58,13 +46,12 @@ export default function Management() {
             </button>
           </div>
         )}
->>>>>>> 8a62f4317298bb4666f4087c3acc7bb736472e2b
       </div>
 
       {/* Table Data */}
       {activeTab === "vehicle" && (
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-200 rounded-md shadow-md text-sm">
+          <table className="min-w-full bg-white border border-gray-200 rounded-md shadow-md text-xs">
             <thead className="bg-gray-100">
               <tr className="text-left">
                 <th className="p-3">VEHICLE</th>
@@ -103,6 +90,7 @@ export default function Management() {
                 <th className="p-3">NAME</th>
                 <th className="p-3">CONTACT NO.</th>
                 <th className="p-3">EMAIL ADDRESS</th>
+                <th className="p-3">OFFICE/DEPARTMENT</th>
               </tr>
             </thead>
             <tbody>
@@ -111,6 +99,7 @@ export default function Management() {
                   <td className="p-3">ANA </td>
                   <td className="p-3">0912-345-6789</td>
                   <td className="p-3">Ana@gmail.com</td>
+                  <td className="p-3">ICTS</td>
                 </tr>
               ))}
             </tbody>
@@ -119,11 +108,7 @@ export default function Management() {
       )}
 
       {activeTab === "driver" && (
-<<<<<<< HEAD
-       <div className="overflow-x-auto">
-=======
         <div className="overflow-x-auto">
->>>>>>> 8a62f4317298bb4666f4087c3acc7bb736472e2b
           <table className="min-w-full bg-white border border-gray-200 rounded-md shadow-md text-sm">
             <thead className="bg-gray-100">
               <tr className="text-left">
@@ -131,10 +116,6 @@ export default function Management() {
                 <th className="p-3">CONTACT NO.</th>
                 <th className="p-3">EMAIL ADDRESS</th>
                 <th className="p-3">STATUS</th>
-<<<<<<< HEAD
-                
-=======
->>>>>>> 8a62f4317298bb4666f4087c3acc7bb736472e2b
               </tr>
             </thead>
             <tbody>
@@ -149,9 +130,6 @@ export default function Management() {
                 </tr>
               ))}
             </tbody>
-<<<<<<< HEAD
-          </table>  
-=======
           </table>
         </div>
       )}
@@ -165,7 +143,7 @@ export default function Management() {
                 <label className="block text-sm mb-1">Vehicle Type</label>
                 <input
                   type="text"
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border rounded px-3 py-1"
                   placeholder=""
                   defaultValue=""
                 />
@@ -175,7 +153,7 @@ export default function Management() {
                   <label className="block text-sm mb-1">Plate Name</label>
                   <input
                     type="text"
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border rounded px-3 py-1"
                     placeholder=""
                     defaultValue=""
                   />
@@ -186,7 +164,7 @@ export default function Management() {
                     type="number"
                     min="1"
                     max="14"
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border rounded px-3 py-1"
                     placeholder=""
                     defaultValue=""
                     onKeyDown={(e) => {
@@ -204,7 +182,7 @@ export default function Management() {
               </div>
               <div>
                 <label className="block text-sm mb-1">Fuel Type</label>
-                <select className="w-full border rounded px-3 py-2" defaultValue="">
+                <select className="w-full border rounded px-3 py-1" defaultValue="">
                   <option value="" disabled hidden>Select Fuel Type</option>
                   <option>BIO- DIESEL</option>
                   <option>DIESEL</option>
@@ -212,7 +190,7 @@ export default function Management() {
               </div>
               <div>
                 <label className="block text-sm mb-1">Fleet card</label>
-                <select className="w-full border rounded px-3 py-2" defaultValue="">
+                <select className="w-full border rounded px-3 py-1" defaultValue="">
                   <option value="" disabled hidden>Select Fleet Card</option>
                   <option>Available</option>
                   <option>Unavailable</option>
@@ -220,7 +198,7 @@ export default function Management() {
               </div>
               <div>
                 <label className="block text-sm mb-1">RFID</label>
-                <select className="w-full border rounded px-3 py-2" defaultValue="">
+                <select className="w-full border rounded px-3 py-1" defaultValue="">
                   <option value="" disabled hidden>Select RFID</option>
                   <option>Available</option>
                   <option>Unavailable</option>
@@ -229,14 +207,14 @@ export default function Management() {
               <div className="flex justify-end space-x-2 mt-6">
                 <button
                   type="button"
-                  className="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100"
+                  className="px-4 0.5 border rounded text-gray-700 hover:bg-gray-100"
                   onClick={() => setShowModal(false)}
                 >
                   Discard
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  className="px-6 0.5 bg-green-600 text-white rounded hover:bg-green-700"
                 >
                   Add
                 </button>
@@ -249,31 +227,31 @@ export default function Management() {
       {/* Modal for DRIVER INFORMATION tab */}
       {activeTab === "driver" && showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-40">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-8 relative">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-8 relative">
             <form className="space-y-6" onSubmit={handleModalSubmit}>
               <div>
-                <label className="block text-sm mb-1">Name</label>
+                <label className="block text-xs mb-1">Name</label>
                 <input
                   type="text"
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border rounded px-3 py-1"
                   placeholder=""
                   defaultValue=""
                 />
               </div>
               <div>
-                <label className="block text-sm mb-1">Contact No.</label>
+                <label className="block text-xs mb-1">Contact No.</label>
                 <input
                   type="text"
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border rounded px-3 py-1"
                   placeholder=""
                   defaultValue=""
                 />
               </div>
               <div>
-                <label className="block text-sm mb-1">Email Address</label>
+                <label className="block text-xs mb-1">Email Address</label>
                 <input
                   type="email"
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border rounded px-3 py-1"
                   placeholder=""
                   defaultValue=""
                 />
@@ -281,27 +259,22 @@ export default function Management() {
               <div className="flex justify-end space-x-2 mt-6">
                 <button
                   type="button"
-                  className="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100 shadow"
+                  className="px-4 0.5 border rounded text-gray-700 text-m hover:bg-gray-100 shadow"
                   onClick={() => setShowModal(false)}
                 >
                   Discard
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-green-700 text-white rounded shadow hover:bg-green-800"
+                  className="px-6 py-0.5 bg-green-700 text-white text-m rounded shadow hover:bg-green-800"
                 >
                   Add
                 </button>
               </div>
             </form>
           </div>
->>>>>>> 8a62f4317298bb4666f4087c3acc7bb736472e2b
         </div>
       )}
     </div>
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 8a62f4317298bb4666f4087c3acc7bb736472e2b

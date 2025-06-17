@@ -15,8 +15,8 @@ function Profile() {
       className="pl-5 h-full bg-[#F9FFF5] overflow-auto"
       style={{ backgroundColor: "#FBFFF5" }}
     >
-      <div className="p-2 ml-4">
-        <h1 className="alignment-top p-5 text-3xl font-bold">Profile</h1>
+      <div className="p-6 ml-2">
+        <h1 className="alignment-top-left p-1 text-3xl font-bold">Profile</h1>
       </div>
 
       {/* Profile Image Section */}
