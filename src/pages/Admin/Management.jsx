@@ -1,30 +1,180 @@
 import React, { useState } from "react";
 
-import React, { useState } from "react";
-
 export default function Management() {
   const [activeTab, setActiveTab] = useState("vehicle");
   const [showModal, setShowModal] = useState(false);
 
+  // State for vehicle and driver data
+  const [vehicles, setVehicles] = useState([]);
+  const [drivers, setDrivers] = useState([]);
+
+  // State for delete confirmation modal
+  const [confirmDelete, setConfirmDelete] = useState({ type: null, idx: null });
+
+  // State for duplicate modal
+  const [duplicateModal, setDuplicateModal] = useState({ show: false, type: "" });
+
+  // Form state for modals
+  const [vehicleForm, setVehicleForm] = useState({
+    vehicleType: "",
+    plateNo: "",
+    capacity: "",
+    fuelType: "",
+    fleetCard: "",
+    rfid: "",
+  });
+  const [driverForm, setDriverForm] = useState({
+    name: "",
+    contact: "",
+    email: "",
+  });
+
   const tabClass = (tab) =>
     `py-2 px-4 text-sm font-medium ${
       activeTab === tab
-        ? "text-green-700 border-b-2 border-green-700"
+        ? "text-green-700 border-b-3 border-green-700"
         : "text-gray-600 hover:text-green-700"
     }`;
 
-  // Handler for modal submit
-  const handleModalSubmit = (e) => {
+  // Handle modal open and reset form
+  const handleAddClick = () => {
+    setShowModal(true);
+    setVehicleForm({
+      vehicleType: "",
+      plateNo: "",
+      capacity: "",
+      fuelType: "",
+      fleetCard: "",
+      rfid: "",
+    });
+    setDriverForm({
+      name: "",
+      contact: "",
+      email: "",
+    });
+  };
+
+  // Handle vehicle modal submit
+  const handleVehicleSubmit = (e) => {
     e.preventDefault();
+    // Check for duplicate plate number
+    if (
+      vehicles.some(
+        (v) =>
+          v.plateNo.trim().toLowerCase() === vehicleForm.plateNo.trim().toLowerCase()
+      )
+    ) {
+      setDuplicateModal({ show: true, type: "vehicle" });
+      return;
+    }
+    setVehicles([
+      ...vehicles,
+      {
+        vehicleType: vehicleForm.vehicleType,
+        plateNo: vehicleForm.plateNo,
+        capacity: vehicleForm.capacity,
+        fuelType: vehicleForm.fuelType,
+        fleetCard: vehicleForm.fleetCard,
+        rfid: vehicleForm.rfid,
+      },
+    ]);
     setShowModal(false);
-    // Optionally, you can reset form fields or add logic here
+  };
+
+  // Handle driver modal submit
+  const handleDriverSubmit = (e) => {
+    e.preventDefault();
+    // Check for duplicate email or contact
+    if (
+      drivers.some(
+        (d) =>
+          d.email.trim().toLowerCase() === driverForm.email.trim().toLowerCase() ||
+          d.contact.replace(/\D/g, "") === driverForm.contact.replace(/\D/g, "")
+      )
+    ) {
+      setDuplicateModal({ show: true, type: "driver" });
+      return;
+    }
+    setDrivers([
+      ...drivers,
+      {
+        name: driverForm.name,
+        contact: driverForm.contact,
+        email: driverForm.email,
+        status: "AVAILABLE",
+      },
+    ]);
+    setShowModal(false);
+  };
+
+  // Open confirmation modal for vehicle
+  const handleDeleteVehicle = (idx) => {
+    setConfirmDelete({ type: "vehicle", idx });
+  };
+
+  // Open confirmation modal for driver
+  const handleDeleteDriver = (idx) => {
+    setConfirmDelete({ type: "driver", idx });
+  };
+
+  // Confirm deletion
+  const confirmDeleteAction = () => {
+    if (confirmDelete.type === "vehicle") {
+      setVehicles(vehicles.filter((_, i) => i !== confirmDelete.idx));
+    } else if (confirmDelete.type === "driver") {
+      setDrivers(drivers.filter((_, i) => i !== confirmDelete.idx));
+    }
+    setConfirmDelete({ type: null, idx: null });
+  };
+
+  // Cancel deletion
+  const cancelDeleteAction = () => {
+    setConfirmDelete({ type: null, idx: null });
+  };
+
+  // Format contact number as 0912-234-2345
+  const formatContact = (value) => {
+    let digits = value.replace(/\D/g, "").slice(0, 11);
+    let formatted = digits;
+    if (digits.length > 4 && digits.length <= 7) {
+      formatted = `${digits.slice(0, 4)}-${digits.slice(4)}`;
+    } else if (digits.length > 7) {
+      formatted = `${digits.slice(0, 4)}-${digits.slice(4, 7)}-${digits.slice(7)}`;
+    }
+    return formatted;
+  };
+
+  // Handle contact input change
+  const handleContactChange = (e) => {
+    const formatted = formatContact(e.target.value);
+    setDriverForm({ ...driverForm, contact: formatted });
+  };
+
+  // Validation for vehicle form
+  const isVehicleFormValid = () => {
+    return (
+      vehicleForm.vehicleType.trim() &&
+      vehicleForm.plateNo.trim() &&
+      vehicleForm.capacity &&
+      vehicleForm.fuelType &&
+      vehicleForm.fleetCard &&
+      vehicleForm.rfid
+    );
+  };
+
+  // Validation for driver form
+  const isDriverFormValid = () => {
+    return (
+      driverForm.name.trim() &&
+      driverForm.contact.trim() &&
+      driverForm.email.trim()
+    );
   };
 
   return (
     <div className="p-6">
       <h1 className="text-3xl font-bold mb-6">Management</h1>
 
-      {/* Tabs */}
       <div className="relative flex border-b mb-4 space-x-2">
         <button className={tabClass("vehicle")} onClick={() => setActiveTab("vehicle")}>
           VEHICLE DETAIL
@@ -36,12 +186,11 @@ export default function Management() {
           DRIVER INFORMATION
         </button>
 
-        {/* ADD button - show in VEHICLE DETAIL and DRIVER INFORMATION tabs */}
         {(activeTab === "vehicle" || activeTab === "driver") && (
           <div className="absolute right-0 top-0">
             <button
               className="py-1 px-7 bg-green-500 text-white rounded-md hover:bg-green-700 transition duration-300 flex items-center space-x-1 text-sm"
-              onClick={() => setShowModal(true)}
+              onClick={handleAddClick}
             >
               <span className="text-lg">+</span>
               <span>ADD</span>
@@ -50,35 +199,44 @@ export default function Management() {
         )}
       </div>
 
-      {/* Table Data */}
       {activeTab === "vehicle" && (
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-200 rounded-md shadow-md text-sm">
-            <thead className="bg-gray-100">
-              <tr className="text-left">
+          <table className="min-w-full border border-gray-200 rounded-md shadow-md text-sm">
+            <thead>
+              <tr className="bg-green-700 text-white text-left">
                 <th className="p-3">VEHICLE</th>
                 <th className="p-3">PLATE NO.</th>
-                <th className="p-3">CAPACITY</th>
+                <th className="p-3 text-center">CAPACITY</th>
                 <th className="p-3">FUEL TYPE</th>
                 <th className="p-3">FLEET CARD</th>
                 <th className="p-3">RFID</th>
               </tr>
             </thead>
             <tbody>
-              {[1].map((row) => (
-                <tr key={row} className="border-t">
-                  <td className="p-3">INNOVA</td>
-                  <td className="p-3">NAP 3344</td>
-                  <td className="p-3">9</td>
-                  <td className="p-3 font-semibold">BIO–DIESEL</td>
-                  <td className="p-3">
-                    <span className="bg-green-100 text-green-700 px-2 py-1 rounded-md text-xs">AVAILABLE</span>
-                  </td>
-                  <td className="p-3">
-                    <span className="bg-green-100 text-green-700 px-2 py-1 rounded-md text-xs">AVAILABLE</span>
-                  </td>
+              {vehicles.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-3 text-center text-black">No data</td>
                 </tr>
-              ))}
+              ) : (
+                vehicles.map((v, idx) => (
+                  <tr key={idx} className="border-t text-black">
+                    <td className="p-3">{v.vehicleType}</td>
+                    <td className="p-3">{v.plateNo}</td>
+                    <td className="p-3 text-center">{v.capacity}</td>
+                    <td className="p-3 font-semibold">{v.fuelType}</td>
+                    <td className="p-3">
+                      <span className="bg-green-100 text-green-700 px-2 py-1 rounded-md text-xs">
+                        {v.fleetCard?.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      <span className="bg-green-100 text-green-700 px-2 py-1 rounded-md text-xs">
+                        {v.rfid?.toUpperCase()}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -86,8 +244,8 @@ export default function Management() {
 
       {activeTab === "client" && (
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-200 rounded-md shadow-md text-sm">
-            <thead className="bg-gray-100">
+          <table className="min-w-full bg-white text-white border border-gray-200 rounded-md shadow-md text-sm">
+            <thead className="bg-green-700">
               <tr className="text-left">
                 <th className="p-3">NAME</th>
                 <th className="p-3">CONTACT NO.</th>
@@ -95,13 +253,9 @@ export default function Management() {
               </tr>
             </thead>
             <tbody>
-              {[1].map((row) => (
-                <tr key={row} className="border-t">
-                  <td className="p-3">ANA </td>
-                  <td className="p-3">0912-345-6789</td>
-                  <td className="p-3">Ana@gmail.com</td>
-                </tr>
-              ))}
+              <tr className="border-t text-black">
+                <td colSpan={4} className="p-3 text-center text-black">No data</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -109,8 +263,8 @@ export default function Management() {
 
       {activeTab === "driver" && (
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-200 rounded-md shadow-md text-sm">
-            <thead className="bg-gray-100">
+          <table className="min-w-full bg-white text-white border border-gray-200 rounded-md shadow-md text-sm">
+            <thead className="bg-green-700">
               <tr className="text-left">
                 <th className="p-3">NAME</th>
                 <th className="p-3">CONTACT NO.</th>
@@ -119,70 +273,80 @@ export default function Management() {
               </tr>
             </thead>
             <tbody>
-              {[1].map((row) => (
-                <tr key={row} className="border-t">
-                  <td className="p-3">MARK JOHN </td>
-                  <td className="p-3">0912-345-6789</td>
-                  <td className="p-3">Ana@gmail.com</td>
-                  <td className="p-3">
-                    <span className="bg-green-100 text-green-700 px-2 py-1 rounded-md text-xs">AVAILABLE</span>
-                  </td>
+              {drivers.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="p-3 text-center text-black">No data</td>
                 </tr>
-              ))}
+              ) : (
+                drivers.map((d, idx) => (
+                  <tr key={idx} className="border-t text-black">
+                    <td className="p-3">{d.name}</td>
+                    <td className="p-3">{d.contact}</td>
+                    <td className="p-3">{d.email}</td>
+                    <td className="p-3">
+                      <span className="bg-green-100 text-green-700 px-2 py-1 rounded-md text-xs">{d.status}</span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       )}
 
-      {/* Modal for VEHICLE DETAIL tab */}
       {activeTab === "vehicle" && showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-40">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-8 relative">
-            <form className="space-y-4" onSubmit={handleModalSubmit}>
+            <form className="space-y-4" onSubmit={handleVehicleSubmit}>
               <div>
                 <label className="block text-sm mb-1">Vehicle Type</label>
                 <input
                   type="text"
                   className="w-full border rounded px-3 py-2"
-                  placeholder=""
-                  defaultValue=""
+                  value={vehicleForm.vehicleType}
+                  onChange={e => setVehicleForm({ ...vehicleForm, vehicleType: e.target.value })}
+                  required
                 />
               </div>
               <div className="flex space-x-2">
                 <div className="flex-1">
-                  <label className="block text-sm mb-1">Plate Name</label>
+                  <label className="block text-sm mb-1">Plate No.</label>
                   <input
                     type="text"
                     className="w-full border rounded px-3 py-2"
-                    placeholder=""
-                    defaultValue=""
+                    value={vehicleForm.plateNo}
+                    onChange={e => setVehicleForm({ ...vehicleForm, plateNo: e.target.value })}
+                    required
                   />
                 </div>
-                <div className="w-1/3">
-                  <label className="block text-sm mb-1">Capacity</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="14"
-                    className="w-full border rounded px-3 py-2"
-                    placeholder=""
-                    defaultValue=""
-                    onKeyDown={(e) => {
-                      if (!/[0-9]/.test(e.key) && e.key !== "Backspace" && e.key !== "Tab") {
-                        e.preventDefault();
-                      }
-                    }}
-                    onInput={(e) => {
-                      let value = parseInt(e.target.value, 10);
-                      if (value < 1) e.target.value = 1;
-                      if (value > 14) e.target.value = 14;
-                    }}
-                  />
-                </div>
+                
+
+<div className="w-1/3">
+  <label className="block text-sm mb-1">Capacity</label>
+  <input
+    type="number"
+    min="1"
+    max="14"
+    maxLength={2}
+    className="w-full border rounded px-3 py-2 text-center"
+    value={vehicleForm.capacity}
+    onChange={e => {
+      // Only allow up to 2 digits
+      const val = e.target.value.replace(/\D/g, '').slice(0, 2);
+      setVehicleForm({ ...vehicleForm, capacity: val });
+    }}
+    required
+  />
+</div>
               </div>
               <div>
                 <label className="block text-sm mb-1">Fuel Type</label>
-                <select className="w-full border rounded px-3 py-2" defaultValue="">
+                <select
+                  className="w-full border rounded px-3 py-2"
+                  value={vehicleForm.fuelType}
+                  onChange={e => setVehicleForm({ ...vehicleForm, fuelType: e.target.value })}
+                  required
+                >
                   <option value="" disabled hidden>Select Fuel Type</option>
                   <option>BIO- DIESEL</option>
                   <option>DIESEL</option>
@@ -190,7 +354,12 @@ export default function Management() {
               </div>
               <div>
                 <label className="block text-sm mb-1">Fleet card</label>
-                <select className="w-full border rounded px-3 py-2" defaultValue="">
+                <select
+                  className="w-full border rounded px-3 py-2"
+                  value={vehicleForm.fleetCard}
+                  onChange={e => setVehicleForm({ ...vehicleForm, fleetCard: e.target.value })}
+                  required
+                >
                   <option value="" disabled hidden>Select Fleet Card</option>
                   <option>Available</option>
                   <option>Unavailable</option>
@@ -198,7 +367,12 @@ export default function Management() {
               </div>
               <div>
                 <label className="block text-sm mb-1">RFID</label>
-                <select className="w-full border rounded px-3 py-2" defaultValue="">
+                <select
+                  className="w-full border rounded px-3 py-2"
+                  value={vehicleForm.rfid}
+                  onChange={e => setVehicleForm({ ...vehicleForm, rfid: e.target.value })}
+                  required
+                >
                   <option value="" disabled hidden>Select RFID</option>
                   <option>Available</option>
                   <option>Unavailable</option>
@@ -214,7 +388,8 @@ export default function Management() {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  className={`px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 ${!isVehicleFormValid() ? "opacity-50 cursor-not-allowed" : ""}`}
+                  disabled={!isVehicleFormValid()}
                 >
                   Add
                 </button>
@@ -224,18 +399,18 @@ export default function Management() {
         </div>
       )}
 
-      {/* Modal for DRIVER INFORMATION tab */}
       {activeTab === "driver" && showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-40">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-8 relative">
-            <form className="space-y-6" onSubmit={handleModalSubmit}>
+            <form className="space-y-6" onSubmit={handleDriverSubmit}>
               <div>
                 <label className="block text-sm mb-1">Name</label>
                 <input
                   type="text"
                   className="w-full border rounded px-3 py-2"
-                  placeholder=""
-                  defaultValue=""
+                  value={driverForm.name}
+                  onChange={e => setDriverForm({ ...driverForm, name: e.target.value })}
+                  required
                 />
               </div>
               <div>
@@ -243,8 +418,11 @@ export default function Management() {
                 <input
                   type="text"
                   className="w-full border rounded px-3 py-2"
-                  placeholder=""
-                  defaultValue=""
+                  maxLength={13}
+                  placeholder="0912-234-2345"
+                  value={driverForm.contact}
+                  onChange={handleContactChange}
+                  required
                 />
               </div>
               <div>
@@ -252,8 +430,9 @@ export default function Management() {
                 <input
                   type="email"
                   className="w-full border rounded px-3 py-2"
-                  placeholder=""
-                  defaultValue=""
+                  value={driverForm.email}
+                  onChange={e => setDriverForm({ ...driverForm, email: e.target.value })}
+                  required
                 />
               </div>
               <div className="flex justify-end space-x-2 mt-6">
@@ -266,12 +445,56 @@ export default function Management() {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-green-700 text-white rounded shadow hover:bg-green-800"
+                  className={`px-6 py-2 bg-green-700 text-white rounded shadow hover:bg-green-800 ${!isDriverFormValid() ? "opacity-50 cursor-not-allowed" : ""}`}
+                  disabled={!isDriverFormValid()}
                 >
                   Add
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Duplicate Modal */}
+      {duplicateModal.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-xs p-8 text-center">
+            <div className="text-lg font-semibold mb-4 text-red-600">Already Exists</div>
+            <div className="mb-6 text-gray-700">
+              
+            </div>
+            <button
+              className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              onClick={() => setDuplicateModal({ show: false, type: "" })}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
+      {confirmDelete.type && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-xs p-8 text-center">
+            <div className="text-lg font-semibold mb-4 text-red-600">Confirm Delete</div>
+            <div className="mb-6 text-gray-700">
+              Are you sure you want to delete this {confirmDelete.type === "vehicle" ? "vehicle" : "driver"}?
+            </div>
+            <div className="flex justify-center space-x-4">
+              <button
+                className="px-6 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                onClick={cancelDeleteAction}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                onClick={confirmDeleteAction}
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       )}
