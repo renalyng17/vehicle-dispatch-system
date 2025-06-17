@@ -199,45 +199,56 @@ export default function Management() {
         )}
       </div>
 
+          {/**Information  Vehicle Table */}  
       {activeTab === "vehicle" && (
         <div className="overflow-x-auto">
           <table className="min-w-full border border-gray-200 rounded-md shadow-md text-sm">
             <thead>
-              <tr className="bg-green-700 text-white text-left">
+              <tr className="bg-green-700 md:bg-green-600 text-white text-left">
                 <th className="p-3">VEHICLE</th>
                 <th className="p-3">PLATE NO.</th>
                 <th className="p-3 text-center">CAPACITY</th>
                 <th className="p-3">FUEL TYPE</th>
                 <th className="p-3">FLEET CARD</th>
                 <th className="p-3">RFID</th>
+                <th className="p-3 text-center"></th> {/* New column */}
               </tr>
             </thead>
             <tbody>
-              {vehicles.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="p-3 text-center text-black">No data</td>
-                </tr>
-              ) : (
-                vehicles.map((v, idx) => (
-                  <tr key={idx} className="border-t text-black">
-                    <td className="p-3">{v.vehicleType}</td>
-                    <td className="p-3">{v.plateNo}</td>
-                    <td className="p-3 text-center">{v.capacity}</td>
-                    <td className="p-3 font-semibold">{v.fuelType}</td>
-                    <td className="p-3">
-                      <span className="bg-green-100 text-green-700 px-2 py-1 rounded-md text-xs">
-                        {v.fleetCard?.toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="p-3">
-                      <span className="bg-green-100 text-green-700 px-2 py-1 rounded-md text-xs">
-                        {v.rfid?.toUpperCase()}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
+  {vehicles.length === 0 ? (
+    <tr>
+      <td colSpan={7} className="p-3 text-center text-black">No data</td>
+    </tr>
+  ) : (
+    vehicles.map((v, idx) => (
+      <tr key={idx} className="border-t text-black">
+        <td className="p-3">{v.vehicleType}</td>
+        <td className="p-3">{v.plateNo}</td>
+        <td className="p-3 text-center">{v.capacity}</td>
+        <td className="p-3 font-semibold">{v.fuelType}</td>
+        <td className="p-3">
+          <span className="bg-green-100 md:bg-green-200 text-green-700 px-2 py-1 rounded-md text-xs">
+            {v.fleetCard?.toUpperCase()}
+          </span>
+        </td>
+        <td className="p-3">
+          <span className="bg-green-100 md:bg-green-200 text-green-700 px-2 py-1 rounded-md text-xs">
+            {v.rfid?.toUpperCase()}
+          </span>
+        </td>
+        <td className="p-3 text-center">
+          <button
+            className="px-3 py-1 bg-red-500 md:bg-red-600 text-white rounded hover:bg-red-700 transition text-xs"
+            type="button"
+            onClick={() => handleDeleteVehicle(idx)}
+          >
+            Delete
+          </button>
+          </td>
+           </tr>
+           ))
+            )}
+        </tbody>
           </table>
         </div>
       )}
@@ -264,36 +275,47 @@ export default function Management() {
       {activeTab === "driver" && (
         <div className="overflow-x-auto">
           <table className="min-w-full bg-white text-white border border-gray-200 rounded-md shadow-md text-sm">
-            <thead className="bg-green-700">
+            <thead className="bg-green-700 md:bg-green-600">
               <tr className="text-left">
                 <th className="p-3">NAME</th>
                 <th className="p-3">CONTACT NO.</th>
                 <th className="p-3">EMAIL ADDRESS</th>
                 <th className="p-3">STATUS</th>
+                <th className="p-3 text-center"></th> {/* New column */}
               </tr>
             </thead>
-            <tbody>
-              {drivers.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="p-3 text-center text-black">No data</td>
-                </tr>
-              ) : (
-                drivers.map((d, idx) => (
-                  <tr key={idx} className="border-t text-black">
-                    <td className="p-3">{d.name}</td>
-                    <td className="p-3">{d.contact}</td>
-                    <td className="p-3">{d.email}</td>
-                    <td className="p-3">
-                      <span className="bg-green-100 text-green-700 px-2 py-1 rounded-md text-xs">{d.status}</span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
+           <tbody>
+  {drivers.length === 0 ? (
+    <tr>
+      <td colSpan={5} className="p-3 text-center text-black">No data</td>
+    </tr>
+  ) : (
+    drivers.map((d, idx) => (
+      <tr key={idx} className="border-t text-black">
+        <td className="p-3">{d.name}</td>
+        <td className="p-3">{d.contact}</td>
+        <td className="p-3">{d.email}</td>
+        <td className="p-3">
+          <span className="bg-green-100 md:bg-green-200 text-green-700 px-2 py-1 rounded-md text-xs">{d.status}</span>
+        </td>
+        <td className="p-3 text-center">
+          <button
+            className="px-3 py-1 bg-red-500 md:bg-red-600 text-white rounded hover:bg-red-700 transition text-xs"
+            type="button"
+            onClick={() => handleDeleteDriver(idx)}
+          >
+            Delete
+          </button>
+        </td>
+           </tr>
+           ))
+          )}
+        </tbody>
           </table>
         </div>
       )}
 
+          {/*Modal for Vehicle Information */}
       {activeTab === "vehicle" && showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-40">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-8 relative">
@@ -319,25 +341,22 @@ export default function Management() {
                     required
                   />
                 </div>
-                
-
-<div className="w-1/3">
-  <label className="block text-sm mb-1">Capacity</label>
-  <input
-    type="number"
-    min="1"
-    max="14"
-    maxLength={2}
-    className="w-full border rounded px-3 py-2 text-center"
-    value={vehicleForm.capacity}
-    onChange={e => {
-      // Only allow up to 2 digits
-      const val = e.target.value.replace(/\D/g, '').slice(0, 2);
-      setVehicleForm({ ...vehicleForm, capacity: val });
-    }}
-    required
-  />
-</div>
+              <div className="w-1/3">
+                <label className="block text-sm mb-1">Capacity</label>
+                   <input
+                     type="number"
+                     min="1"
+                     max="14"
+                     className="w-full border rounded px-3 py-2 text-center"
+                     value={vehicleForm.capacity}
+                     onChange={e => {
+                       // Only allow up to 2 digits
+                    const val = e.target.value.replace(/\D/g, '').slice(0, 2);
+                    setVehicleForm({ ...vehicleForm, capacity: val });
+                  }}
+                    required
+                  />
+                    </div>
               </div>
               <div>
                 <label className="block text-sm mb-1">Fuel Type</label>
@@ -345,8 +364,7 @@ export default function Management() {
                   className="w-full border rounded px-3 py-2"
                   value={vehicleForm.fuelType}
                   onChange={e => setVehicleForm({ ...vehicleForm, fuelType: e.target.value })}
-                  required
-                >
+                  required>
                   <option value="" disabled hidden>Select Fuel Type</option>
                   <option>BIO- DIESEL</option>
                   <option>DIESEL</option>
@@ -398,7 +416,7 @@ export default function Management() {
           </div>
         </div>
       )}
-
+      {/* Modal for Driver Information */}
       {activeTab === "driver" && showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-40">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-8 relative">
@@ -445,7 +463,7 @@ export default function Management() {
                 </button>
                 <button
                   type="submit"
-                  className={`px-6 py-2 bg-green-700 text-white rounded shadow hover:bg-green-800 ${!isDriverFormValid() ? "opacity-50 cursor-not-allowed" : ""}`}
+                  className={`px-6 py-2 bg-green-600 text-white rounded shadow hover:bg-green-800 ${!isDriverFormValid() ? "opacity-50 cursor-not-allowed" : ""}`}
                   disabled={!isDriverFormValid()}
                 >
                   Add
@@ -456,7 +474,7 @@ export default function Management() {
         </div>
       )}
 
-      {/* Duplicate Modal */}
+      {/* Duplicate Modal - Already Exists on the list */}
       {duplicateModal.show && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-40">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-xs p-8 text-center">
