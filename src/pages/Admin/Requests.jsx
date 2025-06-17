@@ -36,7 +36,7 @@ function Requests() {
               <tr>
                 <th className="py-3 px-4">Name</th>
                 <th className="py-3 px-4">Office/Department</th>
-                <th className="py-3 px-4">Vehicle Name</th>
+                <th className="py-3 px-4">Vehicle Type</th>
                 <th className="py-3 px-4">Date Entered</th>
                 <th className="py-3 px-4">Status</th>
               </tr>
