@@ -32,7 +32,7 @@ export default function Management() {
   const tabClass = (tab) =>
     `py-2 px-4 text-sm font-medium ${
       activeTab === tab
-        ? "text-green-700 border-b-3 border-green-700"
+        ? "text-green-600 border-b-3 border-green-700"
         : "text-gray-600 hover:text-green-700"
     }`;
 
@@ -204,6 +204,7 @@ export default function Management() {
         <div className="overflow-x-auto">
           <table className="min-w-full border border-gray-200 rounded-md shadow-md text-sm">
             <thead>
+              {/* Header row for vehicle information */}
               <tr className="bg-green-700 md:bg-green-600 text-white text-left">
                 <th className="p-3">VEHICLE</th>
                 <th className="p-3">PLATE NO.</th>
@@ -217,7 +218,7 @@ export default function Management() {
             <tbody>
   {vehicles.length === 0 ? (
     <tr>
-      <td colSpan={7} className="p-3 text-center text-black">No data</td>
+      <td colSpan={7} className="p-3 text-center text-gray-400">No data</td>
     </tr>
   ) : (
     vehicles.map((v, idx) => (
@@ -256,7 +257,7 @@ export default function Management() {
       {activeTab === "client" && (
         <div className="overflow-x-auto">
           <table className="min-w-full bg-white text-white border border-gray-200 rounded-md shadow-md text-sm">
-            <thead className="bg-green-700">
+            <thead className="bg-green-700 md:bg-green-600">
               <tr className="text-left">
                 <th className="p-3">NAME</th>
                 <th className="p-3">CONTACT NO.</th>
@@ -264,8 +265,8 @@ export default function Management() {
               </tr>
             </thead>
             <tbody>
-              <tr className="border-t text-black">
-                <td colSpan={4} className="p-3 text-center text-black">No data</td>
+              <tr className="border-t text-black-100">
+                <td colSpan={4} className="p-3 text-center text-gray-400">No data</td>
               </tr>
             </tbody>
           </table>
@@ -287,7 +288,7 @@ export default function Management() {
            <tbody>
   {drivers.length === 0 ? (
     <tr>
-      <td colSpan={5} className="p-3 text-center text-black">No data</td>
+      <td colSpan={5} className="p-3 text-center text-gray-400">No data</td>
     </tr>
   ) : (
     drivers.map((d, idx) => (
@@ -324,7 +325,7 @@ export default function Management() {
                 <label className="block text-sm mb-1">Vehicle Type</label>
                 <input
                   type="text"
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border rounded px-3 py-1"
                   value={vehicleForm.vehicleType}
                   onChange={e => setVehicleForm({ ...vehicleForm, vehicleType: e.target.value })}
                   required
@@ -335,7 +336,7 @@ export default function Management() {
                   <label className="block text-sm mb-1">Plate No.</label>
                   <input
                     type="text"
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border rounded px-3 py-1"
                     value={vehicleForm.plateNo}
                     onChange={e => setVehicleForm({ ...vehicleForm, plateNo: e.target.value })}
                     required
@@ -347,7 +348,7 @@ export default function Management() {
                      type="number"
                      min="1"
                      max="14"
-                     className="w-full border rounded px-3 py-2 text-center"
+                     className="w-full border rounded px-3 py-1 text-center"
                      value={vehicleForm.capacity}
                      onChange={e => {
                        // Only allow up to 2 digits
@@ -361,7 +362,7 @@ export default function Management() {
               <div>
                 <label className="block text-sm mb-1">Fuel Type</label>
                 <select
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border rounded px-3 py-1"
                   value={vehicleForm.fuelType}
                   onChange={e => setVehicleForm({ ...vehicleForm, fuelType: e.target.value })}
                   required>
@@ -373,7 +374,7 @@ export default function Management() {
               <div>
                 <label className="block text-sm mb-1">Fleet card</label>
                 <select
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border rounded px-3 py-1"
                   value={vehicleForm.fleetCard}
                   onChange={e => setVehicleForm({ ...vehicleForm, fleetCard: e.target.value })}
                   required
@@ -386,7 +387,7 @@ export default function Management() {
               <div>
                 <label className="block text-sm mb-1">RFID</label>
                 <select
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border rounded px-3 py-1"
                   value={vehicleForm.rfid}
                   onChange={e => setVehicleForm({ ...vehicleForm, rfid: e.target.value })}
                   required
@@ -399,14 +400,14 @@ export default function Management() {
               <div className="flex justify-end space-x-2 mt-6">
                 <button
                   type="button"
-                  className="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100"
+                  className="px-3 py-1 border rounded text-gray-700 hover:bg-gray-100"
                   onClick={() => setShowModal(false)}
                 >
                   Discard
                 </button>
                 <button
                   type="submit"
-                  className={`px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 ${!isVehicleFormValid() ? "opacity-50 cursor-not-allowed" : ""}`}
+                  className={`px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 ${!isVehicleFormValid() ? "opacity-50 cursor-not-allowed" : ""}`}
                   disabled={!isVehicleFormValid()}
                 >
                   Add
@@ -425,7 +426,7 @@ export default function Management() {
                 <label className="block text-sm mb-1">Name</label>
                 <input
                   type="text"
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border rounded px-3 py-1"
                   value={driverForm.name}
                   onChange={e => setDriverForm({ ...driverForm, name: e.target.value })}
                   required
@@ -435,7 +436,7 @@ export default function Management() {
                 <label className="block text-sm mb-1">Contact No.</label>
                 <input
                   type="text"
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border rounded px-3 py-1"
                   maxLength={13}
                   placeholder="0912-234-2345"
                   value={driverForm.contact}
@@ -447,7 +448,7 @@ export default function Management() {
                 <label className="block text-sm mb-1">Email Address</label>
                 <input
                   type="email"
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border rounded px-3 py-1"
                   value={driverForm.email}
                   onChange={e => setDriverForm({ ...driverForm, email: e.target.value })}
                   required
@@ -456,14 +457,14 @@ export default function Management() {
               <div className="flex justify-end space-x-2 mt-6">
                 <button
                   type="button"
-                  className="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100 shadow"
+                  className="px-3 py-1 border rounded text-gray-700 hover:bg-gray-100 shadow"
                   onClick={() => setShowModal(false)}
                 >
                   Discard
                 </button>
                 <button
                   type="submit"
-                  className={`px-6 py-2 bg-green-600 text-white rounded shadow hover:bg-green-800 ${!isDriverFormValid() ? "opacity-50 cursor-not-allowed" : ""}`}
+                  className={`px-3 py-1 bg-green-600 text-white rounded shadow hover:bg-green-800 ${!isDriverFormValid() ? "opacity-50 cursor-not-allowed" : ""}`}
                   disabled={!isDriverFormValid()}
                 >
                   Add
