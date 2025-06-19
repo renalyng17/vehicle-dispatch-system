@@ -26,13 +26,13 @@ function Requests() {
         className=" h-full bg-[#F9FFF5] overflow-auto"
       style={{ backgroundColor: "#FBFFF5" }}
       >
-        <div className="p-6 ml-4">
+        <div className="p-6 ml-1">
           <h1 className="text-3xl font-bold">Request List</h1>
         </div>
 
         <div className="mx-8 mt-6 p-6 bg-white shadow rounded-md">
           <table className="w-full text-left border-collapse">
-            <thead className="bg-[#15803D] text-white">
+            <thead className="md:bg-green-600 text-white">
               <tr>
                 <th className="py-3 px-4">Name</th>
                 <th className="py-3 px-4">Office/Department</th>

@@ -1,13 +1,13 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import Nav from "../Admin/nav";
-import NotificationBar from "../Clien/NotificationBar";
+import NotificationBar from "../Client/NotificationBar";
 
 import Home from "./Home";
 import Calendar from "./Calendar";
 import Requests from "./Requests";
 import Management from "./Management";
-import Profile from "./Profile";
+import Profile from "./Profile";  
 
 const Dashboard = () => {
   return (
