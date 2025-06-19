@@ -6,7 +6,11 @@ export default function Management() {
 
   // State for vehicle and driver data
   const [vehicles, setVehicles] = useState([]);
-  const [drivers, setDrivers] = useState([]);
+ const [drivers, setDrivers] = useState([]);
+  
+  // State for archived data
+  const [archivedVehicles, setArchivedVehicles] = useState([]);
+  const [archivedDrivers, setArchivedDrivers] = useState([]);
 
   // State for delete confirmation modal
   const [confirmDelete, setConfirmDelete] = useState({ type: null, idx: null });
@@ -85,7 +89,7 @@ export default function Management() {
   const handleDriverSubmit = (e) => {
     e.preventDefault();
     // Check for duplicate email or contact
-    if (
+  if (
       drivers.some(
         (d) =>
           d.email.trim().toLowerCase() === driverForm.email.trim().toLowerCase() ||
@@ -117,11 +121,15 @@ export default function Management() {
     setConfirmDelete({ type: "driver", idx });
   };
 
-  // Confirm deletion
+  // Confirm deletion - moves to archive
   const confirmDeleteAction = () => {
     if (confirmDelete.type === "vehicle") {
+      const vehicleToArchive = vehicles[confirmDelete.idx];
+      setArchivedVehicles([...archivedVehicles, vehicleToArchive]);
       setVehicles(vehicles.filter((_, i) => i !== confirmDelete.idx));
     } else if (confirmDelete.type === "driver") {
+      const driverToArchive = drivers[confirmDelete.idx];
+      setArchivedDrivers([...archivedDrivers, driverToArchive]);
       setDrivers(drivers.filter((_, i) => i !== confirmDelete.idx));
     }
     setConfirmDelete({ type: null, idx: null });
@@ -130,6 +138,19 @@ export default function Management() {
   // Cancel deletion
   const cancelDeleteAction = () => {
     setConfirmDelete({ type: null, idx: null });
+  };
+
+  // Handle restoring items from archive
+  const handleRestore = (type, idx) => {
+    if (type === "vehicle") {
+      const vehicleToRestore = archivedVehicles[idx];
+      setVehicles([...vehicles, vehicleToRestore]);
+      setArchivedVehicles(archivedVehicles.filter((_, i) => i !== idx));
+    } else if (type === "driver") {
+      const driverToRestore = archivedDrivers[idx];
+      setDrivers([...drivers, driverToRestore]);
+      setArchivedDrivers(archivedDrivers.filter((_, i) => i !== idx));
+    }
   };
 
   // Format contact number as 0912-234-2345
@@ -172,7 +193,7 @@ export default function Management() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 relative pb-16">
       <h1 className="text-3xl font-bold mb-6">Management</h1>
 
       <div className="relative flex border-b mb-4 space-x-2">
@@ -182,8 +203,8 @@ export default function Management() {
         <button className={tabClass("client")} onClick={() => setActiveTab("client")}>
           CLIENT INFORMATION
         </button>
-        <button className={tabClass("driver")} onClick={() => setActiveTab("driver")}>
-          DRIVER INFORMATION
+      <button className={tabClass("driver")} onClick={() => setActiveTab("driver")}>
+         DRIVER INFORMATION
         </button>
 
         {(activeTab === "vehicle" || activeTab === "driver") && (
@@ -199,12 +220,10 @@ export default function Management() {
         )}
       </div>
 
-          {/**Information  Vehicle Table */}  
       {activeTab === "vehicle" && (
         <div className="overflow-x-auto">
           <table className="min-w-full border border-gray-200 rounded-md shadow-md text-sm">
             <thead>
-              {/* Header row for vehicle information */}
               <tr className="bg-green-700 md:bg-green-600 text-white text-left">
                 <th className="p-3">VEHICLE</th>
                 <th className="p-3">PLATE NO.</th>
@@ -212,44 +231,44 @@ export default function Management() {
                 <th className="p-3">FUEL TYPE</th>
                 <th className="p-3">FLEET CARD</th>
                 <th className="p-3">RFID</th>
-                <th className="p-3 text-center"></th> {/* New column */}
+                <th className="p-3 text-center">ACTIONS</th>
               </tr>
             </thead>
             <tbody>
-  {vehicles.length === 0 ? (
-    <tr>
-      <td colSpan={7} className="p-3 text-center text-gray-400">No data</td>
-    </tr>
-  ) : (
-    vehicles.map((v, idx) => (
-      <tr key={idx} className="border-t text-black">
-        <td className="p-3">{v.vehicleType}</td>
-        <td className="p-3">{v.plateNo}</td>
-        <td className="p-3 text-center">{v.capacity}</td>
-        <td className="p-3 font-semibold">{v.fuelType}</td>
-        <td className="p-3">
-          <span className="bg-green-100 md:bg-green-200 text-green-700 px-2 py-1 rounded-md text-xs">
-            {v.fleetCard?.toUpperCase()}
-          </span>
-        </td>
-        <td className="p-3">
-          <span className="bg-green-100 md:bg-green-200 text-green-700 px-2 py-1 rounded-md text-xs">
-            {v.rfid?.toUpperCase()}
-          </span>
-        </td>
-        <td className="p-3 text-center">
-          <button
-            className="px-3 py-1 bg-red-500 md:bg-red-600 text-white rounded hover:bg-red-700 transition text-xs"
-            type="button"
-            onClick={() => handleDeleteVehicle(idx)}
-          >
-            Delete
-          </button>
-          </td>
-           </tr>
-           ))
-            )}
-        </tbody>
+              {vehicles.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="p-3 text-center text-gray-400">No data</td>
+                </tr>
+              ) : (
+                vehicles.map((v, idx) => (
+                  <tr key={idx} className="border-t text-black">
+                    <td className="p-3">{v.vehicleType}</td>
+                    <td className="p-3">{v.plateNo}</td>
+                    <td className="p-3 text-center">{v.capacity}</td>
+                    <td className="p-3 font-semibold">{v.fuelType}</td>
+                    <td className="p-3">
+                      <span className="bg-green-100 md:bg-green-200 text-green-700 px-2 py-1 rounded-md text-xs">
+                        {v.fleetCard?.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      <span className="bg-green-100 md:bg-green-200 text-green-700 px-2 py-1 rounded-md text-xs">
+                        {v.rfid?.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="p-3 text-center">
+                      <button
+                        className="px-3 py-1 bg-red-500 md:bg-red-600 text-white rounded hover:bg-red-700 transition text-xs"
+                        type="button"
+                        onClick={() => handleDeleteVehicle(idx)}
+                      >
+                        Archive
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
           </table>
         </div>
       )}
@@ -282,50 +301,146 @@ export default function Management() {
                 <th className="p-3">CONTACT NO.</th>
                 <th className="p-3">EMAIL ADDRESS</th>
                 <th className="p-3">STATUS</th>
-                <th className="p-3 text-center"></th> {/* New column */}
+                <th className="p-3 text-center">...</th>
               </tr>
             </thead>
-           <tbody>
-  {drivers.length === 0 ? (
-    <tr>
-      <td colSpan={5} className="p-3 text-center text-gray-400">No data</td>
-    </tr>
-  ) : (
-    drivers.map((d, idx) => (
-      <tr key={idx} className="border-t text-black">
-        <td className="p-3">{d.name}</td>
-        <td className="p-3">{d.contact}</td>
-        <td className="p-3">{d.email}</td>
-        <td className="p-3">
-          <span className="bg-green-100 md:bg-green-200 text-green-700 px-2 py-1 rounded-md text-xs">{d.status}</span>
-        </td>
-        <td className="p-3 text-center">
-          <button
-            className="px-3 py-1 bg-red-500 md:bg-red-600 text-white rounded hover:bg-red-700 transition text-xs"
-            type="button"
-            onClick={() => handleDeleteDriver(idx)}
-          >
-            Delete
-          </button>
-        </td>
-           </tr>
-           ))
-          )}
-        </tbody>
+            <tbody>
+              {drivers.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="p-3 text-center text-gray-400">No data</td>
+                </tr>
+              ) : (
+                drivers.map((d, idx) => (
+                  <tr key={idx} className="border-t text-black">
+                    <td className="p-3">{d.name}</td>
+                    <td className="p-3">{d.contact}</td>
+                    <td className="p-3">{d.email}</td>
+                    <td className="p-3">
+                      <span className="bg-green-100 md:bg-green-200 text-green-700 px-2 py-1 rounded-md text-xs">{d.status}</span>
+                    </td>
+                    <td className="p-3 text-center">
+                      <button
+                        className="px-3 py-1 bg-red-500 md:bg-red-600 text-white rounded hover:bg-red-700 transition text-xs"
+                        type="button"
+                        onClick={() => handleDeleteDriver(idx)}
+                      >
+                        Archive
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
           </table>
         </div>
       )}
 
-          {/*Modal for Vehicle Information */}
+      {activeTab === "archive" && (
+        <div className="space-y-6">
+          {/* Archived Vehicles */}
+          <div>
+            <h2 className="text-xl font-semibold mb-3">Archived Vehicles</h2>
+            {archivedVehicles.length === 0 ? (
+              <p className="text-gray-400">No archived vehicles</p>
+            ) : (
+              <table className="min-w-full border border-gray-200 rounded-md shadow-md text-sm">
+                <thead>
+                  <tr className="bg-gray-600 text-white text-left">
+                    <th className="p-3">VEHICLE</th>
+                    <th className="p-3">PLATE NO.</th>
+                    <th className="p-3 text-center">CAPACITY</th>
+                    <th className="p-3">FUEL TYPE</th>
+                    <th className="p-3">FLEET CARD</th>
+                    <th className="p-3">RFID</th>
+                    <th className="p-3 text-center">ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {archivedVehicles.map((v, idx) => (
+                    <tr key={idx} className="border-t text-black">
+                      <td className="p-3">{v.vehicleType}</td>
+                      <td className="p-3">{v.plateNo}</td>
+                      <td className="p-3 text-center">{v.capacity}</td>
+                      <td className="p-3 font-semibold">{v.fuelType}</td>
+                      <td className="p-3">
+                        <span className="bg-gray-200 text-gray-700 px-2 py-1 rounded-md text-xs">
+                          {v.fleetCard?.toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <span className="bg-gray-200 text-gray-700 px-2 py-1 rounded-md text-xs">
+                          {v.rfid?.toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="p-3 text-center">
+                        <button
+                          className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition text-xs"
+                          onClick={() => handleRestore("vehicle", idx)}
+                        >
+                          Restore
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* Archived Drivers */}
+          <div>
+            <h2 className="text-xl font-semibold mb-3">Archived Drivers</h2>
+            {archivedDrivers.length === 0 ? (
+              <p className="text-gray-400">No archived drivers</p>
+            ) : (
+              <table className="min-w-full border border-gray-200 rounded-md shadow-md text-sm">
+                <thead>
+                  <tr className="bg-gray-600 text-white text-left">
+                    <th className="p-3">NAME</th>
+                    <th className="p-3">CONTACT NO.</th>
+                    <th className="p-3">EMAIL ADDRESS</th>
+                    <th className="p-3">STATUS</th>
+                    <th className="p-3 text-center">...</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {archivedDrivers.map((d, idx) => (
+                    <tr key={idx} className="border-t text-black">
+                      <td className="p-3">{d.name}</td>
+                      <td className="p-3">{d.contact}</td>
+                      <td className="p-3">{d.email}</td>
+                      <td className="p-3">
+                        <span className="bg-gray-200 text-gray-700 px-2 py-1 rounded-md text-xs">
+                          {d.status}
+                        </span>
+                      </td>
+                      <td className="p-3 text-center">
+                        <button
+                          className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition text-xs"
+                          onClick={() => handleRestore("driver", idx)}
+                        >
+                          Restore
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal for Vehicle Information */}
       {activeTab === "vehicle" && showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-40">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-8 relative">
             <form className="space-y-4" onSubmit={handleVehicleSubmit}>
               <div>
-                <label className="block text-sm mb-1">Vehicle Type</label>
+                <label className="block text-gray-600 text-sm mb-1">Vehicle Type</label>
                 <input
                   type="text"
-                  className="w-full border rounded px-3 py-1"
+                  className="w-full border text-gray-600 text-sm rounded px-3 py-1"
                   value={vehicleForm.vehicleType}
                   onChange={e => setVehicleForm({ ...vehicleForm, vehicleType: e.target.value })}
                   required
@@ -333,36 +448,35 @@ export default function Management() {
               </div>
               <div className="flex space-x-2">
                 <div className="flex-1">
-                  <label className="block text-sm mb-1">Plate No.</label>
+                  <label className="block text-gray-600 text-sm mb-1">Plate No.</label>
                   <input
                     type="text"
-                    className="w-full border rounded px-3 py-1"
+                    className="w-full border text-gray-600 text-sm rounded px-3 py-1"
                     value={vehicleForm.plateNo}
                     onChange={e => setVehicleForm({ ...vehicleForm, plateNo: e.target.value })}
                     required
                   />
                 </div>
-              <div className="w-1/3">
-                <label className="block text-sm mb-1">Capacity</label>
-                   <input
-                     type="number"
-                     min="1"
-                     max="14"
-                     className="w-full border rounded px-3 py-1 text-center"
-                     value={vehicleForm.capacity}
-                     onChange={e => {
-                       // Only allow up to 2 digits
-                    const val = e.target.value.replace(/\D/g, '').slice(0, 2);
-                    setVehicleForm({ ...vehicleForm, capacity: val });
-                  }}
+                <div className="w-1/3">
+                  <label className="block text-gray-600 text-sm mb-1">Capacity</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="14"
+                    className="w-full border text-gray-600 text-sm rounded px-3 py-1 text-center"
+                    value={vehicleForm.capacity}
+                    onChange={e => {
+                      const val = e.target.value.replace(/\D/g, '').slice(0, 2);
+                      setVehicleForm({ ...vehicleForm, capacity: val });
+                    }}
                     required
                   />
                     </div>
               </div>
               <div>
-                <label className="block text-sm mb-1">Fuel Type</label>
+                <label className="block text-gray-600 text-sm mb-1">Fuel Type</label>
                 <select
-                  className="w-full border rounded px-3 py-1"
+                  className="w-full border text-gray-600 text-sm rounded px-3 py-1"
                   value={vehicleForm.fuelType}
                   onChange={e => setVehicleForm({ ...vehicleForm, fuelType: e.target.value })}
                   required>
@@ -372,9 +486,9 @@ export default function Management() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm mb-1">Fleet card</label>
+                <label className="block text-gray-600 text-sm mb-1">Fleet card</label>
                 <select
-                  className="w-full border rounded px-3 py-1"
+                  className="w-full border text-gray-600 text-sm rounded px-3 py-1"
                   value={vehicleForm.fleetCard}
                   onChange={e => setVehicleForm({ ...vehicleForm, fleetCard: e.target.value })}
                   required
@@ -385,9 +499,9 @@ export default function Management() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm mb-1">RFID</label>
+                <label className="block text-gray-600 text-sm mb-1">RFID</label>
                 <select
-                  className="w-full border rounded px-3 py-1"
+                  className="w-full border text-gray-600 text-sm rounded px-3 py-1"
                   value={vehicleForm.rfid}
                   onChange={e => setVehicleForm({ ...vehicleForm, rfid: e.target.value })}
                   required
@@ -400,14 +514,14 @@ export default function Management() {
               <div className="flex justify-end space-x-2 mt-6">
                 <button
                   type="button"
-                  className="px-3 py-1 border rounded text-gray-700 hover:bg-gray-100"
+                  className="px-3 py-1 border rounded text-gray-700 text-sm hover:bg-gray-100"
                   onClick={() => setShowModal(false)}
                 >
                   Discard
                 </button>
                 <button
                   type="submit"
-                  className={`px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 ${!isVehicleFormValid() ? "opacity-50 cursor-not-allowed" : ""}`}
+                  className={`px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 ${!isVehicleFormValid() ? "opacity-50 cursor-not-allowed" : ""}`}
                   disabled={!isVehicleFormValid()}
                 >
                   Add
@@ -417,13 +531,14 @@ export default function Management() {
           </div>
         </div>
       )}
+
       {/* Modal for Driver Information */}
       {activeTab === "driver" && showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-40">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-8 relative">
             <form className="space-y-6" onSubmit={handleDriverSubmit}>
               <div>
-                <label className="block text-sm mb-1">Name</label>
+                <label className="block text-gray-600 text-sm mb-1">Name</label>
                 <input
                   type="text"
                   className="w-full border rounded px-3 py-1"
@@ -433,19 +548,18 @@ export default function Management() {
                 />
               </div>
               <div>
-                <label className="block text-sm mb-1">Contact No.</label>
+                <label className="block text-gray-600 text-sm mb-1">Contact No.</label>
                 <input
                   type="text"
                   className="w-full border rounded px-3 py-1"
                   maxLength={13}
-                  placeholder="0912-234-2345"
                   value={driverForm.contact}
                   onChange={handleContactChange}
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm mb-1">Email Address</label>
+                <label className="block text-gray-600 text-sm mb-1">Email Address</label>
                 <input
                   type="email"
                   className="w-full border rounded px-3 py-1"
@@ -457,14 +571,14 @@ export default function Management() {
               <div className="flex justify-end space-x-2 mt-6">
                 <button
                   type="button"
-                  className="px-3 py-1 border rounded text-gray-700 hover:bg-gray-100 shadow"
+                  className="px-3 py-1 border rounded text-gray-700 text-sm hover:bg-gray-100 shadow"
                   onClick={() => setShowModal(false)}
                 >
                   Discard
                 </button>
                 <button
                   type="submit"
-                  className={`px-3 py-1 bg-green-600 text-white rounded shadow hover:bg-green-800 ${!isDriverFormValid() ? "opacity-50 cursor-not-allowed" : ""}`}
+                  className={`px-3 py-1 bg-green-600 text-white text-sm rounded shadow hover:bg-green-800 ${!isDriverFormValid() ? "opacity-50 cursor-not-allowed" : ""}`}
                   disabled={!isDriverFormValid()}
                 >
                   Add
@@ -481,7 +595,7 @@ export default function Management() {
           <div className="bg-white rounded-lg shadow-lg w-full max-w-xs p-8 text-center">
             <div className="text-lg font-semibold mb-4 text-red-600">Already Exists</div>
             <div className="mb-6 text-gray-700">
-              
+              This {duplicateModal.type} already exists in the system.
             </div>
             <button
               className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
@@ -493,30 +607,44 @@ export default function Management() {
         </div>
       )}
 
+      {/* Archive Confirmation Modal */}
       {confirmDelete.type && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-40">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-xs p-8 text-center">
-            <div className="text-lg font-semibold mb-4 text-red-600">Confirm Delete</div>
-            <div className="mb-6 text-gray-700">
-              Are you sure you want to delete this {confirmDelete.type === "vehicle" ? "vehicle" : "driver"}?
+            <div className="text-lg font-semibold mb-4 text-red-600">Confirm Archive</div>
+            <div className="mb-6 text-gray-700 text-sm">
+              Are you sure you want to archive this {confirmDelete.type === "vehicle" ? "vehicle" : "driver"}?
+              <br />
+              (It will be moved to the Archive tab)
             </div>
             <div className="flex justify-center space-x-4">
               <button
-                className="px-6 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                className="px-6 py-2 bg-gray-200 text-gray-800 text-sm rounded hover:bg-gray-300"
                 onClick={cancelDeleteAction}
               >
                 Cancel
               </button>
               <button
-                className="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                className="px-4 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
                 onClick={confirmDeleteAction}
               >
-                Delete
+                Archive
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Archive button in bottom right corner */}
+      <button
+        className="fixed bottom-4 right-13 py-1 px-4 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700 transition duration-300 flex items-center space-x-1 shadow-lg"
+        onClick={() => setActiveTab("archive")}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z" />
+        </svg>
+        <span>Archive</span>
+      </button>
     </div>
   );
 }
