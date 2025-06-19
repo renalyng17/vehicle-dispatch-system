@@ -1,6 +1,7 @@
 import React from "react";
 import { Users, User, Car } from "lucide-react";
 
+
 export default function Home() {
   return (
        <div className="bg-[#F9FFF5] px-0 mt-0">
