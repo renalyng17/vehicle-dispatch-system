@@ -1,5 +1,5 @@
 import { Bell } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function NotificationBar() {
   const [isOpen, setIsOpen] = useState(false);
