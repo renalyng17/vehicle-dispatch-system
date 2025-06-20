@@ -47,7 +47,7 @@ const Calendar = () => {
       {/* Top Bar */}
       <div className="relative flex justify-between items-center mb-4">
         <button
-          className="border px-2 py-1 z-10 bg-green-100 text-green-800 font-bold"
+          className="border px-2 py-1 z-10 bg-green-100 text-green-600 font-bold"
           onClick={() => setCurrentDate(new Date())}
         >
           Today
@@ -57,13 +57,13 @@ const Calendar = () => {
         </h1>
         <div className="z-10">
           <button
-            className="border px-2 py-1 mr-1"
+            className="border px-2 py-1 mr-1 border-gray-700"
             onClick={() => setCurrentDate(new Date(currentDate.setDate(currentDate.getDate() - 7)))}
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
-            className="border px-2 py-1"
+            className="border px-2 py-1 border-gray-700"
             onClick={() => setCurrentDate(new Date(currentDate.setDate(currentDate.getDate() + 7)))}
           >
             <ChevronRight className="w-4 h-4" />
@@ -72,16 +72,16 @@ const Calendar = () => {
       </div>
 
       {/* Calendar Container */}
-      <div className="border rounded-lg overflow-auto flex-1">
+      <div className="border rounded-lg overflow-auto border-gray-700 flex-1">
         {/* Day Headers Row */}
-        <div className="grid grid-cols-7 sticky top-0 bg-white z-10">
+        <div className="grid grid-cols-7 sticky top-0 bg-green-600 text-white font-bold z-10">
           {calendarWeek.map((date, index) => {
             const isToday = date.toDateString() === new Date().toDateString();
             return (
               <div
                 key={index}
                 className={`border-b border-r h-12 p-1 text-center font-bold ${
-                  isToday ? 'bg-green-100 text-green-800' : ''
+                  isToday ? 'bg-green-100 text-green-600' : ''
                 }`}
               >
                 <div>{daysOfWeek[date.getDay()]}</div>
@@ -94,17 +94,17 @@ const Calendar = () => {
         </div>
 
         {/* Time Slots Grid */}
-        <div className="grid grid-cols-7">
+        <div className="grid grid-cols-7 ">
           {allHours.map((hour) =>
             calendarWeek.map((_, dayIndex) => (
-              <div key={`${hour}-${dayIndex}`} className="relative border-b border-r h-24">
+              <div key={`${hour}-${dayIndex}`} className="relative border-b border-r h-24 border-gray-700">
                 {events.map(
                   (event) =>
                     event.day === dayIndex &&
                     event.hour === hour && (
                       <div
                         key={event.id}
-                        className="absolute top-1 left-1 right-1 bg-white shadow-md border rounded p-2 cursor-pointer"
+                        className="absolute top-1 left-1 right-1 bg-white shadow-md border rounded p-2 cursor-pointer border-gray-700"
                         onClick={() => toggleModal(event.id)}
                       >
                         <div className="font-semibold text-sm">{event.name}</div>
@@ -127,7 +127,7 @@ const Calendar = () => {
 
       {/* Modal */}
       {openModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-20">
+        <div className="fixed inset-0 flex items-center justify-center z-20 ">
           <div
             className="absolute inset-0"
             onClick={() => setOpenModal(null)}
