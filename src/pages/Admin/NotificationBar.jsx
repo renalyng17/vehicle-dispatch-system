@@ -20,13 +20,16 @@ export default function NotificationBar() {
   }, []);
 
   const handleButtonClick = (e, action) => {
-    e.stopPropagation();
-    if (action === 'decline') {
-      setIsDeclineModalOpen(true);
-    } else if (action === 'accept') {
-      setIsAcceptModalOpen(true);
-    }
-  };
+  e.stopPropagation();
+
+  if (action === 'decline') {
+    setIsDeclineModalOpen(true);
+    setIsAcceptModalOpen(false); // Close accept modal
+  } else if (action === 'accept') {
+    setIsAcceptModalOpen(true);
+    setIsDeclineModalOpen(false); // Close decline modal
+  }
+};
 
   return (
     <>
@@ -92,11 +95,14 @@ export default function NotificationBar() {
       {/* Decline Modal - Fixed Position */}
       {isDeclineModalOpen && (
         <div 
-          className="fixed inset-0bg-opacity-30 flex items-center justify-center z-[60]"
-          onClick={() => setIsDeclineModalOpen(false)}
+          className="fixed inset-0 bg-opacity-30 flex items-center justify-center z-[60]"
+        onClick={() => {
+        setIsDeclineModalOpen(false);
+        setIsAcceptModalOpen(true);
+  }}
         >
           <div 
-            className="fixed bg-white p-5 rounded-lg shadow-lg"
+            className="fixed bg-white p-5 rounded-lg shadow-2xl"
             style={{
               top: '50%',
               left: '50%',
@@ -145,11 +151,14 @@ export default function NotificationBar() {
       {/* Accept Modal - Fixed Position */}
       {isAcceptModalOpen && (
         <div 
-          className="fixed inset-0bg-opacity-30 flex items-center justify-center z-[60]"
-          onClick={() => setIsAcceptModalOpen(false)}
+          className="fixed inset-0 bg-opacity-30 flex items-center justify-center z-[60]"
+           onClick={() => {
+            setIsAcceptModalOpen(false);
+            setIsDeclineModalOpen(true);
+             }}
         >
           <div 
-            className="fixed bg-white p-6 rounded-lg shadow-lg"
+            className="fixed bg-white p-6 rounded-lg shadow-2xl "
             style={{
               top: '50%',
               left: '50%',
