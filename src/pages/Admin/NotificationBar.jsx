@@ -41,7 +41,7 @@ export default function NotificationBar() {
   onClick={() => setIsOpen(!isOpen)}
 >
   <Bell className="w-6 h-6" />
-  <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500" />
+  <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg--500" />
 </button>
 
       {/* Notification Dropdown - Fixed Position */}
