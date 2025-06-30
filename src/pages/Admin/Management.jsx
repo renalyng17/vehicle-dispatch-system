@@ -231,7 +231,7 @@ export default function Management() {
                 <th className="p-3">FUEL TYPE</th>
                 <th className="p-3">FLEET CARD</th>
                 <th className="p-3">RFID</th>
-                <th className="p-3 text-center">ACTIONS</th>
+                <th className="p-3 text-center"></th>
               </tr>
             </thead>
             <tbody>
@@ -301,7 +301,7 @@ export default function Management() {
                 <th className="p-3">CONTACT NO.</th>
                 <th className="p-3">EMAIL ADDRESS</th>
                 <th className="p-3">STATUS</th>
-                <th className="p-3 text-center">...</th>
+                <th className="p-3 text-center"></th>
               </tr>
             </thead>
             <tbody>
@@ -352,7 +352,7 @@ export default function Management() {
                     <th className="p-3">FUEL TYPE</th>
                     <th className="p-3">FLEET CARD</th>
                     <th className="p-3">RFID</th>
-                    <th className="p-3 text-center">ACTIONS</th>
+                    <th className="p-3 text-center">...</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -440,7 +440,7 @@ export default function Management() {
                 <label className="block text-gray-600 text-sm mb-1">Vehicle Type</label>
                 <input
                   type="text"
-                  className="w-full border text-gray-600 text-sm rounded px-3 py-1"
+                  className="w-full border border-grey-400 text-gray-600 text-sm rounded px-3 py-1"
                   value={vehicleForm.vehicleType}
                   onChange={e => setVehicleForm({ ...vehicleForm, vehicleType: e.target.value })}
                   required
@@ -449,40 +449,56 @@ export default function Management() {
               <div className="flex space-x-2">
                 <div className="flex-1">
                   <label className="block text-gray-600 text-sm mb-1">Plate No.</label>
-                  <input
-                    type="text"
-                    className="w-full border text-gray-600 text-sm rounded px-3 py-1"
-                    value={vehicleForm.plateNo}
-                    onChange={e => setVehicleForm({ ...vehicleForm, plateNo: e.target.value })}
-                    required
+                    <input
+                     type="text"
+                      className="w-full border text-gray-600 text-sm rounded px-3 py-1"
+                      value={vehicleForm.plateNo}
+                      onChange={e => {
+        // Allow only up to 3 letters (A-Z, a-z), optional dash or space, then 3 or 4 digits
+                       let val = e.target.value.toUpperCase();
+        // Remove invalid characters
+                      val = val.replace(/[^A-Z0-9\- ]/g, "");
+        // Enforce pattern: 3 letters, optional dash/space, 3-4 numbers
+                      const match = val.match(/^([A-Z]{0,3})([\- ]?)([0-9]{0,4})$/);
+                      if (match) {
+                     setVehicleForm({ ...vehicleForm, plateNo: val });
+                      }
+                    }}
+                      maxLength={8} // e.g. "ABC-1234"
+                     pattern="^[A-Za-z]{3}[\- ]?[0-9]{3,4}$"
+                     
                   />
-                </div>
+                   </div>
                 <div className="w-1/3">
                   <label className="block text-gray-600 text-sm mb-1">Capacity</label>
                   <input
-                    type="number"
-                    min="1"
-                    max="14"
-                    className="w-full border text-gray-600 text-sm rounded px-3 py-1 text-center"
-                    value={vehicleForm.capacity}
-                    onChange={e => {
-                      const val = e.target.value.replace(/\D/g, '').slice(0, 2);
-                      setVehicleForm({ ...vehicleForm, capacity: val });
+                   type="number" 
+                   min="1"
+                   max="16"
+                      className="w-full border text-gray-600 text-sm rounded px-3 py-1 text-center "
+                      value={vehicleForm.capacity}
+                      onChange={e => {
+                      // Only allow numbers between 1 and 16, prevent symbols and letters
+                  let val = e.target.value.replace(/[^0-9]/g, "").slice(0, 2); // Remove all non-numeric characters
+                 if (val === "" || (parseInt(val) >= 1 && parseInt(val) <= 16)) {
+                setVehicleForm({ ...vehicleForm, capacity: val });
+                         }
                     }}
-                    required
-                  />
+                          required
+                      />
                     </div>
               </div>
               <div>
                 <label className="block text-gray-600 text-sm mb-1">Fuel Type</label>
                 <select
-                  className="w-full border text-gray-600 text-sm rounded px-3 py-1"
+                  className="w-full border border-grey-400 text-gray-600 text-sm rounded px-3 py-1"
                   value={vehicleForm.fuelType}
                   onChange={e => setVehicleForm({ ...vehicleForm, fuelType: e.target.value })}
                   required>
                   <option value="" disabled hidden>Select Fuel Type</option>
                   <option>BIO- DIESEL</option>
                   <option>DIESEL</option>
+                  <option>KEROSENE</option>
                 </select>
               </div>
               <div>
