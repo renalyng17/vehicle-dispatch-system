@@ -200,9 +200,6 @@ export default function Management() {
         <button className={tabClass("vehicle")} onClick={() => setActiveTab("vehicle")}>
           VEHICLE DETAIL
         </button>
-        <button className={tabClass("client")} onClick={() => setActiveTab("client")}>
-          CLIENT INFORMATION
-        </button>
       <button className={tabClass("driver")} onClick={() => setActiveTab("driver")}>
          DRIVER INFORMATION
         </button>
@@ -247,14 +244,18 @@ export default function Management() {
                     <td className="p-3 text-center">{v.capacity}</td>
                     <td className="p-3 font-semibold">{v.fuelType}</td>
                     <td className="p-3">
-                      <span className="bg-green-100 md:bg-green-200 text-green-700 px-2 py-1 rounded-md text-xs">
-                        {v.fleetCard?.toUpperCase()}
-                      </span>
+                      <span className={`px-2 py-1 rounded-md text-xs  bg-green-100
+                        ${v.fleetCard?.toLowerCase() === "available" ? "md:bg-green-200 text-green-700" : "md:bg-red-200 text-red-700"}
+  `                      }>
+                       {v.fleetCard?.toUpperCase()}
+                       </span>
                     </td>
                     <td className="p-3">
-                      <span className="bg-green-100 md:bg-green-200 text-green-700 px-2 py-1 rounded-md text-xs">
-                        {v.rfid?.toUpperCase()}
-                      </span>
+                     <span className={`px-2 py-1 rounded-md text-xs bg-green-100
+                       ${v.rfid?.toLowerCase() === "available" ? "md:bg-green-200 text-green-700" : "md:bg-red-200 text-red-700"}
+  `                     }>
+                      {v.rfid?.toUpperCase()}
+                    </span>
                     </td>
                     <td className="p-3 text-center">
                       <button
@@ -273,24 +274,6 @@ export default function Management() {
         </div>
       )}
 
-      {activeTab === "client" && (
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white text-white border border-gray-200 rounded-md shadow-md text-sm">
-            <thead className="bg-green-700 md:bg-green-600">
-              <tr className="text-left">
-                <th className="p-3">NAME</th>
-                <th className="p-3">CONTACT NO.</th>
-                <th className="p-3">EMAIL ADDRESS</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-t text-black-100">
-                <td colSpan={4} className="p-3 text-center text-gray-400">No data</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      )}
 
       {activeTab === "driver" && (
         <div className="overflow-x-auto">
@@ -465,28 +448,29 @@ export default function Management() {
                       }
                     }}
                       maxLength={8} // e.g. "ABC-1234"
-                     pattern="^[A-Za-z]{3}[\- ]?[0-9]{3,4}$"
+                      pattern="^[A-Za-z]{3}[\- ]?[0-9]{3,4}$"
                      
                   />
                    </div>
                 <div className="w-1/3">
-                  <label className="block text-gray-600 text-sm mb-1">Capacity</label>
-                  <input
-                   type="number" 
-                   min="1"
-                   max="16"
-                      className="w-full border text-gray-600 text-sm rounded px-3 py-1 text-center "
+                    <label className="block text-gray-600 text-sm mb-1">Capacity</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      className="w-full border text-gray-600 text-sm rounded px-3 py-1 text-center pr-8"
                       value={vehicleForm.capacity}
                       onChange={e => {
-                      // Only allow numbers between 1 and 16, prevent symbols and letters
-                  let val = e.target.value.replace(/[^0-9]/g, "").slice(0, 2); // Remove all non-numeric characters
-                 if (val === "" || (parseInt(val) >= 1 && parseInt(val) <= 16)) {
-                setVehicleForm({ ...vehicleForm, capacity: val });
-                         }
-                    }}
-                          required
+                        let val = e.target.value.replace(/[^0-9]/g, "").slice(0, 2);
+                        if (val === "" || (parseInt(val) >= 1 && parseInt(val) <= 16)) {
+                          setVehicleForm({ ...vehicleForm, capacity: val });
+                        }
+                        }}
+                        maxLength={2}
+                        required
                       />
                     </div>
+                    
               </div>
               <div>
                 <label className="block text-gray-600 text-sm mb-1">Fuel Type</label>
