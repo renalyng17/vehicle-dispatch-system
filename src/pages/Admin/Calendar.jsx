@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -33,7 +34,7 @@ const Calendar = () => {
   const calendarWeek = getCalendarWeek();
 
   const events = [
-    { id: 1, day: 1, hour: 3, duration: 5, name: 'Juan DelaCruz' },
+    { id: 1, day: 1, hour: 3, duration: 5, name: 'Juan Dove' },
     { id: 2, day: 2, hour: 6, duration: 6, name: 'Juan DelaCruz' },
     { id: 3, day: 3, hour: 8, duration: 2, name: 'Juan DelaCruz' },
     { id: 4, day: 4, hour: 2, duration: 4, name: 'Juan DelaCruz' },
