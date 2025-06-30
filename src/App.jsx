@@ -4,6 +4,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import Dashboard from "./pages/Admin/Dashboard";
+import Requests from "./pages/Admin/Requests"; // ✅ import
+import { RequestProvider } from "./pages/Admin/RequestContext";
 
 const App = () => {
   return (
@@ -12,6 +14,7 @@ const App = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/dashboard/*" element={<Dashboard />} />
+      <Route path="/requests" element={<Requests />} />
     </Routes>
   );
 };
