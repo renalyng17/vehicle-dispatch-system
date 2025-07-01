@@ -1,124 +1,201 @@
 import React, { useState } from "react";
-import profile from "../../assets/profile.png"; // Ensure this image exists
+import profile from "../../assets/profile.png";
 
 function Profile() {
+  // State
   const [isEditing, setIsEditing] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
-  const [isSaved, setIsSaved] = useState(false); // ✅ Tracks if saved
-  const [firstName, setFirstName] = useState("John");
-  const [lastName, setLastName] = useState("Doe");
-  const [email, setEmail] = useState("Admin123@gmail.com");
-  const [contact, setContact] = useState("1234-5678-910");
+  const [isSaved, setIsSaved] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    contact: "",
+    role: ""
+  });
+
+  // Constants
+  const colors = {
+    background: "#FBFFF5",
+    border: "#DDC7C7",
+    editButton: "#F9CA9C",
+    popupBackground: "#E0F2E9",
+    successButton: "#15803D",
+    green700: "#15803D",
+    gray300: "#D1D5DB",
+    blue500: "#3B82F6",
+    slate600: "#475569"
+  };
+
+  const labels = {
+    profileTitle: "Profile",
+    personalInfo: "PERSONAL INFORMATION",
+    firstName: "First name",
+    lastName: "Last name",
+    email: "Email address",
+    contact: "Contact Number",
+    role: "User role",
+    edit: "Edit",
+    uploadImage: "Upload Image",
+    discard: "Discard",
+    save: "Save",
+    successTitle: "Successfully Saved!",
+    ok: "OK",
+    defaultName: "Edit to add name"
+  };
+
+  const dimensions = {
+    profileImage: "w-25 h-25",
+    inputWidths: {
+      half: "w-1/2",
+      third: "w-1/3"
+    },
+    containerWidth: "w-4/5"
+  };
+
+  const classNames = {
+    header: "alignment-top-left text-3xl font-bold",
+    profileName: "ml-5 text-xl font-bold",
+    sectionTitle: "ml-2 text-xl font-medium",
+    label: "text-slate-600 font-poppins mb-2",
+    value: "font-poppins",
+    input: "w-full p-2 border rounded-md mt-1",
+    button: {
+      edit: "px-5 py-2 text-sm font-medium rounded-md shadow",
+      upload: "px-4 py-2 text-white rounded-md text-sm",
+      action: "px-4 py-2 rounded-md",
+      popup: "px-4 py-2 text-white rounded-md"
+    },
+    popupTitle: "text-lg font-semibold mb-4"
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSave = () => {
+    setIsEditing(false);
+    setIsSaved(true);
+    setShowPopup(true);
+  };
 
   return (
     <div
-      className="pl-5 h-full bg-[#F9FFF5] overflow-auto"
-      style={{ backgroundColor: "#FBFFF5" }}
+      className={`pl-5 h-full overflow-auto`}
+      style={{ backgroundColor: colors.background }}
     >
       <div className="p-6 ml-0">
-        <h1 className="alignment-top-left text-3xl font-bold">Profile</h1>
+        <h1 className={classNames.header}>{labels.profileTitle}</h1>
       </div>
 
       {/* Profile Image Section */}
       <div
-        className="mt-5 w-4/5 flex items-center justify-between border rounded-md p-4 mx-auto shadow-md"
-        style={{ borderColor: "#DDC7C7" }}
+        className={`mt-5 ${dimensions.containerWidth} flex items-center justify-between border rounded-md p-4 mx-auto shadow-md`}
+        style={{ borderColor: colors.border }}
       >
         <div className="flex items-center">
           <img
             src={profile}
             alt="User"
-            className="w-25 h-25 rounded-full object-cover"
+            className={`${dimensions.profileImage} rounded-full object-cover`}
           />
-          <p className="ml-5 text-xl font-bold">
-            {isSaved ? `${firstName} ${lastName}` : "Edit to add name"}
+          <p className={classNames.profileName}>
+            {isSaved ? `${formData.firstName} ${formData.lastName}` : labels.defaultName}
           </p>
         </div>
 
         {isEditing && (
-          <button className="px-4 py-2 bg-green-700 text-white rounded-md text-sm">
-            Upload Image
+          <button 
+            className={classNames.button.upload}
+            style={{ backgroundColor: colors.green700 }}
+          >
+            {labels.uploadImage}
           </button>
         )}
       </div>
 
       {/* Personal Info Section */}
       <div
-        className="mt-5 w-4/5 flex flex-col border rounded-md py-8 px-4 mx-auto shadow-md"
-        style={{ borderColor: "#DDC7C7" }}
+        className={`mt-5 ${dimensions.containerWidth} flex flex-col border rounded-md py-8 px-4 mx-auto shadow-md`}
+        style={{ borderColor: colors.border }}
       >
         <div className="flex items-center justify-between w-full">
-          <p className="ml-2 text-xl font-medium">PERSONAL INFORMATION</p>
+          <p className={classNames.sectionTitle}>{labels.personalInfo}</p>
           <button
-            className="px-5 py-2 text-sm font-medium rounded-md shadow"
-            style={{ backgroundColor: "#F9CA9C" }}
+            className={classNames.button.edit}
+            style={{ backgroundColor: colors.editButton }}
             onClick={() => setIsEditing(true)}
           >
-            Edit
+            {labels.edit}
           </button>
         </div>
 
         {/* First + Last Name */}
         <div className="mx-2 mt-4 flex justify-between w-4/5">
-          <div className="w-1/2 pr-2">
-            <p className="text-slate-600 font-poppins mb-2">First name</p>
+          <div className={`${dimensions.inputWidths.half} pr-2`}>
+            <p className={classNames.label}>{labels.firstName}</p>
             {isEditing ? (
               <input
                 type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="w-full p-2 border rounded-md mt-1"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleInputChange}
+                className={classNames.input}
               />
             ) : (
-              <p className="font-medium font-poppins">{firstName}</p>
+              <p className={`${classNames.value} font-medium`}>{formData.firstName}</p>
             )}
           </div>
-          <div className="w-1/2 pl-2">
-            <p className="text-slate-600 font-poppins mb-2">Last name</p>
+          <div className={`${dimensions.inputWidths.half} pl-2`}>
+            <p className={classNames.label}>{labels.lastName}</p>
             {isEditing ? (
               <input
                 type="text"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="w-full p-2 border rounded-md mt-1"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleInputChange}
+                className={classNames.input}
               />
             ) : (
-              <p className="font-medium font-poppins">{lastName}</p>
+              <p className={`${classNames.value} font-medium`}>{formData.lastName}</p>
             )}
           </div>
         </div>
 
         {/* Email, Contact, Role */}
         <div className="mx-2 mt-10 flex justify-between w-4/5">
-          <div className="w-1/3 pr-2">
-            <p className="text-slate-600 font-poppins mb-2">Email address</p>
+          <div className={`${dimensions.inputWidths.third} pr-2`}>
+            <p className={classNames.label}>{labels.email}</p>
             {isEditing ? (
               <input
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-2 border rounded-md mt-1"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                className={classNames.input}
               />
             ) : (
-              <p className="font-poppins">{email}</p>
+              <p className={classNames.value}>{formData.email}</p>
             )}
           </div>
-          <div className="w-1/3 px-2">
-            <p className="text-slate-600 font-poppins mb-2">Contact Number</p>
+          <div className={`${dimensions.inputWidths.third} px-2`}>
+            <p className={classNames.label}>{labels.contact}</p>
             {isEditing ? (
               <input
                 type="text"
-                value={contact}
-                onChange={(e) => setContact(e.target.value)}
-                className="w-full p-2 border rounded-md mt-1"
+                name="contact"
+                value={formData.contact}
+                onChange={handleInputChange}
+                className={classNames.input}
               />
             ) : (
-              <p className="font-poppins">{contact}</p>
+              <p className={classNames.value}>{formData.contact}</p>
             )}
           </div>
-          <div className="w-1/3 pl-2">
-            <p className="text-slate-600 font-poppins mb-2">User role</p>
-            <p className="font-poppins">Admin</p>
+          <div className={`${dimensions.inputWidths.third} pl-2`}>
+            <p className={classNames.label}>{labels.role}</p>
+            <p className={classNames.value}>{formData.role}</p>
           </div>
         </div>
 
@@ -127,17 +204,17 @@ function Profile() {
           <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50">
             <div
               className="p-6 rounded-lg shadow-lg text-center"
-              style={{ backgroundColor: "#E0F2E9" }}
+              style={{ backgroundColor: colors.popupBackground }}
             >
-              <h2 className="text-lg font-semibold mb-4">
-                Successfully Saved!
+              <h2 className={classNames.popupTitle}>
+                {labels.successTitle}
               </h2>
               <button
-                className="px-4 py-2 text-white rounded-md"
-                style={{ backgroundColor: "#15803D" }}
+                className={classNames.button.popup}
+                style={{ backgroundColor: colors.successButton }}
                 onClick={() => setShowPopup(false)}
               >
-                OK
+                {labels.ok}
               </button>
             </div>
           </div>
@@ -147,22 +224,18 @@ function Profile() {
         {isEditing && (
           <div className="flex justify-end gap-2 mt-6 pr-2">
             <button
-              className="px-4 py-2 bg-gray-300 rounded-md"
-              onClick={() => {
-                setIsEditing(false);
-              }}
+              className={classNames.button.action}
+              style={{ backgroundColor: colors.gray300 }}
+              onClick={() => setIsEditing(false)}
             >
-              Discard
+              {labels.discard}
             </button>
             <button
-              className="px-4 py-2 bg-blue-500 text-white rounded-md"
-              onClick={() => {
-                setIsEditing(false);
-                setIsSaved(true); // ✅ Set profile name visibility
-                setShowPopup(true); // ✅ Show confirmation popup
-              }}
+              className={classNames.button.action}
+              style={{ backgroundColor: colors.blue500, color: "white" }}
+              onClick={handleSave}
             >
-              Save
+              {labels.save}
             </button>
           </div>
         )}
