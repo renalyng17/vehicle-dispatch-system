@@ -1,5 +1,5 @@
 import React from "react";
-import { Users, User, Car } from "lucide-react";
+import { CalendarCheck2, CalendarX2, CalendarClock } from "lucide-react";
 
 
 export default function Client_Home() {
@@ -9,21 +9,21 @@ export default function Client_Home() {
 
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-white rounded shadow p-4">
-          <h2 className="mt-5 text-4xl font-bold">10</h2>
+          <h2 className="mt-5 text-4xl font-bold">30</h2>
           <p className="text-gray-800 text-m flex items-center mb-5 gap-2">
-          Users <Users className="w-4 h-4" />
+          Accepted <CalendarCheck2 className="w-4 h-4" />
           </p>
         </div>
         <div className="bg-white rounded shadow p-4">
-          <h2 className="mt-5 text-4xl font-bold">5</h2>
+          <h2 className="mt-5 text-4xl font-bold">20 </h2>
           <p className="text-gray-800 text-m flex items-center mb-5 gap-2">
-           Drivers <User className=" w-4 h-4" />
+           Decline <CalendarX2 className=" w-4 h-4" />
           </p>
         </div>
         <div className="bg-white rounded shadow p-4">
-          <h2 className="mt-5 text-4xl font-bold">5</h2>
+          <h2 className="mt-5 text-4xl font-bold">20</h2>
           <p className="text-gray-800 text-m flex items-center mb-5 gap-2">
-            Vehicles <Car className="w-4 h-4" />
+            Pending <CalendarClock className="w-4 h-4" />
           </p>
         </div>
       </div>
