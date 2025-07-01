@@ -201,7 +201,7 @@ function Profile() {
 
         {/* Save Confirmation Popup */}
         {showPopup && (
-          <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="fixed inset-0  flex items-center justify-center z-50">
             <div
               className="p-6 rounded-lg shadow-lg text-center"
               style={{ backgroundColor: colors.popupBackground }}
