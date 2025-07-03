@@ -6,7 +6,7 @@ export default function NotificationBar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isDeclineModalOpen, setIsDeclineModalOpen] = useState(false);
   const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
-  const [bellPosition, setBellPosition] = useState({ top: 0, right: 0 });
+  const [bellPosition, setBellPosition] = useState({ top: 0, right: 10 });
   const [formValues, setFormValues] = useState({
     driver: "",
     vehicleType: "",
@@ -18,7 +18,7 @@ export default function NotificationBar() {
 
   // Notification data that matches what should appear in requests
   const notificationData = {
-    name: "mia MIA",
+    name: "JOY MIA",
     department: "SysADD",
     vehicle: "Van",
     date: "2025-06-01",  // Updated to match notification dates
