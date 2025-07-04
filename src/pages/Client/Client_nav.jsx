@@ -59,7 +59,7 @@ export default function Client_Nav() {
 </ul>
 
       {/* Footer Section with User and Logout */}
-      <div className="ml-2 flex items-center space-x-3 mt-40 p-2 border-t-2 border-white">
+      <div className="ml-2 flex items-center space-x-3 mt-70 p-2 border-t-2 border-white">
         <img
           src={logo}
           alt="User"
@@ -81,7 +81,7 @@ export default function Client_Nav() {
           onClick={handleLogout}
           className="text-white hover:text-lime-300 transition"
         >
-          <LogOut className="w-6 h-6" />
+          <LogOut className="w-6 h-10" />
         </button>
       </div>
     </div>
