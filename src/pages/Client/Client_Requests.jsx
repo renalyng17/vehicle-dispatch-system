@@ -14,6 +14,8 @@ function Client_Requests() {
   const [showSort, setShowSort] = useState(false);
   const [sortStatus, setSortStatus] = useState("All");
   const [showModal, setShowModal] = useState(false);
+  const [showPendingModal, setShowPendingModal] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState(null);
   const [requests, setRequests] = useState([]);
   const [formData, setFormData] = useState({
     destination: "",
@@ -25,6 +27,7 @@ function Client_Requests() {
     toDate: "",
     toTime: "",
   });
+
   // Prevent page scroll
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -79,6 +82,11 @@ function Client_Requests() {
   const handleCancel = () => {
     resetFormData();
     setShowModal(false);
+  };
+
+  const handlePendingClick = (request) => {
+    setSelectedRequest(request);
+    setShowPendingModal(true);
   };
 
   const filteredRequests = sortStatus === "All"
@@ -158,9 +166,12 @@ function Client_Requests() {
                             {req.names.join(", ")}
                           </p>
                         </div>
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColors[req.status]}`}>
+                        <button 
+                          onClick={() => handlePendingClick(req)}
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColors[req.status]}`}
+                        >
                           {req.status.toUpperCase()}
-                        </span>
+                        </button>
                       </div>
                       <div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-gray-600">
                         <div className="flex items-center gap-1">
@@ -195,59 +206,60 @@ function Client_Requests() {
         </div>
       </div>
       
-      {/* Modal */}
+      {/* CREATE NEW REQUEST Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-opacity-30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md relative">
-            <div className="p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Create New Request</h2>
+        <div className="fixed inset-0 bg-opacity-30 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm relative">
+            <div className="p-5">
+              <h2 className="text-xl font-bold text-gray-800 mb-5">Create New Request</h2>
               <form onSubmit={handleSubmit}>
                 {/* From Date and Time */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">From Date</label>
                     <input
                       type="date"
                       name="fromDate"
                       value={formData.fromDate}
                       onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">From Time</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">From Time</label>
                     <input
                       type="time"
                       name="fromTime"
                       value={formData.fromTime}
                       onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                       required
                     />
                   </div>
                 </div>
+                
                 {/* To Date and Time */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">To Date</label>
                     <input
                       type="date"
                       name="toDate"
                       value={formData.toDate}
                       onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">To Time</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">To Time</label>
                     <input
                       type="time"
                       name="toTime"
                       value={formData.toTime}
                       onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                       required
                     />
                   </div>
@@ -255,7 +267,7 @@ function Client_Requests() {
 
                 {/* Names */}
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Names</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Names</label>
                   <div 
                     className={`flex flex-col gap-2 ${
                       formData.names.length >= 2 
@@ -270,11 +282,11 @@ function Client_Requests() {
                           name={`name-${index}`}
                           value={name}
                           onChange={handleInputChange}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:border-black focus:ring-0"
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 pr-10 text-sm focus:border-black focus:ring-0"
                           placeholder="Enter name"
                           required={index === 0}
                         />
-                        <div className="absolute right-0 top-0 h-full flex border-l border-gray-300 rounded-r-lg overflow-hidden">
+                        <div className="absolute right-0 top-0 h-full flex border-l border-gray-300 rounded-r-md overflow-hidden">
                           {index === 0 && (
                             <button
                               type="button"
@@ -306,28 +318,28 @@ function Client_Requests() {
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Destination</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Destination</label>
                   <input
                     type="text"
                     name="destination"
                     value={formData.destination}
                     onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
                 </div>
 
                 {/* Requesting Office Dropdown */}
                 <div className="mb-6 relative">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Requesting Office</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Requesting Office</label>
                   <button
                     type="button"
-                    className="w-full border border-gray-300 px-3 py-2 sm:px-4 sm:py-2 rounded-md bg-white  flex items-center justify-between hover:bg-gray-50 transition-colors text-sm sm:text-base"
+                    className="w-full border border-gray-300 px-3 py-2 rounded-md bg-white flex items-center justify-between hover:bg-gray-50 transition-colors text-sm"
                     onClick={() => setShowOfficeDropdown((prev) => !prev)}
                   >
                     {formData.requestingOffice || "Select an office"}
                     <svg
-                      className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform ${showOfficeDropdown ? "rotate-180" : ""}`}
+                      className={`w-4 h-4 transition-transform ${showOfficeDropdown ? "rotate-180" : ""}`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -378,10 +390,99 @@ function Client_Requests() {
               onClick={handleCancel}
               aria-label="Close"
             >
-              <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* PENDING REQUEST DETAILS MODAL */}
+      {showPendingModal && selectedRequest && (
+        <div className="fixed inset-0 bg-opacity-30 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md relative">
+            <div className="p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Request Details</h2>
+              
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold">{selectedRequest.destination}</h3>
+                <p className="text-sm text-gray-600">{selectedRequest.names.join(", ")}</p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <p className="text-xs font-medium text-gray-500">From</p>
+                  <p className="text-sm">
+                    {formatDateTime(selectedRequest.fromDate, selectedRequest.fromTime)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-500">To</p>
+                  <p className="text-sm">
+                    {formatDateTime(selectedRequest.toDate, selectedRequest.toTime)}
+                  </p>
+                </div>
+              </div>
+              
+              {selectedRequest.requestingOffice && (
+                <div className="mb-4">
+                  <p className="text-xs font-medium text-gray-500">Office</p>
+                  <p className="text-sm">{selectedRequest.requestingOffice}</p>
+                </div>
+              )}
+              
+              <div className="mb-4">
+                <p className="text-xs font-medium text-gray-500">Status</p>
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColors[selectedRequest.status]}`}>
+                  {selectedRequest.status.toUpperCase()}
+                </span>
+              </div>
+              
+              {/* Driver Information Section */}
+                <div className="mt-6 border-t pt-4">
+                  <h3 className="font-semibold text-lg mb-3">Driver's Name</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">Contact No.</p>
+                      <p className="text-sm mt-1">-</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">Email Address</p>
+                      <p className="text-sm mt-1">-</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">Vehicle Type</p>
+                      <p className="text-sm mt-1">-</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">Fuel Type</p>
+                      <p className="text-sm mt-1">-</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">Plate no.</p>
+                      <p className="text-sm mt-1">-</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">Capacity</p>
+                      <p className="text-sm mt-1">-</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">RFID</p>
+                      <p className="text-sm mt-1">-</p>
+                    </div>
+                  </div>
+                </div>    
+              
+              <div className="flex justify-end mt-6">
+                <button
+                  onClick={() => setShowPendingModal(false)}
+                  className="px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

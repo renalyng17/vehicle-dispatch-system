@@ -83,7 +83,7 @@ function Requests() {
   }, [newRequest, action]);
 
   return (
-    <div className="h-full bg-[#f6f5ff] overflow-auto">
+    <div className="h-full bg-[#F9FFF5] overflow-auto">
       <div className="p-6 ml-1">
         <h1 className="text-3xl font-bold">Request List</h1>
         {notification && (
