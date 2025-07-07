@@ -1,4 +1,4 @@
-import Nav from "./Client_nav.jsx";
+import Nav from "./Client_Nav.jsx";
 import NotificationBar from "./Client_NotificationBar.jsx";
 
 function Client_Requests() {

@@ -59,7 +59,7 @@ export default function Client_Nav() {
 </ul>
 
       {/* Footer Section with User and Logout */}
-      <div className="ml-2 flex items-center space-x-3 mt-40 p-2 border-t-2 border-white">
+      <div className="ml-2 flex items-center space-x-3 mt-70 p-2 border-t-2 border-white">
         <img
           src={logo}
           alt="User"

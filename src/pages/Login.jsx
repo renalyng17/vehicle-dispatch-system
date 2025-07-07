@@ -17,32 +17,33 @@ const Login = () => {
   const location = useLocation();
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+  e.preventDefault();
+  setError("");
+  setLoading(true);
+  
+  try {
+    const result = await login(email, password, rememberMe);
+    
+    if (result.success) {
+      // FIRST define redirectTo, THEN use it
+      const redirectTo = location.search.includes('redirect=')
+        ? new URLSearchParams(location.search).get('redirect')
+        : result.user.user_type === 'admin'
+          ? '/admin/dashboard'
+          : '/client/dashboard';
 
-    try {
-      const result = await login(email, password, rememberMe);
-      
-      if (result.success) {
-        const searchParams = new URLSearchParams(location.search);
-        const redirectTo = searchParams.get('redirect') || 
-          (result.user.user_type === 'admin' 
-            ? '/admin/dashboard' 
-            : '/client/dashboard');
-            
-        navigate(redirectTo, { replace: true });
-      } else {
-        setError(result.error || "Login failed. Please try again.");
-      }
-    } catch (err) {
-      setError("An unexpected error occurred. Please try again.");
-      console.error("Login error:", err);
-    } finally {
-      setLoading(false);
+      console.log("Redirecting to:", redirectTo);
+      navigate(redirectTo, { replace: true });
+    } else {
+      setError(result.error || "Login failed. Please try again.");
     }
-  };
-
+  } catch (err) {
+    setError("An unexpected error occurred. Please try again.");
+    console.error("Login error:", err);
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <div className="min-h-screen bg-cover bg-center relative flex items-center justify-start pl-35"
       style={{ backgroundImage: `url(${background})` }}>

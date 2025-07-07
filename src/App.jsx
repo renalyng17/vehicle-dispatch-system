@@ -7,7 +7,8 @@ import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import Unauthorized from "./pages/Unauthorized";
 import AdminDashboard from "./pages/Admin/Dashboard";
-import ClientDashboard from "./pages/Client/Client_Dashboard";
+import Client_Dashboard from "./pages/Client/Client_Dashboard";
+import ClientHome from "./pages/Client/ClientHome"; // Added this import
 import Layout from "./components/Layout";
 
 const App = () => {
@@ -29,7 +30,7 @@ const App = () => {
 
         {/* Client protected routes */}
         <Route element={<ProtectedRoute allowedRoles={['client']} />}>
-          <Route path="/client/*" element={<ClientDashboard />} />
+          <Route path="/client/*" element={<Client_Dashboard />} />
         </Route>
 
         {/* Default redirects */}

@@ -1,4 +1,4 @@
-import Nav from "./nav.jsx";
+import Nav from "./Nav.jsx";
 import NotificationBar from "./NotificationBar.jsx";
 
 function Requests() {
