@@ -110,7 +110,11 @@ function Requests() {
           </thead>
           <tbody>
             {requests.map((req) => (
+<<<<<<< HEAD
               <tr key={req.id} className="border-b border-gray-200 hover:bg-gray-50">
+=======
+              <tr key={req.id} className="border-b border-gray-200 text-sm hover:bg-gray-50">
+>>>>>>> 51b73d99c076a8d216668d38333b2c46e02f5923
                 <td className="py-3 px-4">{req.name}</td>
                 <td className="py-3 px-4">{req.department}</td>
                 <td className="py-3 px-4">{req.vehicle}</td>
@@ -130,7 +134,11 @@ function Requests() {
                 </td>
                 <td className="py-3 px-4">
                   <span
+<<<<<<< HEAD
                     className={`px-4 py-1 rounded-md text-sm font-medium ${
+=======
+                    className={`px-4 py-1 rounded-md text-xs font-medium ${
+>>>>>>> 51b73d99c076a8d216668d38333b2c46e02f5923
                       req.status === "Accepted"
                         ? "bg-green-300 text-green-900"
                         : "bg-rose-300 text-rose-900"

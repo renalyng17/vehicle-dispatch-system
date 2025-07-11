@@ -82,7 +82,11 @@ const Calendar = () => {
 </div>
 
       {/* Calendar */}
+<<<<<<< HEAD
       <div className="grid grid-cols-7 gap-px border rounded bg-gray-300 text-center text-sm  font- bold-large">
+=======
+      <div className="grid grid-cols-7 gap-px border rounded bg-gray-400 text-center text-sm  font- bold-large">
+>>>>>>> 51b73d99c076a8d216668d38333b2c46e02f5923
         {daysOfWeek.map((day) => (
           <div key={day} className="bg- bg-green-600 py-  text-white">
             {day}
