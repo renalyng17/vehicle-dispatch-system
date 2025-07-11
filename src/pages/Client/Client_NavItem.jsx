@@ -11,7 +11,7 @@ export default function NavItem({ href, icon: Icon, label }) {
       className={`flex items-center space-x-2 px-3 py-2 rounded-md transition 
         ${isActive ? "bg-green-600 text-white " : "hover:text-green-600 text-white"}`}
     >
-      <Icon className="w-5 h-5" />
+      <Icon className="w-5 h-5" /> {/* Adjusted icon size for consistency */}
       <span>{label}</span>
     </Link>
   );

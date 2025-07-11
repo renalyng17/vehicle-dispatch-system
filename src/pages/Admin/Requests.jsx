@@ -83,7 +83,7 @@ function Requests() {
   }, [newRequest, action]);
 
   return (
-    <div className="h-full bg-[#FBFFF5] overflow-auto">
+    <div className="h-full bg-[#F9FFF5] overflow-auto">
       <div className="p-6 ml-1">
         <h1 className="text-3xl font-bold">Request List</h1>
         {notification && (
@@ -99,7 +99,7 @@ function Requests() {
 
       <div className="border rounded-lg overflow-auto border-gray-700 flex-1 mx-4 mb-4">
         <table className="w-full text-left border-collapse">
-          <thead className="bg-green-600 text-white">
+          <thead className="bg-green-700 text-white">
             <tr>
               <th className="py-3 px-4">Name</th>
               <th className="py-3 px-4">Office/Department</th>
