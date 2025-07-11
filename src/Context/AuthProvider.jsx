@@ -22,6 +22,8 @@ useEffect(() => {
 }, []);
 
 // Context/AuthProvider.jsx
+// In your AuthProvider
+// In your AuthProvider.jsx
 const login = async (email, password, rememberMe) => {
   try {
     const res = await axiosInstance.post('/auth/login', { email, password, rememberMe });
@@ -32,7 +34,12 @@ const login = async (email, password, rememberMe) => {
     storage.setItem('user', JSON.stringify(user));
     storage.setItem('token', token);
     
+    // Update axios defaults
+    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    
+    // Update state
     setAuthUser(user);
+    
     return { success: true, user };
   } catch (err) {
     return { success: false, error: err.response?.data?.message || 'Login failed' };

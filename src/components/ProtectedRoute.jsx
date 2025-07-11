@@ -1,3 +1,4 @@
+// components/ProtectedRoute.js
 import { useContext } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthContext } from '../Context/AuthContext';

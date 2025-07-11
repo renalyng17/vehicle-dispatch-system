@@ -8,14 +8,23 @@ import ForgotPassword from "./pages/ForgotPassword";
 import Unauthorized from "./pages/Unauthorized";
 import AdminDashboard from "./pages/Admin/Dashboard";
 import Client_Dashboard from "./pages/Client/Client_Dashboard";
-import ClientHome from "./pages/Client/ClientHome"; // Added this import
 import Layout from "./components/Layout";
+
+// Import all your page components
+import AdminHome from "./pages/Admin/Home";
+import AdminCalendar from "./pages/Admin/Calendar";
+import AdminRequests from "./pages/Admin/Requests";
+import AdminManagement from "./pages/Admin/Management";
+import AdminProfile from "./pages/Admin/Profile";
+import ClientHome from "./pages/Client/ClientHome";
+import ClientRequests from "./pages/Client/Client_Requests";
+import ClientProfile from "./pages/Client/Client_Profile";
 
 const App = () => {
   return (
     <AuthProvider>
       <Routes>
-        {/* Public routes with layout */}
+        {/* Public routes */}
         <Route element={<Layout />}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -23,22 +32,35 @@ const App = () => {
           <Route path="/unauthorized" element={<Unauthorized />} />
         </Route>
 
-        {/* Admin protected routes */}
-        <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-          <Route path="/admin/*" element={<AdminDashboard />} />
-        </Route>
+      <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+          <Route path="/admin" element={<AdminDashboard />}>
+          <Route index element={<AdminHome />} />
+          <Route path="home" element={<AdminHome />} />
+          <Route path="calendar" element={<AdminCalendar />} />
+          <Route path="requests" element={<AdminRequests />} />
+          <Route path="management" element={<AdminManagement />} />
+          <Route path="profile" element={<AdminProfile />} />
+          <Route path="*" element={<Navigate to="/admin/home" replace />} />
+          </Route>
+      </Route>
 
-        {/* Client protected routes */}
-        <Route element={<ProtectedRoute allowedRoles={['client']} />}>
-          <Route path="/client/*" element={<Client_Dashboard />} />
-        </Route>
 
-        {/* Default redirects */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </AuthProvider>
+      <Route element={<ProtectedRoute allowedRoles={['client']} />}>
+          <Route path="/client" element={<Client_Dashboard />}>
+          <Route index element={<ClientHome />} />
+          <Route path="home" element={<ClientHome />} />
+          <Route path="requests" element={<ClientRequests />} />
+          <Route path="profile" element={<ClientProfile />} />
+          <Route path="*" element={<Navigate to="/client/home" replace />} />
+          </Route>
+      </Route>
+
+        {/* Redirects */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+           <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+          </AuthProvider>
   );
 };
 
-export default App;
+export default App; 
