@@ -1,5 +1,5 @@
 // src/pages/ChangePassword.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import background from "../assets/background.png";
 import car from "../assets/car.png";
@@ -8,6 +8,14 @@ import logo from "../assets/logo.png";
 const ChangePassword = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+   // Prevent page scroll
+    useEffect(() => {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "auto";
+      };
+    }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -19,6 +27,7 @@ const ChangePassword = () => {
     // You can integrate with backend here
   };
 
+  
   return (
     <div
       className="min-h-screen bg-cover bg-center relative flex items-center justify-start pl-35"
