@@ -1,10 +1,20 @@
-import React from "react";
+import React, { useEffect } from "react";
 import background from "../assets/background.png";
 import car from "../assets/car.png";
 import logo from "../assets/logo.png";
 import { Link } from 'react-router-dom';
 
 const Register = () => {
+
+   // Prevent page scroll
+           useEffect(() => {
+             document.body.style.overflow = "hidden";
+             return () => {
+               document.body.style.overflow = "auto";
+             };
+           }, []);
+
+
   return (
     <div
       className="min-h-screen bg-cover bg-center relative flex items-center justify-start pl-35"
@@ -13,7 +23,7 @@ const Register = () => {
       {/* Logo in top-left */}
       <div className="absolute top-1 left-6 flex items-center space-x-2">
         <img src={logo} alt="VDS Logo" className="h-15 w-auto" />
-        <h1 className="text-green-700 text-xl font-bold">Vehicle Dispatch System</h1>
+        <h1 className="text-black text-xl font-bold">Vehicle Dispatch System</h1>
         
       </div>
       {/* Form Box */}
