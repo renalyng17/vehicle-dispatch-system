@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { CalendarDays, Clock3, ChevronDown } from "lucide-react";
+import io from 'socket.io-client';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const statusColors = {
   Pending: "bg-orange-100 text-orange-700",
@@ -27,6 +30,42 @@ function Client_Requests() {
     toDate: "",
     toTime: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const socketRef = useRef(null);
+
+  // Initialize WebSocket connection
+  useEffect(() => {
+    socketRef.current = io('http://localhost:5000', {
+      withCredentials: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, []);
+
+  // Fetch initial requests
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/requests', {
+          credentials: 'include'
+        });
+        if (!response.ok) throw new Error('Failed to fetch requests');
+        const data = await response.json();
+        setRequests(data);
+      } catch (error) {
+        console.error('Error fetching requests:', error);
+        toast.error('Failed to load requests');
+      }
+    };
+
+    fetchRequests();
+  }, []);
 
   // Prevent page scroll
   useEffect(() => {
@@ -62,21 +101,54 @@ function Client_Requests() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const newRequest = {
-      destination: formData.destination,
-      fromDate: formData.fromDate,
-      fromTime: formData.fromTime,
-      toDate: formData.toDate,
-      toTime: formData.toTime,
-      status: formData.status,
-      names: formData.names.filter((name) => name.trim() !== ""),
-      requestingOffice: formData.requestingOffice,
-    };
-    setRequests((prev) => [...prev, newRequest]);
-    resetFormData();
-    setShowModal(false);
+    setIsLoading(true);
+
+    try {
+      const newRequest = {
+        destination: formData.destination,
+        date: formData.fromDate,
+        end_date: formData.toDate,
+        time: formData.fromTime,
+        names: formData.names.filter(name => name.trim() !== ""),
+        requesting_office: formData.requestingOffice,
+        status: "Pending"
+      };
+
+      const response = await fetch('http://localhost:5000/api/requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newRequest),
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create request');
+      }
+
+      const createdRequest = await response.json();
+      
+      // Update local state
+      setRequests(prev => [...prev, createdRequest]);
+      
+      // Notify admin via socket
+      if (socketRef.current) {
+        socketRef.current.emit('new-request', createdRequest);
+      }
+
+      resetFormData();
+      setShowModal(false);
+      toast.success('Request submitted successfully!');
+    } catch (error) {
+      console.error('Error submitting request:', error);
+      toast.error(error.message || 'Failed to submit request');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -176,17 +248,17 @@ function Client_Requests() {
                       <div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-gray-600">
                         <div className="flex items-center gap-1">
                           <Clock3 size={14} className="text-gray-400" />
-                          <span>{formatDateTime(req.fromDate, req.fromTime)}</span>
+                          <span>{formatDateTime(req.date || req.fromDate, req.time || req.fromTime)}</span>
                         </div>
                         <span className="hidden sm:inline">→</span>
                         <div className="flex items-center gap-1">
                           <Clock3 size={14} className="text-gray-400" />
-                          <span>{formatDateTime(req.toDate, req.toTime)}</span>
+                          <span>{formatDateTime(req.end_date || req.toDate, req.end_time || req.toTime)}</span>
                         </div>
                       </div>
-                      {req.requestingOffice && (
+                      {req.requesting_office && (
                         <div className="mt-2 text-sm text-gray-600">
-                          <span className="font-medium">Office:</span> {req.requestingOffice}
+                          <span className="font-medium">Office:</span> {req.requesting_office}
                         </div>
                       )}
                     </div>
@@ -378,9 +450,12 @@ function Client_Requests() {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-green-700 rounded-lg font-medium text-white hover:bg-green-800 transition-colors"
+                    className={`px-4 py-2 bg-green-700 rounded-lg font-medium text-white hover:bg-green-800 transition-colors ${
+                      isLoading ? "opacity-75 cursor-not-allowed" : ""
+                    }`}
+                    disabled={isLoading}
                   >
-                    Submit Request
+                    {isLoading ? 'Submitting...' : 'Submit Request'}
                   </button>
                 </div>
               </form>
@@ -414,21 +489,21 @@ function Client_Requests() {
                 <div>
                   <p className="text-xs font-medium text-gray-500">From</p>
                   <p className="text-sm">
-                    {formatDateTime(selectedRequest.fromDate, selectedRequest.fromTime)}
+                    {formatDateTime(selectedRequest.date || selectedRequest.fromDate, selectedRequest.time || selectedRequest.fromTime)}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs font-medium text-gray-500">To</p>
                   <p className="text-sm">
-                    {formatDateTime(selectedRequest.toDate, selectedRequest.toTime)}
+                    {formatDateTime(selectedRequest.end_date || selectedRequest.toDate, selectedRequest.end_time || selectedRequest.toTime)}
                   </p>
                 </div>
               </div>
               
-              {selectedRequest.requestingOffice && (
+              {selectedRequest.requesting_office && (
                 <div className="mb-4">
                   <p className="text-xs font-medium text-gray-500">Office</p>
-                  <p className="text-sm">{selectedRequest.requestingOffice}</p>
+                  <p className="text-sm">{selectedRequest.requesting_office}</p>
                 </div>
               )}
               
@@ -440,39 +515,39 @@ function Client_Requests() {
               </div>
               
               {/* Driver Information Section */}
-                <div className="mt-6 border-t pt-4">
-                  <h3 className="font-semibold text-lg mb-3">Driver's Name</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">Contact No.</p>
-                      <p className="text-sm mt-1">-</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">Email Address</p>
-                      <p className="text-sm mt-1">-</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">Vehicle Type</p>
-                      <p className="text-sm mt-1">-</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">Fuel Type</p>
-                      <p className="text-sm mt-1">-</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">Plate no.</p>
-                      <p className="text-sm mt-1">-</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">Capacity</p>
-                      <p className="text-sm mt-1">-</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">RFID</p>
-                      <p className="text-sm mt-1">-</p>
-                    </div>
+              <div className="mt-6 border-t pt-4">
+                <h3 className="font-semibold text-lg mb-3">Driver's Name</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">Contact No.</p>
+                    <p className="text-sm mt-1">-</p>
                   </div>
-                </div>    
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">Email Address</p>
+                    <p className="text-sm mt-1">-</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">Vehicle Type</p>
+                    <p className="text-sm mt-1">-</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">Fuel Type</p>
+                    <p className="text-sm mt-1">-</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">Plate no.</p>
+                    <p className="text-sm mt-1">-</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">Capacity</p>
+                    <p className="text-sm mt-1">-</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">RFID</p>
+                    <p className="text-sm mt-1">-</p>
+                  </div>
+                </div>
+              </div>    
               
               <div className="flex justify-end mt-6">
                 <button
