@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronsUpDown } from "lucide-react";
 
 export default function Management() {
@@ -17,6 +17,14 @@ export default function Management() {
   const [confirmDelete, setConfirmDelete] = useState({ type: null, idx: null });
   const [duplicateModal, setDuplicateModal] = useState({ show: false, type: "" });
   
+  // Prevent page scroll
+    useEffect(() => {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "auto";
+      };
+    }, []);
+    
   const [vehicleForm, setVehicleForm] = useState({
     vehicleType: "",
     plateNo: "",
@@ -31,6 +39,8 @@ export default function Management() {
     contact: "",
     email: "",
   });
+
+  
 
   // Handle modal open and reset form
   const handleAddClick = () => {

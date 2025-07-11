@@ -1,8 +1,18 @@
-import React from "react";
+import { useEffect } from "react";
 import { CalendarCheck2, CalendarX2, CalendarClock } from "lucide-react";
 
 
+
 export default function Client_Home() {
+  
+   // Prevent page scroll
+          useEffect(() => {
+            document.body.style.overflow = "hidden";
+            return () => {
+              document.body.style.overflow = "auto";
+            };
+        }, []);
+
   return (
        <div className="bg-[#F9FFF5] px-0 mt-0">
       <h1 className="alignment-top p-6 text-3xl font-bold">Home</h1>

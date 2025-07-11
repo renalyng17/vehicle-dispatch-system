@@ -39,6 +39,14 @@ function Requests() {
 
   const [notification, setNotification] = useState(null);
 
+   // Prevent page scroll
+        useEffect(() => {
+          document.body.style.overflow = "hidden";
+          return () => {
+            document.body.style.overflow = "auto";
+          };
+      }, []);
+
   useEffect(() => {
     // Save requests to localStorage whenever they change
     localStorage.setItem('vehicleRequests', JSON.stringify(requests));
@@ -53,6 +61,7 @@ function Requests() {
         status: action === 'accept' ? 'Accepted' : 'Declined'
       };
 
+      // Add the new request to the state
       setRequests(prevRequests => {
         // Check if this request already exists to avoid duplicates
         const exists = prevRequests.some(req => 
