@@ -33,33 +33,36 @@ function Client_Requests() {
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const newRequest = {
-      destination: formData.destination,
-      date: formData.toDate,
-      time: formData.toTime,
-      status: formData.status,
-      name: formData.name,
-      requestingOffice: formData.requestingOffice
-    };
-    
-    setRequests(prev => [...prev, newRequest]);
-    setShowModal(false);
-    // Reset form
-    setFormData({
-      destination: "",
-      date: "",
-      time: "",
-      name: "",
-      requestingOffice: "",
-      status: "Pending",
-      fromDate: "",
-      fromTime: "",
-      toDate: "",
-      toTime: ""
-    });
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  const newRequest = {
+    destination: formData.destination,
+    date: formData.toDate,
+    time: formData.toTime,
+    status: "Pending",
+    name: formData.name,
+    requestingOffice: formData.requestingOffice,
+    // Include additional fields as needed
   };
+
+  try {
+    // Send request to admin-side
+    const response = await fetch('http://localhost:5000/api/requests', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newRequest),
+    });
+
+    if (response.ok) {
+      setRequests(prev => [...prev, newRequest]);
+      setShowModal(false);
+      // Reset form
+      setFormData({ /* ... */ });
+    }
+  } catch (error) {
+    console.error('Failed to submit request:', error);
+  }
+};
 
   const filteredRequests =
     sortStatus === "All"

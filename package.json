@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "rimraf node_modules/.vite",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
@@ -11,10 +12,17 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.8",
+    "dotenv": "^17.2.0",
+    "express-rate-limit": "^7.5.1",
+    "helmet": "^8.1.0",
     "lucide-react": "^0.514.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-icons": "^5.5.0",
     "react-router-dom": "^7.6.2",
+    "react-toastify": "^11.0.5",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
     "vehicle-dispatch-system": "file:"
   },
   "devDependencies": {
@@ -28,6 +36,7 @@
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
     "postcss": "^8.5.4",
+    "rimraf": "^6.0.1",
     "tailwindcss": "^4.1.8",
     "vite": "^6.3.5"
   }
