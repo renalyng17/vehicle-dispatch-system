@@ -217,7 +217,7 @@ export default function Management() {
         {(activeTab === "vehicle" || activeTab === "driver") && (
           <div className="absolute right-0 top-0">
             <button
-              className="py-1 px-7 bg-green-500 text-white rounded-md hover:bg-green-700 transition duration-300 flex items-center space-x-1 text-sm"
+              className="py-1 px-7 bg-green-600 text-white rounded-md hover:bg-green-500 transition duration-300 flex items-center space-x-1 text-sm"
               onClick={handleAddClick}
             >
               <span className="text-lg">+</span>
@@ -231,7 +231,7 @@ export default function Management() {
         <div className="overflow-x-auto">
           <table className="min-w-full border border-gray-200 rounded-md shadow-md text-sm">
             <thead>
-              <tr className="bg-green-700 md:bg-green-600 text-white text-left">
+              <tr className="bg-green-700 md:bg-green-700 text-white text-left">
                 <th className="p-3">VEHICLE</th>
                 <th className="p-3">PLATE NO.</th>
                 <th className="p-3 text-center">CAPACITY</th>
@@ -285,7 +285,7 @@ export default function Management() {
       {activeTab === "driver" && (
         <div className="overflow-x-auto">
           <table className="min-w-full bg-white text-white border border-gray-200 rounded-md shadow-md text-sm">
-            <thead className="bg-green-700 md:bg-green-600">
+            <thead className="bg-green-700 md:bg-green-700">
               <tr className="text-left">
                 <th className="p-3">NAME</th>
                 <th className="p-3">CONTACT NO.</th>

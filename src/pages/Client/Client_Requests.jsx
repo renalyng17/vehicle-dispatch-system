@@ -150,7 +150,8 @@ function Client_Requests() {
               {filteredRequests.map((req, idx) => (
                 <div
                   key={idx}
-                  className="p-6 hover:bg-gray-50 transition-colors"
+                  className="p-6 hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={() => handlePendingClick(req)}
                 >
                   <div className="flex items-start gap-4">
                     <div className="p-3 bg-blue-50 rounded-lg text-black-600">
@@ -166,12 +167,11 @@ function Client_Requests() {
                             {req.names.join(", ")}
                           </p>
                         </div>
-                        <button 
-                          onClick={() => handlePendingClick(req)}
+                        <span 
                           className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColors[req.status]}`}
                         >
                           {req.status.toUpperCase()}
-                        </button>
+                        </span>
                       </div>
                       <div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-gray-600">
                         <div className="flex items-center gap-1">
@@ -205,7 +205,7 @@ function Client_Requests() {
           )}
         </div>
       </div>
-      
+
       {/* CREATE NEW REQUEST Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-opacity-30 flex items-center justify-center z-[60] p-4">
@@ -400,8 +400,12 @@ function Client_Requests() {
 
       {/* PENDING REQUEST DETAILS MODAL */}
       {showPendingModal && selectedRequest && (
-        <div className="fixed inset-0 bg-opacity-30 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md relative">
+         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-[60] p-4">
+          <div
+      className={`bg-white rounded-xl shadow-xl w-full max-w-md transform transition-all duration-300 ease-in-out ${
+        showPendingModal ? 'translate-y-0 opacity-100' : '-translate-y-10 opacity-0'
+      }`}
+    >
             <div className="p-6">
               <h2 className="text-xl font-bold text-gray-800 mb-4">Request Details</h2>
               
@@ -440,39 +444,39 @@ function Client_Requests() {
               </div>
               
               {/* Driver Information Section */}
-                <div className="mt-6 border-t pt-4">
-                  <h3 className="font-semibold text-lg mb-3">Driver's Name</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">Contact No.</p>
-                      <p className="text-sm mt-1">-</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">Email Address</p>
-                      <p className="text-sm mt-1">-</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">Vehicle Type</p>
-                      <p className="text-sm mt-1">-</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">Fuel Type</p>
-                      <p className="text-sm mt-1">-</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">Plate no.</p>
-                      <p className="text-sm mt-1">-</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">Capacity</p>
-                      <p className="text-sm mt-1">-</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">RFID</p>
-                      <p className="text-sm mt-1">-</p>
-                    </div>
+              <div className="mt-6 border-t pt-4">
+                <h3 className="font-semibold text-lg mb-3">Driver's Name</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">Contact No.</p>
+                    <p className="text-sm mt-1">-</p>
                   </div>
-                </div>    
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">Email Address</p>
+                    <p className="text-sm mt-1">-</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">Vehicle Type</p>
+                    <p className="text-sm mt-1">-</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">Fuel Type</p>
+                    <p className="text-sm mt-1">-</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">Plate no.</p>
+                    <p className="text-sm mt-1">-</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">Capacity</p>
+                    <p className="text-sm mt-1">-</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">RFID</p>
+                    <p className="text-sm mt-1">-</p>
+                  </div>
+                </div>
+              </div>    
               
               <div className="flex justify-end mt-6">
                 <button
