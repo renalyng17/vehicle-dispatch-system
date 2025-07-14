@@ -81,7 +81,6 @@ export default function Nav() {
         </ul>
       </nav>
 
-<<<<<<< HEAD
       {/* Footer Section with User and Logout */}
       <div className="ml-2 flex items-center space-x-3 mt-64 p-2 border-t-2 border-white">
         <img
@@ -101,17 +100,6 @@ export default function Nav() {
         </div>
 
         {/* Logout Button */}
-=======
-      {/* Footer Section */}
-      <div className="ml-2 flex items-center space-x-3 p-2 border-t-2 border-white">
-        <img src={logo} alt="User" className="w-10 h-10 rounded-full" />
-        <Link
-          to="/admin/profile"
-          className="flex-1 text-md font-semibold hover:text-lime-300 transition"
-        >
-          John Doe
-        </Link>
->>>>>>> 51b73d99c076a8d216668d38333b2c46e02f5923
         <button
           onClick={handleLogout}
           className="text-white hover:text-lime-300 transition"

@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.8",
-<<<<<<< HEAD
+    "axios": "^1.10.0",
     "dotenv": "^17.2.0",
     "express-rate-limit": "^7.5.1",
     "helmet": "^8.1.0",
@@ -24,15 +24,7 @@
     "react-toastify": "^11.0.5",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
-=======
-    "axios": "^1.10.0",
-    "lucide-react": "^0.514.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "react-router-dom": "^7.6.3",
->>>>>>> 51b73d99c076a8d216668d38333b2c46e02f5923
     "vehicle-dispatch-system": "file:"
-    
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
