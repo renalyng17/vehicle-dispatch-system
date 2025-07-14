@@ -1,8 +1,6 @@
-<<<<<<< HEAD
+
 import React, { useState } from "react";
-=======
-import React, { useState, useEffect } from "react";
->>>>>>> 51b73d99c076a8d216668d38333b2c46e02f5923
+import React, { useState, useEffect } from "react";     
 import { ChevronsUpDown } from "lucide-react";
 
 export default function Management() {
@@ -21,8 +19,6 @@ export default function Management() {
   const [confirmDelete, setConfirmDelete] = useState({ type: null, idx: null });
   const [duplicateModal, setDuplicateModal] = useState({ show: false, type: "" });
   
-<<<<<<< HEAD
-=======
   // Prevent page scroll
     useEffect(() => {
       document.body.style.overflow = "hidden";
@@ -31,7 +27,6 @@ export default function Management() {
       };
     }, []);
     
->>>>>>> 51b73d99c076a8d216668d38333b2c46e02f5923
   const [vehicleForm, setVehicleForm] = useState({
     vehicleType: "",
     plateNo: "",
@@ -47,11 +42,6 @@ export default function Management() {
     email: "",
   });
 
-<<<<<<< HEAD
-=======
-  
-
->>>>>>> 51b73d99c076a8d216668d38333b2c46e02f5923
   // Handle modal open and reset form
   const handleAddClick = () => {
     setShowModal(true);

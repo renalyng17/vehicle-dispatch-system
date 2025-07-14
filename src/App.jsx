@@ -12,13 +12,44 @@ import Client_Dashboard from "./pages/Client/Client_Dashboard";
 
 const App = () => {
   return (
-    <Routes>
-      <Route path="/" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/dashboard/*" element={<Dashboard />} />
-       <Route path="/Client_Dashboard/*" element={<Client_Dashboard />} />
-    </Routes>
+    <AuthProvider>
+      <Routes>
+        {/* Public routes */}
+        <Route element={<Layout />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
+        </Route>
+
+      <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+          <Route path="/admin" element={<AdminDashboard />}>
+          <Route index element={<AdminHome />} />
+          <Route path="home" element={<AdminHome />} />
+          <Route path="calendar" element={<AdminCalendar />} />
+          <Route path="requests" element={<AdminRequests />} />
+          <Route path="management" element={<AdminManagement />} />
+          <Route path="profile" element={<AdminProfile />} />
+          <Route path="*" element={<Navigate to="/admin/home" replace />} />
+          </Route>
+      </Route>
+
+
+      <Route element={<ProtectedRoute allowedRoles={['client']} />}>
+          <Route path="/client" element={<Client_Dashboard />}>
+          <Route index element={<ClientHome />} />
+          <Route path="home" element={<ClientHome />} />
+          <Route path="requests" element={<ClientRequests />} />
+          <Route path="profile" element={<ClientProfile />} />
+          <Route path="*" element={<Navigate to="/client/home" replace />} />
+          </Route>
+      </Route>
+
+        {/* Redirects */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+           <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+          </AuthProvider>
   );
 };
 
