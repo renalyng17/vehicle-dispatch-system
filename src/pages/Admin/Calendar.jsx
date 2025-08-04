@@ -5,15 +5,6 @@ const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState(null); // For modal
 
-  // Prevent page scroll
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, []);
-
-
   const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
   
@@ -91,7 +82,7 @@ const Calendar = () => {
 </div>
 
       {/* Calendar */}
-      <div className="grid grid-cols-7 gap-px border rounded bg-gray-300 text-center text-sm  font- bold-large">
+      <div className="grid grid-cols-7 gap-px border rounded bg-gray-400 text-center text-sm  font- bold-large">
         {daysOfWeek.map((day) => (
           <div key={day} className="bg- bg-green-600 py-  text-white">
             {day}

@@ -39,14 +39,6 @@ function Requests() {
 
   const [notification, setNotification] = useState(null);
 
-   // Prevent page scroll
-        useEffect(() => {
-          document.body.style.overflow = "hidden";
-          return () => {
-            document.body.style.overflow = "auto";
-          };
-      }, []);
-
   useEffect(() => {
     // Save requests to localStorage whenever they change
     localStorage.setItem('vehicleRequests', JSON.stringify(requests));
@@ -61,7 +53,6 @@ function Requests() {
         status: action === 'accept' ? 'Accepted' : 'Declined'
       };
 
-      // Add the new request to the state
       setRequests(prevRequests => {
         // Check if this request already exists to avoid duplicates
         const exists = prevRequests.some(req => 
@@ -119,7 +110,7 @@ function Requests() {
           </thead>
           <tbody>
             {requests.map((req) => (
-              <tr key={req.id} className="border-b border-gray-200 hover:bg-gray-50">
+              <tr key={req.id} className="border-b border-gray-200 text-sm hover:bg-gray-50">
                 <td className="py-3 px-4">{req.name}</td>
                 <td className="py-3 px-4">{req.department}</td>
                 <td className="py-3 px-4">{req.vehicle}</td>
@@ -139,7 +130,7 @@ function Requests() {
                 </td>
                 <td className="py-3 px-4">
                   <span
-                    className={`px-4 py-1 rounded-md text-sm font-medium ${
+                    className={`px-4 py-1 rounded-md text-xs font-medium ${
                       req.status === "Accepted"
                         ? "bg-green-300 text-green-900"
                         : "bg-rose-300 text-rose-900"

@@ -1,55 +1,44 @@
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import React, { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import axiosInstance from "../axiosInstance";
 import background from "../assets/background.png";
 import car from "../assets/car.png";
 import logo from "../assets/logo.png";
 
-const ForgotPassword = () => {
+const ResetPassword = () => {
   const { token } = useParams();
+  const navigate = useNavigate();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-
-   // Prevent page scroll
-    useEffect(() => {
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = "auto";
-      };
-    }, []);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (newPassword !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-    setSuccess("");
-
-    try {
-      const response = await axiosInstance.post("/auth/reset-password", {
-        token,
-        newPassword
-      });
-      
-      setSuccess(response.data.message || "Password changed successfully!");
-      setTimeout(() => navigate("/login"), 2000);
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to change password");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  e.preventDefault();
   
+  if (newPassword !== confirmPassword) {
+    setError("Passwords do not match");
+    return;
+  }
+
+  setLoading(true);
+  setError("");
+
+  try {
+    const response = await axiosInstance.post('/api/auth/reset-password', {
+      token,
+      newPassword
+    });
+
+    setSuccess(response.data.message);
+    setTimeout(() => navigate('/login'), 2000);
+  } catch (err) {
+    setError(err.response?.data?.message || "Failed to reset password");
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <div
       className="min-h-screen bg-cover bg-center relative flex items-center justify-start pl-35"
@@ -62,17 +51,19 @@ const ForgotPassword = () => {
       </div>
 
       {/* Form Box */}
-      <div className="bg-opacity-90 rounded-xl p-8 w-80 max-w-md z-10">
+      <div className="bg-white bg-opacity-90 rounded-xl p-8 w-90 max-w-md z-10">
         <h1 className="text-xl font-semibold text-center mb-5 text-green-700">
-          Change Password
+          Reset Your Password
         </h1>
 
+        {/* Error Message */}
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md text-xs">
             {error}
           </div>
         )}
 
+        {/* Success Message */}
         {success && (
           <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-md text-xs">
             {success}
@@ -91,6 +82,7 @@ const ForgotPassword = () => {
               className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-600 text-xs"
               required
               minLength="8"
+              placeholder="At least 8 characters"
             />
           </div>
 
@@ -105,14 +97,15 @@ const ForgotPassword = () => {
               className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-600 text-xs"
               required
               minLength="8"
+              placeholder="Re-enter your password"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-1.5 bg-green-700 text-white text-sm rounded-md hover:bg-green-800 transition flex justify-center items-center ${
-              loading ? "opacity-70" : ""
+            className={`w-full py-2 bg-green-700 text-white text-sm rounded-md hover:bg-green-800 transition flex justify-center items-center ${
+              loading ? "opacity-70 cursor-not-allowed" : ""
             }`}
           >
             {loading ? (
@@ -137,16 +130,17 @@ const ForgotPassword = () => {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                Processing...
+                Resetting...
               </>
             ) : (
-              "Save"
+              "Reset Password"
             )}
           </button>
 
-          <p className="mt-0.5 text-xs text-center text-gray-600">
+          <p className="mt-4 text-xs text-center text-gray-600">
+            Remember your password?{" "}
             <Link to="/login" className="text-green-700 hover:underline">
-              Back to Login
+              Login here
             </Link>
           </p>
         </form>
@@ -162,4 +156,4 @@ const ForgotPassword = () => {
   );
 };
 
-export default ForgotPassword;
+export default ResetPassword;

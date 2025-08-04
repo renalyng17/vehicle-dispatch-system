@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { ChevronsUpDown } from "lucide-react";
 
 export default function Management() {
@@ -17,6 +17,14 @@ export default function Management() {
   const [confirmDelete, setConfirmDelete] = useState({ type: null, idx: null });
   const [duplicateModal, setDuplicateModal] = useState({ show: false, type: "" });
   
+  // Prevent page scroll
+    useEffect(() => {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "auto";
+      };
+    }, []);
+    
   // Prevent page scroll
     useEffect(() => {
       document.body.style.overflow = "hidden";
@@ -229,7 +237,7 @@ export default function Management() {
 
       {activeTab === "vehicle" && (
         <div className="overflow-x-auto">
-          <table className="min-w-full border border-gray-200 rounded-md shadow-md text-sm">
+          <table className="min-w-full border border-gray-200 rounded-xl shadow-md text-sm">
             <thead>
               <tr className="bg-green-700 md:bg-green-700 text-white text-left">
                 <th className="p-3">VEHICLE</th>
