@@ -5,10 +5,20 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
-import Dashboard from "./pages/Admin/Dashboard";
-import Requests from "./pages/Admin/Requests";
-import { RequestProvider } from "./pages/Admin/RequestContext";
+import Unauthorized from "./pages/Unauthorized";
+import AdminDashboard from "./pages/Admin/Dashboard";
 import Client_Dashboard from "./pages/Client/Client_Dashboard";
+import Layout from "./components/Layout";
+
+// Import all your page components
+import AdminHome from "./pages/Admin/Home";
+import AdminCalendar from "./pages/Admin/Calendar";
+import AdminRequests from "./pages/Admin/Requests";
+import AdminManagement from "./pages/Admin/Management";
+import AdminProfile from "./pages/Admin/Profile";
+import ClientHome from "./pages/Client/ClientHome";
+import ClientRequests from "./pages/Client/Client_Requests";
+import ClientProfile from "./pages/Client/Client_Profile";
 
 const App = () => {
   return (
@@ -19,6 +29,7 @@ const App = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+         {/* <Route path="/reset-password/:token" element={<ResetPassword />} /> */}
           <Route path="/unauthorized" element={<Unauthorized />} />
         </Route>
 
@@ -53,4 +64,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default App; 

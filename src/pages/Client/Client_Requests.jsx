@@ -124,7 +124,7 @@ function Client_Requests() {
               </button>
               {showSort && (
                 <div className="absolute right-0 mt-2 w-36 text-sm bg-white border border-gray-200 rounded-m shadow-m z-10 overflow-hidden">
-                  {["All", "Accept", "Decline", "Pending"].map((status) => (
+                  {[ "Accept", "Decline", "Pending"].map((status) => (
                     <button
                       key={status}
                       className={`block w-full text-left px-4 py-2 hover:bg-gray-100 ${

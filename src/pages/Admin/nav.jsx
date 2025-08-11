@@ -81,25 +81,15 @@ export default function Nav() {
         </ul>
       </nav>
 
-      {/* Footer Section with User and Logout */}
-      <div className="ml-2 flex items-center space-x-3 mt-64 p-2 border-t-2 border-white">
-        <img
-          src={logo}
-          alt="User"
-          className="w-10 h-10 rounded-full object-cover"
-        />
-
-        {/* Clickable User Name */}
-        <div className="flex-1">
-          <Link
-            to="/dashboard/profile"
-            className="text-md font-semibold hover:text-lime-300 transition"
-          >
-            John Doe
-          </Link>
-        </div>
-
-        {/* Logout Button */}
+      {/* Footer Section */}
+      <div className="ml-2 flex items-center space-x-3 p-2 border-t-2 border-white">
+        <img src={logo} alt="User" className="w-10 h-10 rounded-full" />
+        <Link
+          to="/admin/profile"
+          className="flex-1 text-md font-semibold hover:text-lime-300 transition"
+        >
+          John Doe
+        </Link>
         <button
           onClick={handleLogout}
           className="text-white hover:text-lime-300 transition"
