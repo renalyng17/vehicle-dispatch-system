@@ -1,45 +1,72 @@
 import React, { useState, useEffect } from "react";
-import profile from "../../assets/profile.png"; // Ensure this image exists
+import axios from "axios";
+import profile from "../../assets/profile.png";
 
 function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
-  const [firstName, setFirstName] = useState("John");
-  const [lastName, setLastName] = useState("Doe");
-  const [email, setEmail] = useState("Admin123@gmail.com");
-  const [contact, setContact] = useState("1234-5678-910");
+  const [profileData, setProfileData] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    contact_no: "",
+    user_type: "Client",
+    office: ""
+  });
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Prevent page scroll
+  // Fetch profile data
   useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "auto";
+    const fetchProfile = async () => {
+      try {
+        const response = await axios.get('/api/profile', {
+          withCredentials: true
+        });
+        setProfileData(response.data);
+      } catch (error) {
+        console.error('Failed to fetch profile:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
+
+    fetchProfile();
   }, []);
 
-  // Load saved data from localStorage
-  useEffect(() => {
-    const savedFirstName = localStorage.getItem("firstName");
-    const savedLastName = localStorage.getItem("lastName");
-    const savedEmail = localStorage.getItem("email");
-    const savedContact = localStorage.getItem("contact");
-
-    if (savedFirstName) setFirstName(savedFirstName);
-    if (savedLastName) setLastName(savedLastName);
-    if (savedEmail) setEmail(savedEmail);
-    if (savedContact) setContact(savedContact);
-  }, []);
-
-  const handleSave = () => {
-    localStorage.setItem("firstName", firstName);
-    localStorage.setItem("lastName", lastName);
-    localStorage.setItem("email", email);
-    localStorage.setItem("contact", contact);
-    setIsEditing(false);
-    setIsSaved(true);
-    setShowPopup(true);
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setProfileData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
+
+  const handleSave = async () => {
+    try {
+      await axios.put('/api/profile', {
+        first_name: profileData.first_name,
+        last_name: profileData.last_name,
+        email: profileData.email,
+        contact_no: profileData.contact_no
+      }, {
+        withCredentials: true
+      });
+      
+      setShowPopup(true);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+      alert(error.response?.data?.message || 'Failed to update profile');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="pl-5 h-full bg-[#F9FFF5] flex items-center justify-center">
+        <p>Loading profile...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="pl-5 h-full bg-[#F9FFF5] overflow-auto">
@@ -58,7 +85,7 @@ function Profile() {
             alt="User"
             className="w-25 h-25 rounded-full object-cover"
           />
-          <p className="ml-5 text-xl font-bold">{`${firstName} ${lastName}`}</p>
+          <p className="ml-5 text-xl font-bold">{`${profileData.first_name} ${profileData.last_name}`}</p>
         </div>
 
         {isEditing && (
@@ -93,12 +120,13 @@ function Profile() {
             {isEditing ? (
               <input
                 type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
+                name="first_name"
+                value={profileData.first_name}
+                onChange={handleInputChange}
                 className="w-full p-2 border rounded-md mt-1"
               />
             ) : (
-              <p className="font-medium font-poppins">{firstName}</p>
+              <p className="font-medium font-poppins">{profileData.first_name}</p>
             )}
           </div>
           <div className="w-1/2 pl-2">
@@ -106,12 +134,13 @@ function Profile() {
             {isEditing ? (
               <input
                 type="text"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
+                name="last_name"
+                value={profileData.last_name}
+                onChange={handleInputChange}
                 className="w-full p-2 border rounded-md mt-1"
               />
             ) : (
-              <p className="font-medium font-poppins">{lastName}</p>
+              <p className="font-medium font-poppins">{profileData.last_name}</p>
             )}
           </div>
         </div>
@@ -123,12 +152,13 @@ function Profile() {
             {isEditing ? (
               <input
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                name="email"
+                value={profileData.email}
+                onChange={handleInputChange}
                 className="w-full p-2 border rounded-md mt-1"
               />
             ) : (
-              <p className="font-poppins">{email}</p>
+              <p className="font-poppins">{profileData.email}</p>
             )}
           </div>
           <div className="w-1/3 px-2">
@@ -136,30 +166,36 @@ function Profile() {
             {isEditing ? (
               <input
                 type="text"
-                value={contact}
-                onChange={(e) => setContact(e.target.value)}
+                name="contact_no"
+                value={profileData.contact_no}
+                onChange={handleInputChange}
                 className="w-full p-2 border rounded-md mt-1"
               />
             ) : (
-              <p className="font-poppins">{contact}</p>
+              <p className="font-poppins">{profileData.contact_no}</p>
             )}
           </div>
           <div className="w-1/3 pl-2">
             <p className="text-slate-600 font-poppins mb-2">User role</p>
-            <p className="font-poppins">Client</p>
+            <p className="font-poppins">{profileData.user_type}</p>
           </div>
         </div>
 
+        {profileData.office && (
+          <div className="mx-2 mt-10 w-4/5">
+            <p className="text-slate-600 font-poppins mb-2">Office</p>
+            <p className="font-poppins">{profileData.office}</p>
+          </div>
+        )}
+
         {/* Save Confirmation Popup */}
         {showPopup && (
-          <div className="fixed inset-0  flex items-center justify-center z-50">
+          <div className="fixed inset-0 flex items-center justify-center z-50">
             <div
               className="p-6 rounded-lg shadow-lg text-center"
               style={{ backgroundColor: "#E0F2E9" }}
             >
-              <h2 className="text-lg font-semibold mb-2">
-                Successfully Saved!
-              </h2>
+              <h2 className="text-lg font-semibold mb-2">Successfully Saved!</h2>
               <button
                 className="px-4 py-2 text-white rounded-md"
                 style={{ backgroundColor: "#15803D" }}

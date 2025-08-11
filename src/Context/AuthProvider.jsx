@@ -1,7 +1,7 @@
 // src/context/AuthProvider.jsx
 import React, { useState, useEffect } from 'react';
 import axiosInstance from "../axiosInstance";
-import { AuthContext } from './AuthContext'; // Import from the new file
+import { AuthContext } from './AuthContext'; 
 
 // AuthProvider.jsx
 export const AuthProvider = ({ children }) => {

@@ -1,41 +1,49 @@
 import React, { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import axiosInstance from "../axiosInstance";
+import { Link } from "react-router-dom";
+import axios from "axios";
 import background from "../assets/background.png";
 import car from "../assets/car.png";
 import logo from "../assets/logo.png";
 
-const ForgotPassword = () => {
-  const { token } = useParams();
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+const ResetPassword = () => {
+  const [email, setEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Client-side validation
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match");
+      setError('New passwords do not match');
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setError('Password must be at least 8 characters');
       return;
     }
 
     setLoading(true);
-    setError("");
-    setSuccess("");
+    setError('');
+    setMessage('');
 
     try {
-      const response = await axiosInstance.post("/auth/reset-password", {
-        token,
+      const response = await axios.post('/api/auth/reset-password', {
+        email,
         newPassword
       });
       
-      setSuccess(response.data.message || "Password changed successfully!");
-      setTimeout(() => navigate("/login"), 2000);
+      setMessage(response.data.message);
+      // Clear form on success
+      setEmail('');
+      setNewPassword('');
+      setConfirmPassword('');
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to change password");
+      setError(err.response?.data?.message || 'Failed to reset password');
     } finally {
       setLoading(false);
     }
@@ -53,9 +61,9 @@ const ForgotPassword = () => {
       </div>
 
       {/* Form Box */}
-      <div className="bg-opacity-90 rounded-xl p-8 w-80 max-w-md z-10">
+      <div className= "bg-opacity-90 rounded-xl p-8 w-90 max-w-md z-10">
         <h1 className="text-xl font-semibold text-center mb-5 text-green-700">
-          Change Password
+          Reset Password
         </h1>
 
         {error && (
@@ -64,13 +72,26 @@ const ForgotPassword = () => {
           </div>
         )}
 
-        {success && (
+        {message && (
           <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-md text-xs">
-            {success}
+            {message}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              Email
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-6 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-600 text-xs"
+              required
+            />
+          </div>
+
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">
               New Password
@@ -103,7 +124,7 @@ const ForgotPassword = () => {
             type="submit"
             disabled={loading}
             className={`w-full py-1.5 bg-green-700 text-white text-sm rounded-md hover:bg-green-800 transition flex justify-center items-center ${
-              loading ? "opacity-70" : ""
+              loading ? "opacity-70 cursor-not-allowed" : ""
             }`}
           >
             {loading ? (
@@ -128,16 +149,17 @@ const ForgotPassword = () => {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                Processing...
+                Resetting...
               </>
             ) : (
-              "Save"
+              "Reset Password"
             )}
           </button>
 
-          <p className="mt-0.5 text-xs text-center text-gray-600">
+          <p className="mt-4 text-xs text-center text-gray-600">
+            Remember your password?{" "}
             <Link to="/login" className="text-green-700 hover:underline">
-              Back to Login
+              Login here
             </Link>
           </p>
         </form>
@@ -153,4 +175,4 @@ const ForgotPassword = () => {
   );
 };
 
-export default ForgotPassword;
+export default ResetPassword;
