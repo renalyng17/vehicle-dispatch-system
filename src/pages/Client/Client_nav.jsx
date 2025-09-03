@@ -63,7 +63,7 @@ export default function Client_Nav() {
           to="/client/profile"
           className="flex-1 text-md font-semibold hover:text-lime-300 transition"
         >
-          John Doe
+          Profile
         </Link>
         <button
           onClick={handleLogout}

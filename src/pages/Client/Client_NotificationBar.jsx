@@ -60,7 +60,7 @@ export default function NotificationBar() {
         className="fixed top-5 right-7 hover:text-lime-200 transition duration-200 z-50"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <Bell className="w-6 h-6" />
+        <Bell className="w-6 h-6"/>
         {notifications.length > 0 && (
           <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-green-500" />
           

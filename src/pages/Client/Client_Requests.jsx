@@ -14,8 +14,6 @@ const dotColors = {
 };
 
 const officeOptions = ["SysADD"];
-const fuelOptions = ["Gasoline", "Diesel", "Electric", "Hybrid"];
-const vehicleOptions = ["Sedan", "SUV", "Van", "Pickup Truck", "Minibus"];
 
 function Client_Requests() {
   const [showOfficeDropdown, setShowOfficeDropdown] = useState(false);
@@ -272,7 +270,7 @@ function Client_Requests() {
         </div>
       </div>
       
-      {/* CREATE NEW REQUEST Modal */}
+      {/* CREATE NEW REQUEST Modal- Click in*/}
       {showModal && (
         <div className="fixed inset-0 bg-opacity-30 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md relative overflow-y-auto">
@@ -431,19 +429,10 @@ function Client_Requests() {
                 </div>
               </form>
             </div>
-            <button
-              className="absolute top-4 right-4 p-1 rounded-full hover:bg-gray-100 transition-colors"
-              onClick={handleCancel}
-              aria-label="Close"
-            >
-              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
           </div>
         </div>
       )}
-
+  
       {/* REQUEST DETAILS MODAL for Pending, Accepted and Declined Requests */}
       {showPendingModal && selectedRequest && (
         <div className="fixed inset-0 bg-opacity-30 flex items-center justify-center z-[60] p-4">
