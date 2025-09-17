@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { CalendarDays, Clock3, ChevronDown } from "lucide-react";
+import { api } from "../../services/api"; // Import the API
 
 const statusColors = {
   Pending: "bg-orange-100 text-orange-700",
@@ -17,6 +18,7 @@ function Client_Requests() {
   const [showPendingModal, setShowPendingModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     destination: "",
     names: [""],
@@ -28,6 +30,11 @@ function Client_Requests() {
     toTime: "",
   });
 
+  // Fetch requests on component mount
+  useEffect(() => {
+    fetchRequests();
+  }, []);
+
   // Prevent page scroll
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -35,6 +42,19 @@ function Client_Requests() {
       document.body.style.overflow = "auto";
     };
   }, []);
+
+  const fetchRequests = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getRequests();
+      setRequests(data);
+    } catch (error) {
+      console.error("Error fetching requests:", error);
+      alert("Failed to load requests");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const resetFormData = () => {
     setFormData({
@@ -62,21 +82,35 @@ function Client_Requests() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const newRequest = {
-      destination: formData.destination,
-      fromDate: formData.fromDate,
-      fromTime: formData.fromTime,
-      toDate: formData.toDate,
-      toTime: formData.toTime,
-      status: formData.status,
-      names: formData.names.filter((name) => name.trim() !== ""),
-      requestingOffice: formData.requestingOffice,
-    };
-    setRequests((prev) => [...prev, newRequest]);
-    resetFormData();
-    setShowModal(false);
+    try {
+      const newRequest = {
+        destination: formData.destination,
+        fromDate: formData.fromDate,
+        fromTime: formData.fromTime,
+        toDate: formData.toDate,
+        toTime: formData.toTime,
+        status: formData.status,
+        names: formData.names.filter((name) => name.trim() !== ""),
+        requestingOffice: formData.requestingOffice,
+      };
+      
+      // Send to backend API
+      const createdRequest = await api.createRequest(newRequest);
+      
+      // Refresh the requests list
+      await fetchRequests();
+      
+      resetFormData();
+      setShowModal(false);
+      
+      // Show success message
+      alert("Request created successfully! Notification sent to administrators.");
+    } catch (error) {
+      console.error("Error creating request:", error);
+      alert("Failed to create request. Please try again.");
+    }
   };
 
   const handleCancel = () => {
@@ -98,6 +132,17 @@ function Client_Requests() {
     const options = { month: "short", day: "numeric" };
     return `${new Date(date).toLocaleDateString("en-US", options)} at ${time}`;
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F9FFF5] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading requests...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F9FFF5]">
@@ -439,40 +484,30 @@ function Client_Requests() {
                 </span>
               </div>
               
-              {/* Driver Information Section */}
+              {/* Driver Information Section - Only show if request is accepted */}
+              {selectedRequest.status === "Accept" && selectedRequest.driver && (
                 <div className="mt-6 border-t pt-4">
-                  <h3 className="font-semibold text-lg mb-3">Driver's Name</h3>
+                  <h3 className="font-semibold text-lg mb-3">Driver's Information</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-xs font-medium text-gray-500">Contact No.</p>
-                      <p className="text-sm mt-1">-</p>
+                      <p className="text-xs font-medium text-gray-500">Driver Name</p>
+                      <p className="text-sm mt-1">{selectedRequest.driver || "-"}</p>
                     </div>
                     <div>
-                      <p className="text-xs font-medium text-gray-500">Email Address</p>
-                      <p className="text-sm mt-1">-</p>
+                      <p className="text-xs font-medium text-gray-500">Contact No.</p>
+                      <p className="text-sm mt-1">{selectedRequest.driverContact || "-"}</p>
                     </div>
                     <div>
                       <p className="text-xs font-medium text-gray-500">Vehicle Type</p>
-                      <p className="text-sm mt-1">-</p>
+                      <p className="text-sm mt-1">{selectedRequest.vehicleType || "-"}</p>
                     </div>
                     <div>
-                      <p className="text-xs font-medium text-gray-500">Fuel Type</p>
-                      <p className="text-sm mt-1">-</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">Plate no.</p>
-                      <p className="text-sm mt-1">-</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">Capacity</p>
-                      <p className="text-sm mt-1">-</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-500">RFID</p>
-                      <p className="text-sm mt-1">-</p>
+                      <p className="text-xs font-medium text-gray-500">Plate No.</p>
+                      <p className="text-sm mt-1">{selectedRequest.plateNo || "-"}</p>
                     </div>
                   </div>
-                </div>    
+                </div>
+              )}
               
               <div className="flex justify-end mt-6">
                 <button
