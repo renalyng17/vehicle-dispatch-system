@@ -127,16 +127,18 @@ export default function Client_Home() {
       {/* Content Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Requests */}
-        <div className="bg-white rounded-xl shadow p-6">
+        <div className="bg-white rounded-xl shadow p-6 flex flex-col min-h-[400px]">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">Recent Requests</h2>
+            <h2 className="text-xl font-semibold">Recent Request</h2>
             <button className="text-green-600 text-sm font-medium flex items-center">
               View All <ChevronRight className="w-4 h-4" />
             </button>
           </div>
           
           {recentRequests.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">No recent requests found</p>
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-gray-500 text-center py-4">No recent requests found</p>
+            </div>
           ) : (
             <div className="space-y-5">
               {recentRequests.map((request) => (
@@ -169,7 +171,7 @@ export default function Client_Home() {
         </div>
 
         {/* Upcoming Trips */}
-        <div className="bg-white rounded-xl shadow p-6">
+        <div className="bg-white rounded-xl shadow p-6 flex flex-col min-h-[400px]">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold">Upcoming Trips</h2>
             <button className="text-green-600 text-sm font-medium flex items-center">
@@ -178,7 +180,9 @@ export default function Client_Home() {
           </div>
           
           {upcomingTrips.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">No upcoming trips found</p>
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-gray-500 text-center py-4">No upcoming trips found</p>
+            </div>
           ) : (
             <div className="space-y-5">
               {upcomingTrips.map((trip) => (
