@@ -1,12 +1,54 @@
 import { Bell } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { api } from "../../../services/api";
 
-export default function NotificationBar() {
+// Input Component
+const Input = ({ label, value, ...props }) => (
+  <div>
+    <label className="block font-medium text-xs text-gray-500 mb-1">{label}</label>
+    <input
+      value={value}
+      readOnly
+      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-50"
+      {...props}
+    />
+  </div>
+);
+
+// SelectInput Component
+const SelectInput = ({ label, name, value, onChange, options, required = false }) => (
+  <div>
+    <label classNyame="block font-medium text-xs text-gray-500 mb-1">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <select
+      name={name}
+      value={value}
+      onChange={onChange}
+      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+      required={required}
+    >
+      <option value="">Select {label}</option>
+      {options.map((option, index) => (
+        <option key={index} value={option}>
+          {option}
+        </option>
+      ))}
+    </select>
+  </div>
+);
+
+export default function NotificationBar({ onRequestUpdate }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isDeclineModalOpen, setIsDeclineModalOpen] = useState(false);
   const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
   const [bellPosition, setBellPosition] = useState({ top: 0, right: 10 });
+  const [notifications, setNotifications] = useState([]);
+  const [drivers, setDrivers] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+
   const [formValues, setFormValues] = useState({
     driver: "",
     vehicleType: "",
@@ -15,158 +57,205 @@ export default function NotificationBar() {
   });
 
   const navigate = useNavigate();
+  
+  // Get unread notifications
+  const unreadNotifications = notifications.filter(n => !n.read && n.type === "new_request");
+  const latestNotification = unreadNotifications.at(-1);
 
-  // Notification data that matches what should appear in requests
-  const notificationData = {
-    name: "JOY MIA",
-    department: "SysADD",
-    vehicle: "Van",
-    date: "2025-06-01",  // Updated to match notification dates
-    endDate: "2025-06-04",
-    time: "15:00",
-    destination: "Palawan",
-    status: "Pending"
+  // Fetch data on mount
+ useEffect(() => {
+  const fetchNotifications = async () => {
+    try {
+      const data = await api.getNotifications();
+      setNotifications(data || []);
+      console.log("✅ Notifications fetched:", data);
+    } catch (error) {
+      console.error("❌ Failed to fetch notifications:", error);
+    }
   };
 
+  const fetchData = async () => {
+    try {
+      const [driversData, vehiclesData] = await Promise.all([
+        api.getDrivers(),
+        api.getVehicles()
+      ]);
+
+      console.log("✅ Drivers fetched:", driversData);
+      console.log("✅ Vehicles fetched:", vehiclesData);
+
+      // Safely set arrays — prevent undefined/null
+      setDrivers(Array.isArray(driversData) ? driversData : []);
+      setVehicles(Array.isArray(vehiclesData) ? vehiclesData : []);
+
+    } catch (error) {
+      console.error("❌ Failed to fetch drivers/vehicles:", error);
+      // Fallback: use empty arrays
+      setDrivers([]);
+      setVehicles([]);
+    }
+  };
+
+  fetchNotifications();
+  fetchData();
+
+  const interval = setInterval(fetchNotifications, 10000);
+
+  return () => clearInterval(interval);
+}, []);
+
+  // Position bell dropdown
   useEffect(() => {
     const bell = document.getElementById("notification-bell");
-    if (bell) {
+    if (bell && isOpen) {
       const rect = bell.getBoundingClientRect();
       setBellPosition({
         top: rect.top + window.scrollY,
-        right: window.innerWidth - rect.right,
+        right: window.innerWidth - rect.right
       });
     }
-  }, []);
+  }, [isOpen]);
 
-  const handleButtonClick = (e, action) => {
+  // Handle Accept/Decline button click
+  const handleButtonClick = async (e, action) => {
     e.stopPropagation();
+    
     if (action === "decline") {
       setIsDeclineModalOpen(true);
-      setIsAcceptModalOpen(false);
-    } else if (action === "accept") {
+    } else {
       setIsAcceptModalOpen(true);
-      setIsDeclineModalOpen(false);
+    }
+    
+    if (latestNotification) {
+      try {
+        const request = await api.getRequest(latestNotification.requestId);
+        setSelectedRequest(request);
+        console.log("✅ Request details fetched:", request);
+      } catch (error) {
+        console.error("❌ Error fetching request details:", error);
+      }
     }
   };
 
+  // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormValues(prev => ({ ...prev, [name]: value }));
+    setFormValues((prev) => ({ ...prev, [name]: value }));
+    console.log("📝 Form updated:", { [name]: value });
   };
 
-  // Validate Accept Modal form
+  // Process Accept/Decline
+  const handleProcess = async (action) => {
+    try {
+      if (!selectedRequest) {
+        throw new Error("No request selected");
+      }
+
+      const updatedRequest = await api.updateRequest(selectedRequest.id, {
+        status: action === "accept" ? "Accepted" : "Declined", // Fixed: was "Accept"/"Decline"
+        ...formValues
+      });
+
+      await api.markNotificationAsRead(latestNotification.id);
+
+      // Reset
+      setFormValues({ driver: "", vehicleType: "", plateNo: "", reason: "" });
+      setIsDeclineModalOpen(false);
+      setIsAcceptModalOpen(false);
+      setIsOpen(false);
+      setSelectedRequest(null);
+
+      if (onRequestUpdate) {
+        onRequestUpdate(updatedRequest);
+      }
+
+      alert(`Request ${action === "accept" ? "accepted" : "declined"} successfully`);
+
+    } catch (error) {
+      console.error("❌ Error processing request:", error);
+      alert("Error processing request. Please try again.");
+    }
+  };
+
+  // Validate form
   const isAcceptFormValid = formValues.driver && formValues.vehicleType && formValues.plateNo;
 
-  const handleProcess = (action) => {
-    const processedRequest = {
-      ...notificationData,
-      status: action === "accept" ? "Accepted" : "Declined",
-      processedDate: new Date().toISOString().split('T')[0],
-      // Include form values
-      driver: formValues.driver,
-      vehicle: formValues.vehicleType || notificationData.vehicle,
-      plateNo: formValues.plateNo,
-      reason: formValues.reason
-    };
+  // Compute dropdown options with safety
+  const vehicleTypes = [...new Set(
+    (Array.isArray(vehicles) ? vehicles : [])
+      .map(v => v.vehicleType)
+      .filter(Boolean) // Remove null/undefined
+  )];
 
-    navigate("/dashboard/requests", { 
-      state: { 
-        newRequest: processedRequest,
-        action: action 
-      } 
-    });
+  // CASE-INSENSITIVE FILTERING for plate numbers
+  const plateNumbers = formValues.vehicleType 
+    ? (Array.isArray(vehicles) ? vehicles : [])
+        .filter(v => 
+          v.vehicleType && 
+          v.vehicleType.toLowerCase() === formValues.vehicleType.toLowerCase()
+        )
+        .map(v => v.plateNo)
+        .filter(Boolean) // Remove null/undefined plate numbers
+    : [];
 
-    // Reset form and close modals
-    setFormValues({ driver: "", vehicleType: "", plateNo: "", reason: "" });
-    setIsDeclineModalOpen(false);
-    setIsAcceptModalOpen(false);
-    setIsOpen(false);
-  };
+  // Log for debugging
+  console.log("📋 Available vehicles:", vehicles);
+  console.log("🚗 Selected vehicle type:", formValues.vehicleType);
+  console.log("🔢 Plate numbers for selected type:", plateNumbers);
 
   return (
     <>
+      {/* Bell Button */}
       <button
         id="notification-bell"
         className="fixed top-5 right-7 hover:text-lime-200 transition duration-200 z-50"
         onClick={() => setIsOpen(!isOpen)}
+        aria-label="Notifications"
       >
         <Bell className="w-6 h-6" />
-        <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-green-500" />
+        {unreadNotifications.length > 0 && (
+          <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-green-500" />
+        )}
       </button>
 
-      {isOpen && (
+      {/* Dropdown Notification */}
+      {isOpen && latestNotification && (
         <div
           className="fixed bg-white rounded-md shadow-lg z-50"
           style={{
             top: `calc(${bellPosition.top}px + 2rem)`,
             right: `calc(${bellPosition.right}px + 1rem)`,
             width: "320px",
-            transform: "translateY(10px)",
           }}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="p-4">
             <h3 className="font-semibold text-lg mb-2">Notification</h3>
-            <div className="border-b pb-3 mb-3">
-              <div className="flex justify-between items-start">
-                <h4 className="font-medium">{notificationData.name}, Have Travel!</h4>
-              </div>
-              <p className="text-sm text-gray-600 mt-1">
-                Date: {new Date(notificationData.date).toLocaleDateString('en-US', { 
-                  month: 'long', 
-                  day: 'numeric', 
-                  year: 'numeric' 
-                })} - {new Date(notificationData.endDate).toLocaleDateString('en-US', { 
-                  month: 'long', 
-                  day: 'numeric', 
-                  year: 'numeric' 
-                })}
-              </p>
-              <p className="text-sm text-gray-600">Time: {notificationData.time}</p>
-              <p className="text-sm text-gray-600">Destination: {notificationData.destination}</p>
-
+            <div className="border-b pb-3 mb-3 text-sm">
+              <h4 className="font-medium">New Travel Request!</h4>
+              <p>{latestNotification.message}</p>
               <div className="flex justify-end gap-x-2 mt-4">
-                <button
-                  onClick={(e) => handleButtonClick(e, "decline")}
-                  className="px-5 py-2 bg-red-500 text-white rounded-md text-sm"
-                >
-                  Decline
-                </button>
-                <button
-                  onClick={(e) => handleButtonClick(e, "accept")}
-                  className="px-5 py-2 bg-green-500 text-white rounded-md text-sm"
-                >
-                  Accept
-                </button>
+                <button onClick={(e) => handleButtonClick(e, "decline")} className="px-5 py-2 bg-red-500 text-white rounded-md text-sm">Decline</button>
+                <button onClick={(e) => handleButtonClick(e, "accept")} className="px-5 py-2 bg-green-500 text-white rounded-md text-sm">Accept</button>
               </div>
-            </div>
-
-            <div className="text-center text-sm text-gray-500">
-              No more notifications
             </div>
           </div>
         </div>
       )}
 
-      {isDeclineModalOpen && (
-        <div className="fixed inset-0 bg-opacity-30 flex items-center justify-center z-[60]">
-          <div className="fixed bg-white p-5 rounded-lg shadow-2xl w-[400px]">
-            <h2 className="text-2xl font-bold text-center text-green-800 mb-6">
-              DECLINE REQUEST
-            </h2>
-
-            <div className="text-gray-800 space-y-3 text-xs">
-              <Input label="Employee Name" value={notificationData.name} />
+      {/* Decline Modal */}
+      {isDeclineModalOpen && selectedRequest && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[60]">
+          <div className="bg-white p-5 rounded-lg shadow-2xl w-[400px]">
+            <h2 className="text-2xl font-bold text-center text-red-700 mb-6">DECLINE REQUEST</h2>
+            <div className="space-y-3 text-xs text-gray-800">
+              <Input label="Employee Name" value={selectedRequest.names?.join(", ") || ""} />
               <div className="flex gap-2">
-                <Input 
-                  label="Date" 
-                  value={`${notificationData.date} - ${notificationData.endDate}`} 
-                />
-                <Input label="Time" value={notificationData.time} />
+                <Input label="Date" value={`${selectedRequest.fromDate} - ${selectedRequest.toDate}`} />
+                <Input label="Time" value={`${selectedRequest.fromTime} - ${selectedRequest.toTime}`} />
               </div>
-              <Input label="Destination" value={notificationData.destination} />
-              <Input label="Office Department" value={notificationData.department} />
+              <Input label="Destination" value={selectedRequest.destination} />
+              <Input label="Office Department" value={selectedRequest.requestingOffice} />
               <div>
                 <label className="block font-medium">Reason (optional)</label>
                 <textarea
@@ -175,107 +264,64 @@ export default function NotificationBar() {
                   onChange={handleInputChange}
                   rows="3"
                   placeholder="Enter reason here..."
-                  className="w-full border-1 shadow-lg rounded-md px-3 py-2"
-                ></textarea>
+                  className="w-full border rounded-md px-3 py-2 mt-1"
+                />
               </div>
             </div>
-
             <div className="flex justify-end gap-x-3 mt-6">
-              <button
-                onClick={() => setIsDeclineModalOpen(false)}
-                className="px-3 py-1 bg-gray-300 text-sm rounded shadow hover:bg-gray-400"
-              >
-                Discard
-              </button>
-              <button
-                onClick={() => handleProcess("decline")}
-                className="px-3 py-1 bg-green-600 text-white text-sm rounded shadow hover:bg-green-800"
-              >
-                Process
-              </button>
+              <button onClick={() => setIsDeclineModalOpen(false)} className="px-3 py-1 bg-gray-300 text-sm rounded hover:bg-gray-400">Cancel</button>
+              <button onClick={() => handleProcess("decline")} className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-800">Process</button>
             </div>
           </div>
         </div>
       )}
 
-      {isAcceptModalOpen && (
-        <div className="fixed inset-0 bg-opacity-30 flex items-center justify-center z-[60]">
-          <div className="fixed bg-white p-6 rounded-lg shadow-2xl w-[400px]">
-            <h2 className="text-2xl font-bold text-center text-green-800 mb-6">
-              ACCEPT REQUEST
-            </h2>
-
+      {/* Accept Modal */}
+      {isAcceptModalOpen && selectedRequest && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[60]">
+          <div className="bg-white p-6 rounded-lg shadow-2xl w-[400px]">
+            <h2 className="text-2xl font-bold text-center text-green-800 mb-6">APPROVE REQUEST</h2>
             <div className="space-y-3 text-xs text-gray-800">
-              <Input label="Employee Name" value={notificationData.name} />
+              <Input label="Employee Name" value={selectedRequest.names?.join(", ") || ""} />
               <div className="flex gap-2">
-                <Input 
-                  label="Date" 
-                  value={`${notificationData.date} - ${notificationData.endDate}`} 
-                />
-                <Input label="Time" value={notificationData.time} />
+                <Input label="Date" value={`${selectedRequest.fromDate} - ${selectedRequest.toDate}`} />
+                <Input label="Time" value={`${selectedRequest.fromTime} - ${selectedRequest.toTime}`} />
               </div>
-              <Input label="Destination" value={notificationData.destination} />
-              <Input label="Office Department" value={notificationData.department} />
-
-              <div>
-                <label className="block font-medium">Driver*</label>
-                <select 
-                  name="driver"
-                  value={formValues.driver}
+              <Input label="Destination" value={selectedRequest.destination} />
+              <Input label="Office Department" value={selectedRequest.requestingOffice} />
+              <SelectInput
+                label="Driver"
+                name="driver"
+                value={formValues.driver}
+                onChange={handleInputChange}
+                options={(Array.isArray(drivers) ? drivers : []).map(d => d.name).filter(Boolean)}
+                required
+              />
+              <div className="flex gap-2">
+                <SelectInput
+                  label="Vehicle Type"
+                  name="vehicleType"
+                  value={formValues.vehicleType}
                   onChange={handleInputChange}
-                  className="w-full border rounded-md px-3 py-2"
+                  options={vehicleTypes}
                   required
-                >
-                  <option value="">Select Driver</option>
-                  <option>Juan Dela Cruz</option>
-                  <option>Maria Santos</option>
-                </select>
-              </div>
-
-              <div className="flex gap-2">
-                <div className="w-1/2">
-                  <label className="block font-medium">Vehicle Type*</label>
-                  <select 
-                    name="vehicleType"
-                    value={formValues.vehicleType}
-                    onChange={handleInputChange}
-                    className="w-full border rounded-md px-3 py-2"
-                    required
-                  >
-                    <option value="">Select Vehicle</option>
-                    <option>Van</option>
-                    <option>Car</option>
-                    <option>Truck</option>
-                  </select>
-                </div>
-                <div className="w-1/2">
-                  <label className="block font-medium">Plate No.*</label>
-                  <select 
-                    name="plateNo"
-                    value={formValues.plateNo}
-                    onChange={handleInputChange}
-                    className="w-full border rounded-md px-3 py-2"
-                    required
-                  >
-                    <option value="">Select Plate</option>
-                    <option>ABC-1234</option>
-                    <option>XYZ-5678</option>
-                  </select>
-                </div>
+                />
+                <SelectInput
+                  label="Plate No."
+                  name="plateNo"
+                  value={formValues.plateNo}
+                  onChange={handleInputChange}
+                  options={plateNumbers}
+                  required
+                />
               </div>
             </div>
-
             <div className="flex justify-end gap-x-2 mt-6">
-              <button
-                onClick={() => setIsAcceptModalOpen(false)}
-                className="px-3 py-1 bg-gray-300 text-sm rounded shadow hover:bg-gray-400"
-              >
-                Discard
-              </button>
+              <button onClick={() => setIsAcceptModalOpen(false)} className="px-3 py-1 bg-gray-300 text-sm rounded hover:bg-gray-400">Cancel</button>
               <button
                 onClick={() => handleProcess("accept")}
                 disabled={!isAcceptFormValid}
-                className={`px-3 py-1 bg-green-600 text-white text-sm rounded shadow hover:bg-green-800 ${
+                className={`px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-800 ${
                   !isAcceptFormValid ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
@@ -286,19 +332,5 @@ export default function NotificationBar() {
         </div>
       )}
     </>
-  );
-}
-
-function Input({ label, value }) {
-  return (
-    <div>
-      <label className="block font-medium">{label}</label>
-      <input
-        type="text"
-        value={value}
-        readOnly
-        className="w-full border rounded-md px-3 py-2"
-      />
-    </div>
   );
 }

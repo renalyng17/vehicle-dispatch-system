@@ -1,6 +1,7 @@
-import React, { useState, useContext } from "react";
+// src/pages/Login.jsx
+import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { AuthContext } from "../Context/AuthContext";
+import { useAuth } from '../Context/AuthContext'; // Changed import
 import background from "../assets/background.png";
 import car from "../assets/car.png";
 import logo from "../assets/logo.png";
@@ -12,11 +13,15 @@ const Login = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   
-  const { login } = useContext(AuthContext);
+  const { login, user: currentUser, loading: authLoading } = useAuth(); // Use useAuth hook
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleSubmit = async (e) => {
+  // Debug: Check auth context
+  console.log('Auth context:', { currentUser, authLoading });
+
+  // In your Login.jsx handleSubmit function
+const handleSubmit = async (e) => {
   e.preventDefault();
   setError("");
   setLoading(true);
@@ -25,12 +30,13 @@ const Login = () => {
     const result = await login(email, password, rememberMe);
     
     if (result.success) {
-      // FIRST define redirectTo, THEN use it
+      // Use the correct base paths for your routes
+      const basePath = result.user.user_type === 'admin' ? '/admin' : '/client';
+      
+      // Check if there's a redirect parameter or use the base home
       const redirectTo = location.search.includes('redirect=')
         ? new URLSearchParams(location.search).get('redirect')
-        : result.user.user_type === 'admin'
-          ? '/admin/dashboard'
-          : '/client/dashboard';
+        : `${basePath}/home`;
 
       console.log("Redirecting to:", redirectTo);
       navigate(redirectTo, { replace: true });
@@ -44,6 +50,15 @@ const Login = () => {
     setLoading(false);
   }
 };
+  // Show loading while auth context initializes
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-cover bg-center relative flex items-center justify-start pl-35"
       style={{ backgroundImage: `url(${background})` }}>

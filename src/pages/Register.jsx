@@ -70,7 +70,7 @@ const Register = () => {
       const response = await axios.post('/api/auth/register', dataToSend);
 
       if (response.data.status === 'success') {
-        navigate('/login', {
+        navigate('*', {
           state: {
             registrationSuccess: true,
             registeredEmail: formData.email

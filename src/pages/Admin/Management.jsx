@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";     
+import React, { useState, useEffect } from "react";
 import { ChevronsUpDown, Archive, Plus, X, Check, ChevronUp, ChevronDown } from "lucide-react";
 
 export default function Management() {
@@ -7,7 +7,7 @@ export default function Management() {
   const [showFleetCardDropdown, setShowFleetCardDropdown] = useState(false);
   const [showRfidDropdown, setShowRfidDropdown] = useState(false);
 
-  // Rest of your existing state
+  // Main state
   const [activeTab, setActiveTab] = useState("vehicle");
   const [showModal, setShowModal] = useState(false);
   const [vehicles, setVehicles] = useState([]);
@@ -16,15 +16,8 @@ export default function Management() {
   const [archivedDrivers, setArchivedDrivers] = useState([]);
   const [confirmDelete, setConfirmDelete] = useState({ type: null, idx: null });
   const [duplicateModal, setDuplicateModal] = useState({ show: false, type: "" });
-  
-  // Prevent page scroll
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, []);
-    
+
+  // Form state
   const [vehicleForm, setVehicleForm] = useState({
     vehicleType: "",
     plateNo: "",
@@ -33,12 +26,49 @@ export default function Management() {
     fleetCard: "",
     rfid: "",
   });
-  
   const [driverForm, setDriverForm] = useState({
     name: "",
     contact: "",
     email: "",
   });
+
+  // Prevent page scroll when modals open (optional)
+  useEffect(() => {
+    if (showModal || duplicateModal.show || confirmDelete.type) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [showModal, duplicateModal.show, confirmDelete.type]);
+
+  // 🚀 FETCH DATA FROM BACKEND ON MOUNT
+  useEffect(() => {
+    fetchVehicles();
+    fetchDrivers();
+  }, []);
+
+  const fetchVehicles = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/vehicles');
+      const data = await response.json();
+      setVehicles(data);
+    } catch (error) {
+      console.error('Error fetching vehicles:', error);
+    }
+  };
+
+  const fetchDrivers = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/drivers');
+      const data = await response.json();
+      setDrivers(data);
+    } catch (error) {
+      console.error('Error fetching drivers:', error);
+    }
+  };
 
   // Handle modal open and reset form
   const handleAddClick = () => {
@@ -66,98 +96,201 @@ export default function Management() {
         : "text-gray-500 hover:text-green-600 hover:bg-green-50"
     }`;
 
-  // Handle vehicle modal submit
-  const handleVehicleSubmit = (e) => {
+  // 🚚 Handle vehicle modal submit — POST to backend
+  const handleVehicleSubmit = async (e) => {
     e.preventDefault();
-    // Check for duplicate plate number
+
+    // Client-side duplicate check (optional, backend should also check)
     if (
       vehicles.some(
         (v) =>
-          v.plateNo.trim().toLowerCase() === vehicleForm.plateNo.trim().toLowerCase()
+          v.plateNo?.trim().toLowerCase() === vehicleForm.plateNo.trim().toLowerCase()
       )
     ) {
       setDuplicateModal({ show: true, type: "vehicle" });
       return;
     }
-    setVehicles([
-      ...vehicles,
-      {
-        vehicleType: vehicleForm.vehicleType,
-        plateNo: vehicleForm.plateNo,
-        capacity: vehicleForm.capacity,
-        fuelType: vehicleForm.fuelType,
-        fleetCard: vehicleForm.fleetCard,
-        rfid: vehicleForm.rfid,
-      },
-    ]);
-    setShowModal(false);
+
+    try {
+      const response = await fetch('http://localhost:3001/api/vehicles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          vehicle_model: vehicleForm.vehicleType,
+          plate_no: vehicleForm.plateNo, // ⚠️ Make sure backend field name matches
+          capacity: parseInt(vehicleForm.capacity),
+          fuel_type: vehicleForm.fuelType,
+          fleet_card_status: vehicleForm.fleetCard,
+          rfid_status: vehicleForm.rfid,
+        }),
+      });
+
+      if (response.ok) {
+        const newVehicle = await response.json();
+        setVehicles([...vehicles, newVehicle]);
+        setShowModal(false);
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || 'Failed to add vehicle');
+      }
+    } catch (error) {
+      console.error('Error adding vehicle:', error);
+      alert('Network error. Failed to add vehicle.');
+    }
   };
 
-  // Handle driver modal submit
-  const handleDriverSubmit = (e) => {
+  // 👨‍✈️ Handle driver modal submit — POST to backend
+  const handleDriverSubmit = async (e) => {
     e.preventDefault();
-    // Check for duplicate email or contact
+
+    // Client-side duplicate check
     if (
       drivers.some(
         (d) =>
-          d.email.trim().toLowerCase() === driverForm.email.trim().toLowerCase() ||
-          d.contact.replace(/\D/g, "") === driverForm.contact.replace(/\D/g, "")
+          d.email_address?.trim().toLowerCase() === driverForm.email.trim().toLowerCase() ||
+          d.contact_no?.replace(/\D/g, "") === driverForm.contact.replace(/\D/g, "")
       )
     ) {
       setDuplicateModal({ show: true, type: "driver" });
       return;
     }
-    setDrivers([
-      ...drivers,
-      {
-        name: driverForm.name,
-        contact: driverForm.contact,
-        email: driverForm.email,
-        status: "AVAILABLE",
-      },
-    ]);
-    setShowModal(false);
+
+    try {
+      const response = await fetch('http://localhost:3001/api/drivers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: driverForm.name,
+          contact_no: driverForm.contact,
+          email_address: driverForm.email,
+          assigned_boolean: true,
+        }),
+      });
+
+      if (response.ok) {
+        const newDriver = await response.json();
+        setDrivers([...drivers, newDriver]);
+        setShowModal(false);
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || 'Failed to add driver');
+      }
+    } catch (error) {
+      console.error('Error adding driver:', error);
+      alert('Network error. Failed to add driver.');
+    }
   };
 
-  // Open confirmation modal for vehicle
+  // 🗑️ Open confirmation modal for vehicle
   const handleDeleteVehicle = (idx) => {
     setConfirmDelete({ type: "vehicle", idx });
   };
 
-  // Open confirmation modal for driver
+  // 🗑️ Open confirmation modal for driver
   const handleDeleteDriver = (idx) => {
     setConfirmDelete({ type: "driver", idx });
   };
 
-  // Confirm deletion - moves to archive
-  const confirmDeleteAction = () => {
+  // ✅ Confirm deletion — DELETE from backend
+  const confirmDeleteAction = async () => {
     if (confirmDelete.type === "vehicle") {
-      const vehicleToArchive = vehicles[confirmDelete.idx];
-      setArchivedVehicles([...archivedVehicles, vehicleToArchive]);
-      setVehicles(vehicles.filter((_, i) => i !== confirmDelete.idx));
+      const vehicleId = vehicles[confirmDelete.idx]?.vehicle_id;
+      if (!vehicleId) return;
+
+      try {
+        const response = await fetch(`http://localhost:3001/api/vehicles/${vehicleId}`, {
+          method: 'DELETE',
+        });
+
+        if (response.ok) {
+          const archivedVehicle = vehicles[confirmDelete.idx];
+          setVehicles(vehicles.filter((_, i) => i !== confirmDelete.idx));
+          setArchivedVehicles(prev => [...prev, archivedVehicle]);
+        } else {
+          alert('Failed to archive vehicle');
+        }
+      } catch (error) {
+        console.error('Error archiving vehicle:', error);
+        alert('Network error. Failed to archive vehicle.');
+      }
     } else if (confirmDelete.type === "driver") {
-      const driverToArchive = drivers[confirmDelete.idx];
-      setArchivedDrivers([...archivedDrivers, driverToArchive]);
-      setDrivers(drivers.filter((_, i) => i !== confirmDelete.idx));
+      const driverId = drivers[confirmDelete.idx]?.id;
+      if (!driverId) return;
+
+      try {
+        const response = await fetch(`http://localhost:3001/api/drivers/${driverId}`, {
+          method: 'DELETE',
+        });
+
+        if (response.ok) {
+          const archivedDriver = drivers[confirmDelete.idx];
+          setDrivers(drivers.filter((_, i) => i !== confirmDelete.idx));
+          setArchivedDrivers(prev => [...prev, archivedDriver]);
+        } else {
+          alert('Failed to archive driver');
+        }
+      } catch (error) {
+        console.error('Error archiving driver:', error);
+        alert('Network error. Failed to archive driver.');
+      }
     }
     setConfirmDelete({ type: null, idx: null });
   };
 
-  // Cancel deletion
+  // ❌ Cancel deletion
   const cancelDeleteAction = () => {
     setConfirmDelete({ type: null, idx: null });
   };
 
-  // Handle restoring items from archive
-  const handleRestore = (type, idx) => {
-    if (type === "vehicle") {
-      const vehicleToRestore = archivedVehicles[idx];
-      setVehicles([...vehicles, vehicleToRestore]);
-      setArchivedVehicles(archivedVehicles.filter((_, i) => i !== idx));
-    } else if (type === "driver") {
-      const driverToRestore = archivedDrivers[idx];
-      setDrivers([...drivers, driverToRestore]);
-      setArchivedDrivers(archivedDrivers.filter((_, i) => i !== idx));
+  // 🔁 Handle restoring items from archive — POST to re-add
+  const handleRestore = async (type, idx) => {
+    const item = type === "vehicle" ? archivedVehicles[idx] : archivedDrivers[idx];
+    if (!item) return;
+
+    try {
+      let response;
+      if (type === "vehicle") {
+        response = await fetch('http://localhost:3001/api/vehicles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            vehicle_model: item.vehicle_model || item.vehicleType,
+            plate_no: item.plate_no || item.plateNo,
+            capacity: item.capacity,
+            fuel_type: item.fuel_type || item.fuelType,
+            fleet_card_status: item.fleet_card_status || item.fleetCard,
+            rfid_status: item.rfid_status || item.rfid,
+          }),
+        });
+        if (response.ok) {
+          const restoredItem = await response.json();
+          setVehicles([...vehicles, restoredItem]);
+          setArchivedVehicles(archivedVehicles.filter((_, i) => i !== idx));
+        }
+      } else if (type === "driver") {
+        response = await fetch('http://localhost:3001/api/drivers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: item.name,
+            contact_no: item.contact_no || item.contact,
+            email_address: item.email_address || item.email,
+            assigned_boolean: true,
+          }),
+        });
+        if (response.ok) {
+          const restoredItem = await response.json();
+          setDrivers([...drivers, restoredItem]);
+          setArchivedDrivers(archivedDrivers.filter((_, i) => i !== idx));
+        }
+      }
+
+      if (!response?.ok) {
+        alert(`Failed to restore ${type}`);
+      }
+    } catch (error) {
+      console.error('Error restoring item:', error);
+      alert('Network error. Failed to restore item.');
     }
   };
 
@@ -205,11 +338,11 @@ export default function Management() {
     setActiveTab(activeTab === "archive" ? "vehicle" : "archive");
   };
 
+  // 🎨 RETURN YOUR EXISTING UI — UNCHANGED
   return (
     <div className="p-6 relative pb-16 min-h-screen">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800">Management</h1>
-
         {(activeTab === "vehicle" || activeTab === "driver") && (
           <div className="flex justify-end mb-4">
             <button
@@ -221,7 +354,6 @@ export default function Management() {
             </button>
           </div>
         )}
-        
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
           <div className="flex border-b">
             <button 
@@ -237,7 +369,6 @@ export default function Management() {
               Driver Information
             </button>
           </div>
-
           <div className="p-4">
             {activeTab === "vehicle" && (
               <div className="overflow-x-auto">
@@ -264,33 +395,33 @@ export default function Management() {
                       vehicles.map((v, idx) => (
                         <tr key={idx} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {v.vehicleType}
+                            {v.vehicle_model || v.vehicleType}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {v.plateNo}
+                            {v.plate_no || v.plateNo}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
                             {v.capacity}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-semibold">
-                            {v.fuelType}
+                            {v.fuel_type || v.fuelType}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              v.fleetCard?.toLowerCase() === "available" 
+                              (v.fleet_card_status || v.fleetCard)?.toLowerCase() === "available" 
                                 ? "bg-green-100 text-green-800" 
                                 : "bg-red-100 text-red-800"
                             }`}>
-                              {v.fleetCard?.toUpperCase()}
+                              {(v.fleet_card_status || v.fleetCard)?.toUpperCase()}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              v.rfid?.toLowerCase() === "available" 
+                              (v.rfid_status || v.rfid)?.toLowerCase() === "available" 
                                 ? "bg-green-100 text-green-800" 
                                 : "bg-red-100 text-red-800"
                             }`}>
-                              {v.rfid?.toUpperCase()}
+                              {(v.rfid_status || v.rfid)?.toUpperCase()}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -309,7 +440,6 @@ export default function Management() {
                 </table>
               </div>
             )}
-
             {activeTab === "driver" && (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -336,14 +466,14 @@ export default function Management() {
                             {d.name}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {d.contact}
+                            {d.contact_no || d.contact}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {d.email}
+                            {d.email_address || d.email}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              {d.status}
+                              {d.status || (d.assigned_boolean ? "AVAILABLE" : "UNAVAILABLE")}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -362,7 +492,6 @@ export default function Management() {
                 </table>
               </div>
             )}
-
             {activeTab === "archive" && (
               <div className="space-y-6">
                 {/* Archived Vehicles */}
@@ -391,25 +520,25 @@ export default function Management() {
                             {archivedVehicles.map((v, idx) => (
                               <tr key={idx} className="hover:bg-gray-50">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {v.vehicleType}
+                                  {v.vehicle_model || v.vehicleType}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {v.plateNo}
+                                  {v.plate_no || v.plateNo}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
                                   {v.capacity}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {v.fuelType}
+                                  {v.fuel_type || v.fuelType}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                   <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                    {v.fleetCard?.toUpperCase()}
+                                    {(v.fleet_card_status || v.fleetCard)?.toUpperCase()}
                                   </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                   <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                    {v.rfid?.toUpperCase()}
+                                    {(v.rfid_status || v.rfid)?.toUpperCase()}
                                   </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -428,7 +557,6 @@ export default function Management() {
                     )}
                   </div>
                 </div>
-
                 {/* Archived Drivers */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                   <div className="px-6 py-4 border-b border-gray-200">
@@ -456,14 +584,14 @@ export default function Management() {
                                   {d.name}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {d.contact}
+                                  {d.contact_no || d.contact}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {d.email}
+                                  {d.email_address || d.email}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                   <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                    {d.status}
+                                    {d.status || (d.assigned_boolean ? "AVAILABLE" : "UNAVAILABLE")}
                                   </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -518,7 +646,6 @@ export default function Management() {
                       required
                     />
                   </div>
-
                   {/* Plate No. and Capacity */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -597,7 +724,6 @@ export default function Management() {
                       </div>
                     </div>
                   </div>
-
                   {/* Fuel Type Dropdown */}
                   <div className="relative">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Fuel Type</label>
@@ -641,7 +767,6 @@ export default function Management() {
                       </div>
                     )}
                   </div>
-
                   {/* Fleet Card Dropdown */}
                   <div className="relative">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Fleet Card</label>
@@ -685,7 +810,6 @@ export default function Management() {
                       </div>
                     )}
                   </div>
-
                   {/* RFID Dropdown */}
                   <div className="relative">
                     <label className="block text-sm font-medium text-gray-700 mb-1">RFID</label>
@@ -729,7 +853,6 @@ export default function Management() {
                       </div>
                     )}
                   </div>
-
                   {/* Buttons */}
                   <div className="flex justify-end gap-3 pt-4">
                     <button
@@ -781,7 +904,6 @@ export default function Management() {
                       required
                     />
                   </div>
-                  
                   {/* Contact No. */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Contact No.</label>
@@ -807,7 +929,6 @@ export default function Management() {
                       </div>
                     </div>
                   </div>
-                  
                   {/* Email Address */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
@@ -819,7 +940,6 @@ export default function Management() {
                       required
                     />
                   </div>
-
                   {/* Buttons */}
                   <div className="flex justify-end gap-3 pt-4">
                     <button

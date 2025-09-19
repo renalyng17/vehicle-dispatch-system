@@ -1,20 +1,26 @@
-import axios from 'axios';
-import { refreshToken } from './utils/auth';
+import axios from "axios";
+import { refreshToken } from "./utils/auth";
 
+const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api";
+
+const getToken = () =>
+  localStorage.getItem("token") || sessionStorage.getItem("token");
+
+const setToken = (token) => {
+  localStorage.setItem("token", token);
+};
 
 const axiosInstance = axios.create({
-baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api',
+  baseURL,
   timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  withCredentials: true
+  headers: { "Content-Type": "application/json" },
+  withCredentials: true, // ✅ send cookies (refresh token/session)
 });
 
-// Request interceptor
+// Request interceptor: attach token
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const token = getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -23,7 +29,7 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor
+// Response interceptor: auto-refresh token on 401
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -35,12 +41,15 @@ axiosInstance.interceptors.response.use(
       try {
         const newToken = await refreshToken();
         if (newToken) {
+          setToken(newToken);
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
-          return axiosInstance(originalRequest);
+          return axiosInstance(originalRequest); // retry request
         }
       } catch (refreshError) {
-        console.error('Token refresh failed:', refreshError);
-        window.location.href = '/login';
+        console.error("Token refresh failed:", refreshError);
+        if (window.location.pathname !== "/login") {
+          window.location.href = "/login"; // redirect if refresh fails
+        }
         return Promise.reject(refreshError);
       }
     }
