@@ -1,6 +1,8 @@
+// Client_Requests.js (updated with notification integration)
 import React, { useState, useEffect } from "react";
 import { CalendarDays, Clock3, ChevronDown } from "lucide-react";
-import { api } from "../../services/api"; // Import the API
+import { api } from "../../services/api";
+import NotificationBar from "../Admin/NotificationBar"; // Import the NotificationBar
 
 const statusColors = {
   Pending: "bg-orange-100 text-orange-700",
@@ -123,6 +125,16 @@ function Client_Requests() {
     setShowPendingModal(true);
   };
 
+  // Handle request updates from NotificationBar
+  const handleRequestUpdate = (updatedRequest) => {
+    // Update the requests list with the updated request
+    setRequests(prevRequests => 
+      prevRequests.map(req => 
+        req.id === updatedRequest.id ? updatedRequest : req
+      )
+    );
+  };
+
   const filteredRequests = sortStatus === "All"
     ? requests
     : requests.filter((req) => req.status === sortStatus);
@@ -146,6 +158,9 @@ function Client_Requests() {
 
   return (
     <div className="min-h-screen bg-[#F9FFF5]">
+      {/* Notification Bar */}
+      <NotificationBar onRequestUpdate={handleRequestUpdate} />
+      
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-800">Requests</h1>
@@ -191,63 +206,65 @@ function Client_Requests() {
         <hr className="border-green-500 mb-5 my-2" />
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           {filteredRequests.length > 0 ? (
-            <div className="divide-y divide-gray-200">
-              {filteredRequests.map((req, idx) => (
-                <div
-                  key={idx}
-                  className="p-6 hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 bg-blue-50 rounded-lg text-black-600">
-                      <CalendarDays size={24} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-bold text-lg text-gray-800">
-                            {req.destination}
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            {req.names.join(", ")}
-                          </p>
-                        </div>
-                        <button 
-                          onClick={() => handlePendingClick(req)}
-                          className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColors[req.status]}`}
-                        >
-                          {req.status.toUpperCase()}
-                        </button>
-                      </div>
-                      <div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <Clock3 size={14} className="text-gray-400" />
-                          <span>{formatDateTime(req.fromDate, req.fromTime)}</span>
-                        </div>
-                        <span className="hidden sm:inline">→</span>
-                        <div className="flex items-center gap-1">
-                          <Clock3 size={14} className="text-gray-400" />
-                          <span>{formatDateTime(req.toDate, req.toTime)}</span>
-                        </div>
-                      </div>
-                      {req.requestingOffice && (
-                        <div className="mt-2 text-sm text-gray-600">
-                          <span className="font-medium">Office:</span> {req.requestingOffice}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+  <div className="max-h-[40rem] overflow-y-auto pr-2 custom-scroll">
+    <div className="divide-y divide-gray-200">
+      {filteredRequests.map((req, idx) => (
+        <div
+          key={idx}
+          className="p-6 hover:bg-gray-50 transition-colors"
+        >
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-blue-50 rounded-lg text-black-600">
+              <CalendarDays size={24} />
+            </div>
+            <div className="flex-1">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-bold text-lg text-gray-800">
+                    {req.destination}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    {req.names.join(", ")}
+                  </p>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <CalendarDays size={40} className="text-gray-400" />
+                <button 
+                  onClick={() => handlePendingClick(req)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColors[req.status]}`}
+                >
+                  {req.status.toUpperCase()}
+                </button>
               </div>
-              <h3 className="text-lg font-medium text-gray-700">No requests found</h3>
-              <p className="mt-1 text-gray-500">Get started by creating a new request</p>
+              <div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-gray-600">
+                <div className="flex items-center gap-1">
+                  <Clock3 size={14} className="text-gray-400" />
+                  <span>{formatDateTime(req.fromDate, req.fromTime)}</span>
+                </div>
+                <span className="hidden sm:inline">→</span>
+                <div className="flex items-center gap-1">
+                  <Clock3 size={14} className="text-gray-400" />
+                  <span>{formatDateTime(req.toDate, req.toTime)}</span>
+                </div>
+              </div>
+              {req.requestingOffice && (
+                <div className="mt-2 text-sm text-gray-600">
+                  <span className="font-medium">Office:</span> {req.requestingOffice}
+                </div>
+              )}
             </div>
-          )}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+) : (
+  <div className="text-center py-12">
+    <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+      <CalendarDays size={40} className="text-gray-400" />
+    </div>
+    <h3 className="text-lg font-medium text-gray-700">No requests found</h3>
+    <p className="mt-1 text-gray-500">Get started by creating a new request</p>
+  </div>
+)}
         </div>
       </div>
       

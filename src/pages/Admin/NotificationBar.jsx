@@ -1,12 +1,46 @@
-// NotificationBar.js (updated)
+// NotificationBar.js (updated with complete functionality)
 import { Bell } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../services/api";
 
-// ... (Input and SelectInput components remain the same)
+// Input Component
+const Input = ({ label, value, ...props }) => (
+  <div>
+    <label className="block font-medium text-xs text-gray-500 mb-1">{label}</label>
+    <input
+      value={value}
+      readOnly
+      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-50"
+      {...props}
+    />
+  </div>
+);
 
-export default function NotificationBar() {
+// SelectInput Component
+const SelectInput = ({ label, name, value, onChange, options, required = false }) => (
+  <div>
+    <label className="block font-medium text-xs text-gray-500 mb-1">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <select
+      name={name}
+      value={value}
+      onChange={onChange}
+      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+      required={required}
+    >
+      <option value="">Select {label}</option>
+      {options.map((option, index) => (
+        <option key={index} value={option}>
+          {option}
+        </option>
+      ))}
+    </select>
+  </div>
+);
+
+export default function NotificationBar({ onRequestUpdate }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isDeclineModalOpen, setIsDeclineModalOpen] = useState(false);
   const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
@@ -29,39 +63,40 @@ export default function NotificationBar() {
   const unreadNotifications = notifications.filter(n => !n.read && n.type === "new_request");
   const latestNotification = unreadNotifications.at(-1);
 
-  useEffect(() => {
     // Fetch notifications
-    const fetchNotifications = async () => {
-      try {
-        const data = await api.getNotifications();
-        setNotifications(data);
-      } catch (error) {
-        console.error("Error fetching notifications:", error);
-      }
-    };
+useEffect(() => {
+  const fetchNotifications = async () => {
+    try {
+      const data = await api.getNotifications();
+      setNotifications(data);
+      console.log("✅ Notifications fetched:", data);
+    } catch (error) {
+      console.error("❌ Failed to fetch notifications:", error);
+    }
+  };
 
-    // Fetch drivers and vehicles
-    const fetchData = async () => {
-      try {
-        const [driversData, vehiclesData] = await Promise.all([
-          api.getDrivers(),
-          api.getVehicles()
-        ]);
-        setDrivers(driversData);
-        setVehicles(vehiclesData);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
+  const fetchData = async () => {
+    try {
+      const [driversData, vehiclesData] = await Promise.all([
+        api.getDrivers(),
+        api.getVehicles()
+      ]);
+      console.log("✅ Drivers fetched:", driversData);
+      console.log("✅ Vehicles fetched:", vehiclesData);
+      setDrivers(driversData || []);
+      setVehicles(vehiclesData || []);
+    } catch (error) {
+      console.error("❌ Failed to fetch drivers/vehicles:", error);
+    }
+  };
 
-    fetchNotifications();
-    fetchData();
+  fetchNotifications();
+  fetchData();
 
-    // Set up polling for new notifications
-    const interval = setInterval(fetchNotifications, 10000); // Poll every 10 seconds
+  const interval = setInterval(fetchNotifications, 10000);
 
-    return () => clearInterval(interval);
-  }, []);
+  return () => clearInterval(interval);
+}, []);
 
   useEffect(() => {
     const bell = document.getElementById("notification-bell");
@@ -106,8 +141,8 @@ export default function NotificationBar() {
       }
 
       // Update the request status
-      await api.updateRequest(selectedRequest.id, {
-        status: action === "accept" ? "Accepted" : "Declined",
+      const updatedRequest = await api.updateRequest(selectedRequest.id, {
+        status: action === "accept" ? "Accept" : "Decline",
         ...formValues
       });
 
@@ -121,12 +156,22 @@ export default function NotificationBar() {
       setIsOpen(false);
       setSelectedRequest(null);
 
+      // Notify parent component about the update
+      if (onRequestUpdate) {
+        onRequestUpdate(updatedRequest);
+      }
+
       // Navigate to requests page
-      navigate("/dashboard/requests", { 
-        state: { 
-          message: `Request ${action === "accept" ? "accepted" : "declined"} successfully` 
-        } 
-      });
+      // Show success toast (if you have a toast system)
+alert(`Request ${action === "accept" ? "accepted" : "declined"} successfully`);
+
+// Or refresh notifications
+fetchNotifications();
+
+// Close modals
+setIsAcceptModalOpen(false);
+setIsDeclineModalOpen(false);
+setIsOpen(false);
     } catch (error) {
       console.error("Error processing request:", error);
       alert("Error processing request. Please try again.");
@@ -136,13 +181,13 @@ export default function NotificationBar() {
   const isAcceptFormValid =
     formValues.driver && formValues.vehicleType && formValues.plateNo;
 
-  // Get unique vehicle types for dropdown
-  const vehicleTypes = [...new Set(vehicles.map(v => v.type))];
-  
-  // Get plate numbers for selected vehicle type
-  const plateNumbers = formValues.vehicleType 
-    ? vehicles.filter(v => v.type === formValues.vehicleType).map(v => v.plateNo)
-    : [];
+// Get unique vehicle types for dropdown
+const vehicleTypes = [...new Set(vehicles.map(v => v.vehicleType))]; // ✅ Fixed
+
+// Get plate numbers for selected vehicle type
+const plateNumbers = formValues.vehicleType 
+  ? vehicles.filter(v => v.vehicleType === formValues.vehicleType).map(v => v.plateNo) // ✅ Fixed
+  : [];
 
   return (
     <>
