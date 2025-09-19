@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { CalendarDays, Clock3, ChevronDown } from "lucide-react";
+import { api } from "../../services/api"; // Import the API
 
 const statusColors = {
   Pending: "bg-orange-100 text-orange-700",
@@ -23,6 +24,7 @@ function Client_Requests() {
   const [showPendingModal, setShowPendingModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     destination: "",
     names: [""],
@@ -40,6 +42,11 @@ function Client_Requests() {
     capacity: "",
     fuelType: ""
   });
+
+  // Fetch requests on component mount
+  useEffect(() => {
+    fetchRequests();
+  }, []);
 
   // Prevent page scroll
   useEffect(() => {
@@ -109,7 +116,7 @@ function Client_Requests() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newRequest = {
       destination: formData.destination,
