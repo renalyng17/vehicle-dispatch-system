@@ -60,10 +60,9 @@ export default function NotificationBar() {
         className="fixed top-5 right-7 hover:text-lime-200 transition duration-200 z-50"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <Bell className="w-6 h-6"/>
+        <Bell className="w-6 h-6" />
         {notifications.length > 0 && (
           <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-green-500" />
-          
         )}
       </button>
 
@@ -79,47 +78,59 @@ export default function NotificationBar() {
           onClick={(e) => e.stopPropagation()}
         >
           <div className="p-4">
-            <h3 className="font-semibold text-lg mb-4">Notification</h3>
+            <h3 className="font-semibold text-lg mb-4">Notifications</h3>
             
             {loading ? (
               <div className="text-center text-sm text-gray-500 py-4">Loading...</div>
             ) : error ? (
               <div className="text-center text-sm text-red-500 py-4">{error}</div>
             ) : notifications.length > 0 ? (
-              notifications.map((notification) => (
-                <div 
-                  key={notification._id} 
-                  className={`mb-4 p-3 rounded border-l-4 ${
-                    notification.status === 'accepted' ? 'border-green-500' : 'border-red-500'
-                  }`}
-                >
-                  <div className="flex justify-between items-start">
-                    <h4 className="font-medium text-sm">
-                      {notification.status === 'accepted' 
-                        ? 'Admin Accepted your Request' 
-                        : 'Admin Declined your Request'}
-                    </h4>
-                    <span className="text-xs text-gray-500">
-                      {formatDate(notification.updatedAt)}
-                    </span>
+              notifications.map((notification) => {
+                const isAccepted = notification.status === 'accepted';
+                const bgColor = isAccepted ? 'bg-green-50' : 'bg-red-50';
+                const textColor = isAccepted ? 'text-green-800' : 'text-red-800';
+                const iconColor = isAccepted ? 'text-green-500' : 'text-red-500';
+
+                return (
+                  <div
+                    key={notification._id}
+                    className={`mb-3 p-3 rounded-lg ${bgColor} ${textColor} cursor-pointer hover:bg-opacity-90 transition`}
+                    onClick={() => isAccepted && handleViewClick(notification.requestId)}
+                  >
+                    <div className="flex items-start gap-2">
+                      {!isAccepted && <Bell className={`w-5 h-5 mt-0.5 ${iconColor}`} />}
+                      <div className="flex-1">
+                        <div className="font-medium text-sm">
+                          {isAccepted 
+                            ? 'Admin Accepted your Request' 
+                            : 'Admin Declined your Request'}
+                        </div>
+                        {notification.reason && !isAccepted && (
+                          <div className="text-xs mt-1 flex items-center gap-1">
+                            <span className="text-gray-600">💬</span>
+                            <span>{notification.reason}</span>
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-xs text-gray-500 whitespace-nowrap">
+                        {formatDate(notification.updatedAt)}
+                      </span>
+                    </div>
+
+                    {isAccepted && (
+                      <button
+                        className="mt-2 text-xs font-medium text-green-600 hover:underline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewClick(notification.requestId);
+                        }}
+                      >
+                        View
+                      </button>
+                    )}
                   </div>
-                  
-                  {notification.status === 'declined' && notification.reason && (
-                    <p className="text-sm text-gray-600 mt-1">
-                      {notification.reason}
-                    </p>
-                  )}
-                  
-                  {notification.status === 'accepted' && (
-                    <button 
-                      className="mt-2 text-sm text-green-600 hover:underline"
-                      onClick={() => handleViewClick(notification.requestId)}
-                    >
-                      View
-                    </button>
-                  )}
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="text-center text-sm text-gray-500 py-4">
                 No notifications

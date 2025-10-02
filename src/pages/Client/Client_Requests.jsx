@@ -1,17 +1,13 @@
+// Client_Requests.js (updated with notification integration)
 import React, { useState, useEffect } from "react";
 import { CalendarDays, Clock3, ChevronDown } from "lucide-react";
-import { api } from "../../services/api"; // Import the API
+import { api } from "../../services/api";
+import NotificationBar from "../Admin/NotificationBar"; // Import the NotificationBar
 
 const statusColors = {
   Pending: "bg-orange-100 text-orange-700",
   Decline: "bg-red-100 text-red-700",
   Accept: "bg-green-100 text-green-700",
-};
-
-const dotColors = {
-  Pending: "bg-orange-400",     
-  Decline: "bg-red-400",
-  Accept: "bg-green-400",
 };
 
 const officeOptions = ["SysADD"];
@@ -34,13 +30,6 @@ function Client_Requests() {
     fromTime: "",
     toDate: "",
     toTime: "",
-    driverName: "",
-    contactNo: "",
-    email: "",
-    vehicleType: "",
-    plateNo: "",
-    capacity: "",
-    fuelType: ""
   });
 
   // Fetch requests on component mount
@@ -56,31 +45,17 @@ function Client_Requests() {
     };
   }, []);
 
-  // Helper function to format time in 12-hour format with AM/PM
-  const formatTimeWithAMPM = (time) => {
-    if (!time) return "";
-    
-    let [hours, minutes] = time.split(':');
-    hours = parseInt(hours, 10);
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12;
-    hours = hours ? hours : 12; // the hour '0' should be '12'
-    return `${hours}:${minutes} ${ampm}`;
-  };
-
-  const formatDateTime = (date, time) => {
-    if (!date) return "";
-    const options = { month: "short", day: "numeric" };
-    return `${new Date(date).toLocaleDateString("en-US", options)} at ${formatTimeWithAMPM(time)}`;
-  };
-
-  const formatFullDate = (date) => {
-    if (!date) return "";
-    return new Date(date).toLocaleDateString('en-US', { 
-      month: 'long', 
-      day: 'numeric', 
-      year: 'numeric' 
-    });
+  const fetchRequests = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getRequests();
+      setRequests(data);
+    } catch (error) {
+      console.error("Error fetching requests:", error);
+      alert("Failed to load requests");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const resetFormData = () => {
@@ -93,13 +68,6 @@ function Client_Requests() {
       fromTime: "",
       toDate: "",
       toTime: "",
-      driverName: "",
-      contactNo: "",
-      email: "",
-      vehicleType: "",
-      plateNo: "",
-      capacity: "",
-      fuelType: ""
     });
     setShowOfficeDropdown(false);
   };
@@ -118,26 +86,33 @@ function Client_Requests() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const newRequest = {
-      destination: formData.destination,
-      fromDate: formData.fromDate,
-      fromTime: formData.fromTime,
-      toDate: formData.toDate,
-      toTime: formData.toTime,
-      status: formData.status,
-      names: formData.names.filter((name) => name.trim() !== ""),
-      requestingOffice: formData.requestingOffice,
-      driverName: formData.driverName,
-      contactNo: formData.contactNo,
-      email: formData.email,
-      vehicleType: formData.vehicleType,
-      plateNo: formData.plateNo,
-      capacity: formData.capacity,
-      fuelType: formData.fuelType
-    };
-    setRequests((prev) => [...prev, newRequest]);
-    resetFormData();
-    setShowModal(false);
+    try {
+      const newRequest = {
+        destination: formData.destination,
+        fromDate: formData.fromDate,
+        fromTime: formData.fromTime,
+        toDate: formData.toDate,
+        toTime: formData.toTime,
+        status: formData.status,
+        names: formData.names.filter((name) => name.trim() !== ""),
+        requestingOffice: formData.requestingOffice,
+      };
+      
+      // Send to backend API
+      const createdRequest = await api.createRequest(newRequest);
+      
+      // Refresh the requests list
+      await fetchRequests();
+      
+      resetFormData();
+      setShowModal(false);
+      
+      // Show success message
+      alert("Request created successfully! Notification sent to administrators.");
+    } catch (error) {
+      console.error("Error creating request:", error);
+      alert("Failed to create request. Please try again.");
+    }
   };
 
   const handleCancel = () => {
@@ -150,12 +125,42 @@ function Client_Requests() {
     setShowPendingModal(true);
   };
 
+  // Handle request updates from NotificationBar
+  const handleRequestUpdate = (updatedRequest) => {
+    // Update the requests list with the updated request
+    setRequests(prevRequests => 
+      prevRequests.map(req => 
+        req.id === updatedRequest.id ? updatedRequest : req
+      )
+    );
+  };
+
   const filteredRequests = sortStatus === "All"
     ? requests
     : requests.filter((req) => req.status === sortStatus);
 
+  const formatDateTime = (date, time) => {
+    if (!date) return "";
+    const options = { month: "short", day: "numeric" };
+    return `${new Date(date).toLocaleDateString("en-US", options)} at ${time}`;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F9FFF5] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading requests...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F9FFF5]">
+      {/* Notification Bar */}
+      <NotificationBar onRequestUpdate={handleRequestUpdate} />
+      
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-800">Requests</h1>
@@ -206,20 +211,7 @@ function Client_Requests() {
       {filteredRequests.map((req, idx) => (
         <div
           key={idx}
-          className="p-6 hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={(e) => {
-                    if (!e.target.closest('.status-button')) {
-                      handlePendingClick(req);
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      handlePendingClick(req);
-                    }
-                  }}
-                  aria-label={`View details for request to ${req.destination}`}
+          className="p-6 hover:bg-gray-50 transition-colors"
         >
           <div className="flex items-start gap-4">
             <div className="p-3 bg-blue-50 rounded-lg text-black-600">
@@ -236,11 +228,8 @@ function Client_Requests() {
                   </p>
                 </div>
                 <button 
-                  onClick={(e) => {
-                            e.stopPropagation();
-                            handlePendingClick(req);
-                          }}
-                  className={`status-button px-3 py-1 rounded-full text-xs font-semibold ${statusColors[req.status]}`}
+                  onClick={() => handlePendingClick(req)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColors[req.status]}`}
                 >
                   {req.status.toUpperCase()}
                 </button>
@@ -279,149 +268,169 @@ function Client_Requests() {
         </div>
       </div>
       
-      {/* CREATE NEW REQUEST Modal- Click in*/}
+      {/* CREATE NEW REQUEST Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-opacity-30 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md relative overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm relative">
             <div className="p-5">
               <h2 className="text-xl font-bold text-gray-800 mb-5">Create New Request</h2>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                  {/* Schedule Section */}
+              <form onSubmit={handleSubmit}>
+                {/* From Date and Time */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
-                    <h3 className="font-semibold text-gray-700 mb-3 border-b pb-2">Schedule</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">From Date</label>
-                        <input
-                          type="date"
-                          name="fromDate"
-                          value={formData.fromDate}
-                          onChange={handleInputChange}
-                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">From Time</label>
-                        <input
-                          type="time"
-                          name="fromTime"
-                          value={formData.fromTime}
-                          onChange={handleInputChange}
-                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">To Date</label>
-                        <input
-                          type="date"
-                          name="toDate"
-                          value={formData.toDate}
-                          onChange={handleInputChange}
-                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">To Time</label>
-                        <input
-                          type="time"
-                          name="toTime"
-                          value={formData.toTime}
-                          onChange={handleInputChange}
-                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                          required
-                        />
-                      </div>
-                    </div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">From Date</label>
+                    <input
+                      type="date"
+                      name="fromDate"
+                      value={formData.fromDate}
+                      onChange={handleInputChange}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                      required
+                    />
                   </div>
-
-                  {/* Passenger Information Modal */}
                   <div>
-                    <h3 className="font-semibold text-gray-700 mb-3 border-b pb-2">Passenger Information</h3>
-                    <div className="mb-4">
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Names</label>
-                      <div className="space-y-2 max-h-30 overflow-y-auto">
-                        {formData.names.map((name, index) => (
-                          <div key={index} className="flex gap-2 items-center">
-                            <input
-                              type="text"
-                              name={`name-${index}`}
-                              value={name}
-                              onChange={handleInputChange}
-                              className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm"
-                              placeholder="Enter name"
-                              required={index === 0}
-                            />
-                            {index === 0 ? (
-                              <button
-                                type="button"
-                                onClick={() => setFormData(prev => ({
-                                  ...prev,
-                                  names: [...prev.names, ""]
-                                }))}
-                                className="w-8 h-8 bg-gray-100 text-gray-600 rounded-md flex items-center justify-center hover:bg-gray-200"
-                              >
-                                +
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => setFormData(prev => ({
-                                  ...prev,
-                                  names: prev.names.filter((_, i) => i !== index)
-                                }))}
-                                className="w-8 h-8 bg-gray-100 text-gray-600 rounded-md flex items-center justify-center hover:bg-gray-200"
-                              >
-                                -
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">From Time</label>
+                    <input
+                      type="time"
+                      name="fromTime"
+                      value={formData.fromTime}
+                      onChange={handleInputChange}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                      required
+                    />
+                  </div>
+                </div>
+                
+                {/* To Date and Time */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">To Date</label>
+                    <input
+                      type="date"
+                      name="toDate"
+                      value={formData.toDate}
+                      onChange={handleInputChange}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">To Time</label>
+                    <input
+                      type="time"
+                      name="toTime"
+                      value={formData.toTime}
+                      onChange={handleInputChange}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                      required
+                    />
+                  </div>
+                </div>
 
-                    <div className="mb-4">
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Destination</label>
-                      <input
-                        type="text"
-                        name="destination"
-                        value={formData.destination}
-                        onChange={handleInputChange}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                        required
-                        placeholder="Enter destination"
-                      />
-                    </div>
-
-                    <div className="mb-4 relative">
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Requesting Office</label>
-                      <div className="relative">
-                        <select
-                          name="requestingOffice"
-                          value={formData.requestingOffice}
+                {/* Names */}
+                <div className="mb-4">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Names</label>
+                  <div 
+                    className={`flex flex-col gap-2 ${
+                      formData.names.length >= 2 
+                        ? 'max-h-[120px] overflow-y-auto custom-scroll' 
+                        : ''
+                    }`}
+                  >
+                    {formData.names.map((name, index) => (
+                      <div key={index} className="group relative flex min-h-[42px]">
+                        <input
+                          type="text"
+                          name={`name-${index}`}
+                          value={name}
                           onChange={handleInputChange}
-                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm appearance-none bg-white"
-                          required
-                        >
-                          <option value="">Select an office</option>
-                          {officeOptions.map((office, idx) => (
-                            <option key={idx} value={office}>
-                              {office}
-                            </option>
-                          ))}
-                        </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                          <ChevronDown size={16} />
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 pr-10 text-sm focus:border-black focus:ring-0"
+                          placeholder="Enter name"
+                          required={index === 0}
+                        />
+                        <div className="absolute right-0 top-0 h-full flex border-l border-gray-300 rounded-r-md overflow-hidden">
+                          {index === 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setFormData(prev => ({
+                                ...prev,
+                                names: [...prev.names, ""]
+                              }))}
+                              className="h-full bg-gray-100 text-gray-600 w-8 flex items-center justify-center hover:bg-gray-200 border-0"
+                            >
+                              +
+                            </button>
+                          )}
+                          {index > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setFormData(prev => ({
+                                ...prev,
+                                names: prev.names.filter((_, i) => i !== index)
+                              }))}
+                              className="h-full bg-gray-100 text-gray-600 w-8 flex items-center justify-center hover:bg-gray-200 border-0"
+                            >
+                              -
+                            </button>
+                          )}
                         </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                
+                </div>
 
+                <div className="mb-4">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Destination</label>
+                  <input
+                    type="text"
+                    name="destination"
+                    value={formData.destination}
+                    onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+
+                {/* Requesting Office Dropdown */}
+                <div className="mb-6 relative">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Requesting Office</label>
+                  <button
+                    type="button"
+                    className="w-full border border-gray-300 px-3 py-2 rounded-md bg-white flex items-center justify-between hover:bg-gray-50 transition-colors text-sm"
+                    onClick={() => setShowOfficeDropdown((prev) => !prev)}
+                  >
+                    {formData.requestingOffice || "Select an office"}
+                    <svg
+                      className={`w-4 h-4 transition-transform ${showOfficeDropdown ? "rotate-180" : ""}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {showOfficeDropdown && (
+                    <div className="absolute mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-40 overflow-y-auto text-sm">
+                      {officeOptions.map((office, idx) => (
+                        <button
+                          key={idx}
+                          className={`block w-full text-left px-3 py-2 hover:bg-gray-100 ${
+                            formData.requestingOffice === office ? "bg-gray-100 font-medium" : ""
+                          }`}
+                          onClick={() => {
+                            handleInputChange({ target: { name: "requestingOffice", value: office } });
+                            setShowOfficeDropdown(false);
+                          }}
+                        >
+                          {office}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
                 {/* Buttons */}
-                <div className="flex justify-end gap-3 pt-4">
+                <div className="flex justify-end gap-3">
                   <button
                     type="button"
                     className="px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
@@ -438,131 +447,92 @@ function Client_Requests() {
                 </div>
               </form>
             </div>
+            <button
+              className="absolute top-4 right-4 p-1 rounded-full hover:bg-gray-100 transition-colors"
+              onClick={handleCancel}
+              aria-label="Close"
+            >
+              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
       )}
-  
-      {/* REQUEST DETAILS MODAL for Pending, Accepted and Declined Requests */}
+
+      {/* PENDING REQUEST DETAILS MODAL */}
       {showPendingModal && selectedRequest && (
         <div className="fixed inset-0 bg-opacity-30 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-2xl relative max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md relative">
             <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                    <span className="inline-block">
-                      <svg  className="w-5 h-5 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 2h6v4H9V2z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16v14H4V6z" />
-                      </svg>
-                    </span>
-                    {selectedRequest.destination}
-                  </h1>
-                  <div className="flex items-center gap-2 mt-1">
-                    <button
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[selectedRequest.status] || ''}`}
-                    >
-                      {selectedRequest.status.toUpperCase()}
-                    </button>
-                    <span className="text-sm text-gray-500">
-                      {selectedRequest.requestingOffice}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  className="p-1 rounded-full hover:bg-gray-100 transition-colors"
-                  onClick={() => setShowPendingModal(false)}
-                  aria-label="Close"
-                >
-                  <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Request Details</h2>
+              
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold">{selectedRequest.destination}</h3>
+                <p className="text-sm text-gray-600">{selectedRequest.names.join(", ")}</p>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-
-                {/* Schedule and Passengers Modal for clicking Pending, Accepted and Decline */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h2 className="font-semibold text-gray-700 mb-3">Schedule</h2>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-start">
-                      <CalendarDays size={16} className="text-gray-500 mt-0.5 mr-2 flex-shrink-0" />
-                      <div>
-                        <p className="font-medium">From</p>
-                        <p>{formatFullDate(selectedRequest.fromDate)} at {formatTimeWithAMPM(selectedRequest.fromTime)}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start">
-                      <CalendarDays size={16} className="text-gray-500 mt-0.5 mr-2 flex-shrink-0" />
-                      <div>
-                        <p className="font-medium">To</p>
-                        <p>{formatFullDate(selectedRequest.toDate)} at {formatTimeWithAMPM(selectedRequest.toTime)}</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <h2 className="font-semibold text-gray-700 mt-4 mb-3">Passengers</h2>
-                  <ul className="text-sm space-y-1">
-                    {selectedRequest.names.map((name, index) => (
-                      <li key={index} className="flex items-start">
-                        <span className="w-2 h-2 rounded-full bg-gray-400 mt-2 mr-2"></span>
-                        <span>{name}</span>
-                      </li>
-                    ))}
-                  </ul>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <p className="text-xs font-medium text-gray-500">From</p>
+                  <p className="text-sm">
+                    {formatDateTime(selectedRequest.fromDate, selectedRequest.fromTime)}
+                  </p>
                 </div>
-
-                {/* Driver and Vehicle Information for clicking Pending, Accepted and Decline */}
-                <div className="space-y-6">
-                  {/* Driver Information */}
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h2 className="font-semibold text-gray-700 mb-3">Driver Information</h2>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center">
-                      </div>
-                      {(selectedRequest.contactNo || selectedRequest.email) ? (
-                        <div className="pl-7 space-y-1">
-                          <p>{selectedRequest.contactNo || <span className="text-gray-400">No contact</span>}</p>
-                          <p>{selectedRequest.email || <span className="text-gray-400">No email</span>}</p>
-                        </div>
-                      ) : (
-                        <div className="pl-7 text-gray-400">No driver assign yet</div>
-                      )}
+                <div>
+                  <p className="text-xs font-medium text-gray-500">To</p>
+                  <p className="text-sm">
+                    {formatDateTime(selectedRequest.toDate, selectedRequest.toTime)}
+                  </p>
+                </div>
+              </div>
+              
+              {selectedRequest.requestingOffice && (
+                <div className="mb-4">
+                  <p className="text-xs font-medium text-gray-500">Office</p>
+                  <p className="text-sm">{selectedRequest.requestingOffice}</p>
+                </div>
+              )}
+              
+              <div className="mb-4">
+                <p className="text-xs font-medium text-gray-500">Status</p>
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColors[selectedRequest.status]}`}>
+                  {selectedRequest.status.toUpperCase()}
+                </span>
+              </div>
+              
+              {/* Driver Information Section - Only show if request is accepted */}
+              {selectedRequest.status === "Accept" && selectedRequest.driver && (
+                <div className="mt-6 border-t pt-4">
+                  <h3 className="font-semibold text-lg mb-3">Driver's Information</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">Driver Name</p>
+                      <p className="text-sm mt-1">{selectedRequest.driver || "-"}</p>
                     </div>
-                  </div>
-
-                  {/* Vehicle Information */}
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h2 className="font-semibold text-gray-700 mb-3">Vehicle Information</h2>
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <p className="text-gray-500 text-xs">Type</p>
-                        <p className="font-medium">
-                          {selectedRequest.vehicleType ? selectedRequest.vehicleType : <span className="text-gray-400">N/A</span>}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500 text-xs">Plate No.</p>
-                        <p className="font-medium">
-                          {selectedRequest.plateNo ? selectedRequest.plateNo : <span className="text-gray-400">N/A</span>}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500 text-xs">Capacity</p>
-                        <p className="font-medium">
-                          {selectedRequest.capacity ? selectedRequest.capacity : <span className="text-gray-400">N/A</span>}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500 text-xs">Fuel Type</p>
-                        <p className="font-medium">
-                          {selectedRequest.fuelType ? selectedRequest.fuelType : <span className="text-gray-400">N/A</span>}
-                        </p>
-                      </div>
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">Contact No.</p>
+                      <p className="text-sm mt-1">{selectedRequest.driverContact || "-"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">Vehicle Type</p>
+                      <p className="text-sm mt-1">{selectedRequest.vehicleType || "-"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">Plate No.</p>
+                      <p className="text-sm mt-1">{selectedRequest.plateNo || "-"}</p>
                     </div>
                   </div>
                 </div>
+              )}
+              
+              <div className="flex justify-end mt-6">
+                <button
+                  onClick={() => setShowPendingModal(false)}
+                  className="px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 transition-colors"
+                >
+                  Close
+                </button>
               </div>
             </div>
           </div>
