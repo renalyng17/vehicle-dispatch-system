@@ -19,6 +19,7 @@ function Profile() {
     office: "",
   });
 
+  // Prevent body scroll when component mounts
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -26,36 +27,41 @@ function Profile() {
     };
   }, []);
 
+  // Load user data
   useEffect(() => {
     const loadUserData = async () => {
       try {
         setIsLoading(true);
         
+        // Check if data comes from registration
         if (location.state?.registrationSuccess) {
-          const { userData } = location.state;
+          const { userData: regData } = location.state;
           setUserData({
-            firstName: userData.firstName,
-            lastName: userData.lastName,
-            email: userData.email,
-            contact: userData.contact,
-            userType: userData.userType,
-            office: userData.office || "",
+            firstName: regData.firstName || "",
+            lastName: regData.lastName || "",
+            email: regData.email || "",
+            contact: regData.contact || "",
+            userType: regData.userType || "",
+            office: regData.office || "",
           });
           return;
         }
 
+        // Check localStorage first
         const local = localStorage.getItem("userData");
         if (local) {
           setUserData(JSON.parse(local));
           return;
         }
 
+        // Check sessionStorage
         const session = sessionStorage.getItem("userData");
         if (session) {
           setUserData(JSON.parse(session));
           return;
         }
 
+        // Fetch from API if no cached data
         const userId = localStorage.getItem("userId");
         const token = localStorage.getItem("token");
 
@@ -83,6 +89,7 @@ function Profile() {
         localStorage.setItem("userData", JSON.stringify(parsedUser));
       } catch (err) {
         console.error("Failed to fetch user data:", err);
+        // Handle authentication errors (redirect to login?)
       } finally {
         setIsLoading(false);
       }
@@ -91,6 +98,16 @@ function Profile() {
     loadUserData();
   }, [location.state]);
 
+  // Handle input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setUserData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  // Save changes to profile
   const handleSaveChanges = async () => {
     try {
       setIsLoading(true);
@@ -101,9 +118,7 @@ function Profile() {
         throw new Error("User not authenticated");
       }
 
-      localStorage.setItem("userData", JSON.stringify(userData));
-      sessionStorage.setItem("userData", JSON.stringify(userData));
-
+      // Update API (excluding email - it's read-only)
       await axios.put(
         `/api/auth/user/${userId}`,
         {
@@ -119,26 +134,34 @@ function Profile() {
         }
       );
 
+      // Update local storage
+      const updatedData = { ...userData };
+      localStorage.setItem("userData", JSON.stringify(updatedData));
+      sessionStorage.setItem("userData", JSON.stringify(updatedData));
+
       setIsEditing(false);
       setShowPopup(true);
     } catch (error) {
       console.error("Failed to update profile:", error);
+      // Show error notification to user
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setUserData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  }
+  // Cancel editing
+  const handleCancel = () => {
+    // Revert to last saved data
+    const savedData = localStorage.getItem("userData");
+    if (savedData) {
+      setUserData(JSON.parse(savedData));
+    }
+    setIsEditing(false);
+  };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen ">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center">
           <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
           <p className="mt-4 text-gray-600">Loading profile...</p>
@@ -148,7 +171,7 @@ function Profile() {
   }
 
   return (
-    <div className="min-h-screen  p-6 font-sans">
+    <div className="min-h-screen p-6 font-sans bg-gray-50">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -195,7 +218,7 @@ function Profile() {
                   />
                 </div>
                 {isEditing && (
-                  <button className="absolute bottom-2 right-2 bg-white p-2 rounded-full shadow-md hover:bg-gray-50 transition-all transform hover:scale-105  border border-gray-200">
+                  <button className="absolute bottom-2 right-2 bg-white p-2 rounded-full shadow-md hover:bg-gray-50 transition-all transform hover:scale-105 border border-gray-200">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className="h-5 w-5 text-gray-600"
@@ -272,18 +295,8 @@ function Profile() {
                     <label className="block text-sm font-medium text-gray-600">
                       Email Address
                     </label>
-                    {isEditing ? (
-                      <input
-                        type="email"
-                        name="email"
-                        value={userData.email}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                        placeholder="Enter your email"
-                      />
-                    ) : (
-                      <p className="text-gray-800 py-2.5 px-1">{userData.email}</p>
-                    )}
+                    {/* Email is read-only */}
+                    <p className="text-gray-800 py-2.5 px-1 break-all">{userData.email}</p>
                   </div>
 
                   <div className="space-y-1">
@@ -304,7 +317,7 @@ function Profile() {
                     )}
                   </div>
 
-                  {userData.office && (
+                  {(userData.office || isEditing) && (
                     <div className="md:col-span-2 space-y-1">
                       <label className="block text-sm font-medium text-gray-600">
                         Office
@@ -329,15 +342,9 @@ function Profile() {
               {isEditing && (
                 <div className="flex justify-end space-x-3 pt-6 border-t border-gray-100">
                   <button
-                    onClick={() => setIsEditing(false)}
-                    className="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all font-medium flex items-center disabled:opacity-70"
-                  >
-                    Save Changes
-                  </button>
-                  <button
                     onClick={handleSaveChanges}
                     disabled={isLoading}
-                    className="px-6 py-2.5 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-all font-medium"
+                    className="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all font-medium flex items-center disabled:opacity-70"
                   >
                     {isLoading ? (
                       <>
@@ -348,8 +355,14 @@ function Profile() {
                         Saving...
                       </>
                     ) : (
-                      "Cancel"
+                      "Save Changes"
                     )}
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="px-6 py-2.5 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-all font-medium"
+                  >
+                    Cancel
                   </button>
                 </div>
               )}
