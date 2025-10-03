@@ -1,22 +1,30 @@
-// components/ProtectedRoute.js
-import { useContext } from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { AuthContext } from '../Context/AuthContext';
-import LoadingSpinner from './LoadingSpinner';
+// src/components/ProtectedRoute.jsx
+import React from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../Context/AuthContext';
 
-export const ProtectedRoute = ({ allowedRoles }) => {
-  const { authUser, loading } = useContext(AuthContext);
+const ProtectedRoute = ({ children, allowedRoles = [] }) => {
+  const { user, loading } = useAuth();
   const location = useLocation();
 
-  if (loading) return <LoadingSpinner />;
-  
-  if (!authUser) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      </div>
+    );
   }
 
-  if (allowedRoles && !allowedRoles.includes(authUser.user_type)) {
+  // Check if user exists and has proper structure
+  if (!user || typeof user !== 'object' || !user.id) {
+    return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname)}`} replace />;
+  }
+
+  if (allowedRoles.length > 0 && (!user.user_type || !allowedRoles.includes(user.user_type))) {
     return <Navigate to="/unauthorized" replace />;
   }
 
-  return <Outlet />;
+  return children;
 };
+
+export default ProtectedRoute;

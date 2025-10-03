@@ -2,45 +2,8 @@
 import { Bell } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../../services/api";
 
-// Input Component
-const Input = ({ label, value, ...props }) => (
-  <div>
-    <label className="block font-medium text-xs text-gray-500 mb-1">{label}</label>
-    <input
-      value={value}
-      readOnly
-      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-50"
-      {...props}
-    />
-  </div>
-);
-
-// SelectInput Component
-const SelectInput = ({ label, name, value, onChange, options, required = false }) => (
-  <div>
-    <label className="block font-medium text-xs text-gray-500 mb-1">
-      {label} {required && <span className="text-red-500">*</span>}
-    </label>
-    <select
-      name={name}
-      value={value}
-      onChange={onChange}
-      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-      required={required}
-    >
-      <option value="">Select {label}</option>
-      {options.map((option, index) => (
-        <option key={index} value={option}>
-          {option}
-        </option>
-      ))}
-    </select>
-  </div>
-);
-
-export default function NotificationBar({ onRequestUpdate }) {
+export default function NotificationBar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isDeclineModalOpen, setIsDeclineModalOpen] = useState(false);
   const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
@@ -58,45 +21,18 @@ export default function NotificationBar({ onRequestUpdate }) {
   });
 
   const navigate = useNavigate();
-  
-  // Get unread notifications
-  const unreadNotifications = notifications.filter(n => !n.read && n.type === "new_request");
-  const latestNotification = unreadNotifications.at(-1);
 
-    // Fetch notifications
-useEffect(() => {
-  const fetchNotifications = async () => {
-    try {
-      const data = await api.getNotifications();
-      setNotifications(data);
-      console.log("✅ Notifications fetched:", data);
-    } catch (error) {
-      console.error("❌ Failed to fetch notifications:", error);
-    }
+  // Notification data that matches what should appear in requests
+  const notificationData = {
+    name: "JOY MIA",
+    department: "SysADD",
+    vehicle: "Van",
+    date: "2025-06-01",  // Updated to match notification dates
+    endDate: "2025-06-04",
+    time: "15:00",
+    destination: "Palawan",
+    status: "Pending"
   };
-
-  const fetchData = async () => {
-    try {
-      const [driversData, vehiclesData] = await Promise.all([
-        api.getDrivers(),
-        api.getVehicles()
-      ]);
-      console.log("✅ Drivers fetched:", driversData);
-      console.log("✅ Vehicles fetched:", vehiclesData);
-      setDrivers(driversData || []);
-      setVehicles(vehiclesData || []);
-    } catch (error) {
-      console.error("❌ Failed to fetch drivers/vehicles:", error);
-    }
-  };
-
-  fetchNotifications();
-  fetchData();
-
-  const interval = setInterval(fetchNotifications, 10000);
-
-  return () => clearInterval(interval);
-}, []);
 
   useEffect(() => {
     const bell = document.getElementById("notification-bell");
@@ -109,85 +45,51 @@ useEffect(() => {
     }
   }, [isOpen]);
 
-  const handleButtonClick = async (e, action) => {
+  const handleButtonClick = (e, action) => {
     e.stopPropagation();
     
     if (action === "decline") {
       setIsDeclineModalOpen(true);
     } else {
       setIsAcceptModalOpen(true);
-    }
-    
-    // Fetch the request details for the selected notification
-    if (latestNotification) {
-      try {
-        const request = await api.getRequest(latestNotification.requestId);
-        setSelectedRequest(request);
-      } catch (error) {
-        console.error("Error fetching request details:", error);
-      }
+      setIsDeclineModalOpen(false);
     }
   };
 
+  // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormValues((prev) => ({ ...prev, [name]: value }));
+    setFormValues(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleProcess = async (action) => {
-    try {
-      if (!selectedRequest) {
-        throw new Error("No request selected");
-      }
+  // Validate Accept Modal form
+  const isAcceptFormValid = formValues.driver && formValues.vehicleType && formValues.plateNo;
 
-      // Update the request status
-      const updatedRequest = await api.updateRequest(selectedRequest.id, {
-        status: action === "accept" ? "Accept" : "Decline",
-        ...formValues
-      });
+  const handleProcess = (action) => {
+    const processedRequest = {
+      ...notificationData,
+      status: action === "accept" ? "Accepted" : "Declined",
+      processedDate: new Date().toISOString().split('T')[0],
+      // Include form values
+      driver: formValues.driver,
+      vehicle: formValues.vehicleType || notificationData.vehicle,
+      plateNo: formValues.plateNo,
+      reason: formValues.reason
+    };
 
-      // Mark notification as read
-      await api.markNotificationAsRead(latestNotification.id);
+    navigate("/dashboard/requests", { 
+      state: { 
+        newRequest: processedRequest,
+        action: action 
+      } 
+    });
 
-      // Reset form and close modals
-      setFormValues({ driver: "", vehicleType: "", plateNo: "", reason: "" });
-      setIsDeclineModalOpen(false);
-      setIsAcceptModalOpen(false);
-      setIsOpen(false);
-      setSelectedRequest(null);
-
-      // Notify parent component about the update
-      if (onRequestUpdate) {
-        onRequestUpdate(updatedRequest);
-      }
-
-      // Navigate to requests page
-      // Show success toast (if you have a toast system)
-alert(`Request ${action === "accept" ? "accepted" : "declined"} successfully`);
-
-// Or refresh notifications
-fetchNotifications();
-
-// Close modals
-setIsAcceptModalOpen(false);
-setIsDeclineModalOpen(false);
-setIsOpen(false);
-    } catch (error) {
-      console.error("Error processing request:", error);
-      alert("Error processing request. Please try again.");
-    }
+    // Reset form and close modals
+    setFormValues({ driver: "", vehicleType: "", plateNo: "", reason: "" });
+    setIsDeclineModalOpen(false);
+    setIsAcceptModalOpen(false);
+    setIsOpen(false);
   };
-
-  const isAcceptFormValid =
-    formValues.driver && formValues.vehicleType && formValues.plateNo;
-
-// Get unique vehicle types for dropdown
-const vehicleTypes = [...new Set(vehicles.map(v => v.vehicleType))]; // ✅ Fixed
-
-// Get plate numbers for selected vehicle type
-const plateNumbers = formValues.vehicleType 
-  ? vehicles.filter(v => v.vehicleType === formValues.vehicleType).map(v => v.plateNo) // ✅ Fixed
-  : [];
 
   return (
     <>
@@ -273,16 +175,24 @@ const plateNumbers = formValues.vehicleType
                 <Input label="Date" value={`${selectedRequest.fromDate} - ${selectedRequest.toDate}`} />
                 <Input label="Time" value={`${selectedRequest.fromTime} - ${selectedRequest.toTime}`} />
               </div>
-              <Input label="Destination" value={selectedRequest.destination} />
-              <Input label="Office Department" value={selectedRequest.requestingOffice} />
-              <SelectInput
-                label="Driver"
-                name="driver"
-                value={formValues.driver}
-                onChange={handleInputChange}
-                options={drivers.map(d => d.name)}
-                required
-              />
+              <Input label="Destination" value={notificationData.destination} />
+              <Input label="Office Department" value={notificationData.department} />
+
+              <div>
+                <label className="block font-medium">Driver*</label>
+                <select 
+                  name="driver"
+                  value={formValues.driver}
+                  onChange={handleInputChange}
+                  className="w-full border rounded-md px-3 py-2"
+                  required
+                >
+                  <option value="">Select Driver</option>
+                  <option>Juan Dela Cruz</option>
+                  <option>Maria Santos</option>
+                </select>
+              </div>
+
               <div className="flex gap-2">
                 <SelectInput
                   label="Vehicle Type"

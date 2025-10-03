@@ -1,53 +1,100 @@
-// src/context/AuthProvider.jsx
+// src/Context/AuthProvider.jsx
 import React, { useState, useEffect } from 'react';
-import axiosInstance from "../axiosInstance";
-import { AuthContext } from './AuthContext'; // Import from the new file
+import axios from 'axios';
+import { AuthContext } from './AuthContext';
 
-// AuthProvider.jsx
-export const AuthProvider = ({ children }) => {
+const AuthProvider = ({ children }) => {
   const [authUser, setAuthUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Initialize auth state from storage
-  // In AuthProvider.jsx
-useEffect(() => {
-  const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
-  const storedToken = localStorage.getItem('token') || sessionStorage.getItem('token');
-  
-  if (storedUser && storedToken) {
-    setAuthUser(JSON.parse(storedUser));
-    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-  }
-  setLoading(false);
-}, []);
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
 
-// Context/AuthProvider.jsx
-// In your AuthProvider
-// In your AuthProvider.jsx
-const login = async (email, password, rememberMe) => {
-  try {
-    const res = await axiosInstance.post('/auth/login', { email, password, rememberMe });
-    const { user, token } = res.data;
-    
-    // Store in appropriate storage
-    const storage = rememberMe ? localStorage : sessionStorage;
-    storage.setItem('user', JSON.stringify(user));
-    storage.setItem('token', token);
-    
-    // Update axios defaults
-    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    
-    // Update state
-    setAuthUser(user);
-    
-    return { success: true, user };
-  } catch (err) {
-    return { success: false, error: err.response?.data?.message || 'Login failed' };
-  }
-};
+  const checkAuthStatus = async () => {
+    try {
+      setError(null);
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
+
+      const response = await axios.get('/api/auth/verify', {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        withCredentials: true
+      });
+      
+      setAuthUser(response.data.user);
+      
+    } catch (error) {
+      console.error('Auth verification failed:', error);
+      localStorage.removeItem('token');
+      setAuthUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const login = async (credentials) => {
+    try {
+      setError(null);
+      
+      const response = await axios.post('api/auth/login', credentials, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        withCredentials: true
+      });
+      
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        setAuthUser(response.data.user);
+        return { success: true };
+      }
+    } catch (error) {
+      const errorMsg = error.response?.data?.error || 'Login failed';
+      setError(errorMsg);
+      return { 
+        success: false, 
+        error: errorMsg 
+      };
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await axios.post('/api/auth/logout', {}, { 
+        withCredentials: true 
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      localStorage.removeItem('token');
+      setAuthUser(null);
+      setError(null);
+    }
+  };
+
+  const value = {
+    authUser,
+    login,
+    logout,
+    isLoading,
+    error,
+    checkAuthStatus
+  };
+
   return (
-    <AuthContext.Provider value={{ authUser, loading, login,  setAuthUser }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 };
+
+export default AuthProvider;

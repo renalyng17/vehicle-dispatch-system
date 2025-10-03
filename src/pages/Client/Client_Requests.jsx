@@ -1,8 +1,6 @@
 // Client_Requests.js (updated with notification integration)
 import React, { useState, useEffect } from "react";
 import { CalendarDays, Clock3, ChevronDown } from "lucide-react";
-import { api } from "../../services/api";
-import NotificationBar from "../Admin/NotificationBar"; // Import the NotificationBar
 
 const statusColors = {
   Pending: "bg-orange-100 text-orange-700",
@@ -84,35 +82,21 @@ function Client_Requests() {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    try {
-      const newRequest = {
-        destination: formData.destination,
-        fromDate: formData.fromDate,
-        fromTime: formData.fromTime,
-        toDate: formData.toDate,
-        toTime: formData.toTime,
-        status: formData.status,
-        names: formData.names.filter((name) => name.trim() !== ""),
-        requestingOffice: formData.requestingOffice,
-      };
-      
-      // Send to backend API
-      const createdRequest = await api.createRequest(newRequest);
-      
-      // Refresh the requests list
-      await fetchRequests();
-      
-      resetFormData();
-      setShowModal(false);
-      
-      // Show success message
-      alert("Request created successfully! Notification sent to administrators.");
-    } catch (error) {
-      console.error("Error creating request:", error);
-      alert("Failed to create request. Please try again.");
-    }
+    const newRequest = {
+      destination: formData.destination,
+      fromDate: formData.fromDate,
+      fromTime: formData.fromTime,
+      toDate: formData.toDate,
+      toTime: formData.toTime,
+      status: formData.status,
+      names: formData.names.filter((name) => name.trim() !== ""),
+      requestingOffice: formData.requestingOffice,
+    };
+    setRequests((prev) => [...prev, newRequest]);
+    resetFormData();
+    setShowModal(false);
   };
 
   const handleCancel = () => {
