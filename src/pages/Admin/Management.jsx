@@ -96,7 +96,7 @@ export default function Management() {
         : "text-gray-500 hover:text-green-600 hover:bg-green-50"
     }`;
 
-  // 🚚 Handle vehicle modal submit — POST to backend
+  // 🚚 CORRECTED: Handle vehicle modal submit — POST to backend
   const handleVehicleSubmit = async (e) => {
     e.preventDefault();
 
@@ -104,7 +104,8 @@ export default function Management() {
     if (
       vehicles.some(
         (v) =>
-          v.plateNo?.trim().toLowerCase() === vehicleForm.plateNo.trim().toLowerCase()
+          v.plateNo?.trim().toLowerCase() === vehicleForm.plateNo.trim().toLowerCase() ||
+          v.plate_no?.trim().toLowerCase() === vehicleForm.plateNo.trim().toLowerCase()
       )
     ) {
       setDuplicateModal({ show: true, type: "vehicle" });
@@ -116,12 +117,12 @@ export default function Management() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          vehicle_model: vehicleForm.vehicleType,
-          plate_no: vehicleForm.plateNo, // ⚠️ Make sure backend field name matches
+          vehicleType: vehicleForm.vehicleType,    // ✅ Correct field name
+          plateNo: vehicleForm.plateNo,            // ✅ Correct field name
           capacity: parseInt(vehicleForm.capacity),
-          fuel_type: vehicleForm.fuelType,
-          fleet_card_status: vehicleForm.fleetCard,
-          rfid_status: vehicleForm.rfid,
+          fuelType: vehicleForm.fuelType,          // ✅ Correct field name
+          fleetCard: vehicleForm.fleetCard,        // ✅ Correct field name
+          rfid: vehicleForm.rfid,                  // ✅ Correct field name
         }),
       });
 
@@ -139,7 +140,7 @@ export default function Management() {
     }
   };
 
-  // 👨‍✈️ Handle driver modal submit — POST to backend
+  // 👨‍✈️ CORRECTED: Handle driver modal submit — POST to backend
   const handleDriverSubmit = async (e) => {
     e.preventDefault();
 
@@ -147,8 +148,8 @@ export default function Management() {
     if (
       drivers.some(
         (d) =>
-          d.email_address?.trim().toLowerCase() === driverForm.email.trim().toLowerCase() ||
-          d.contact_no?.replace(/\D/g, "") === driverForm.contact.replace(/\D/g, "")
+          d.email?.trim().toLowerCase() === driverForm.email.trim().toLowerCase() ||
+          d.email_address?.trim().toLowerCase() === driverForm.email.trim().toLowerCase()
       )
     ) {
       setDuplicateModal({ show: true, type: "driver" });
@@ -161,9 +162,8 @@ export default function Management() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: driverForm.name,
-          contact_no: driverForm.contact,
-          email_address: driverForm.email,
-          assigned_boolean: true,
+          contact: driverForm.contact.replace('+63 ', ''), // Remove +63 prefix
+          email: driverForm.email,
         }),
       });
 
@@ -254,12 +254,12 @@ export default function Management() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            vehicle_model: item.vehicle_model || item.vehicleType,
-            plate_no: item.plate_no || item.plateNo,
+            vehicleType: item.vehicle_model || item.vehicleType,
+            plateNo: item.plate_no || item.plateNo,
             capacity: item.capacity,
-            fuel_type: item.fuel_type || item.fuelType,
-            fleet_card_status: item.fleet_card_status || item.fleetCard,
-            rfid_status: item.rfid_status || item.rfid,
+            fuelType: item.fuel_type || item.fuelType,
+            fleetCard: item.fleet_card_status || item.fleetCard,
+            rfid: item.rfid_status || item.rfid,
           }),
         });
         if (response.ok) {
@@ -273,9 +273,8 @@ export default function Management() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name: item.name,
-            contact_no: item.contact_no || item.contact,
-            email_address: item.email_address || item.email,
-            assigned_boolean: true,
+            contact: item.contact_no || item.contact,
+            email: item.email_address || item.email,
           }),
         });
         if (response.ok) {

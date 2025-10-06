@@ -84,35 +84,35 @@ function Client_Requests() {
     }
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  try {
-    const newRequest = {
-      destination: formData.destination,
-      fromDate: formData.fromDate,
-      fromTime: formData.fromTime,
-      toDate: formData.toDate,
-      toTime: formData.toTime,
-      status: formData.status,
-      names: formData.names.filter((name) => name.trim() !== ""),
-      requestingOffice: formData.requestingOffice,
-    };
-    
-    // Send to backend API — no need to store result if unused
-    await api.createRequest(newRequest);
-    
-    // Refresh the requests list
-    await fetchRequests();
-    
-    resetFormData();
-    setShowModal(false);
-    
-    // Show success message
-    alert("Request created successfully! Notification sent to administrators.");
-  } catch (error) {
-    console.error("Error creating request:", error);
-    alert("Failed to create request. Please try again.");
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const newRequest = {
+        destination: formData.destination,
+        fromDate: formData.fromDate,
+        fromTime: formData.fromTime,
+        toDate: formData.toDate,
+        toTime: formData.toTime,
+        status: formData.status,
+        names: formData.names.filter((name) => name.trim() !== ""),
+        requestingOffice: formData.requestingOffice,
+      };
+      
+      // Send to backend API
+      const createdRequest = await api.createRequest(newRequest);
+      
+      // Refresh the requests list
+      await fetchRequests();
+      
+      resetFormData();
+      setShowModal(false);
+      
+      // Show success message
+      alert("Request created successfully! Notification sent to administrators.");
+    } catch (error) {
+      console.error("Error creating request:", error);
+      alert("Failed to create request. Please try again.");
+    }
   };
 
   const handleCancel = () => {

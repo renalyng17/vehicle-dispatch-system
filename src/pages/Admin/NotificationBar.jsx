@@ -1,3 +1,4 @@
+// NotificationBar.js (updated with complete functionality)
 import { Bell } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -19,7 +20,7 @@ const Input = ({ label, value, ...props }) => (
 // SelectInput Component
 const SelectInput = ({ label, name, value, onChange, options, required = false }) => (
   <div>
-    <label classNyame="block font-medium text-xs text-gray-500 mb-1">
+    <label className="block font-medium text-xs text-gray-500 mb-1">
       {label} {required && <span className="text-red-500">*</span>}
     </label>
     <select
@@ -62,49 +63,40 @@ export default function NotificationBar({ onRequestUpdate }) {
   const unreadNotifications = notifications.filter(n => !n.read && n.type === "new_request");
   const latestNotification = unreadNotifications.at(-1);
 
-  // Fetch data on mount
- useEffect(() => {
+  // Fetch notifications
+  useEffect(() => {
+    fetchNotifications();
+    fetchDriversAndVehicles();
+
+    const interval = setInterval(fetchNotifications, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
   const fetchNotifications = async () => {
     try {
       const data = await api.getNotifications();
-      setNotifications(data || []);
+      setNotifications(data);
       console.log("✅ Notifications fetched:", data);
     } catch (error) {
       console.error("❌ Failed to fetch notifications:", error);
     }
   };
 
-  const fetchData = async () => {
+  const fetchDriversAndVehicles = async () => {
     try {
       const [driversData, vehiclesData] = await Promise.all([
         api.getDrivers(),
         api.getVehicles()
       ]);
-
       console.log("✅ Drivers fetched:", driversData);
       console.log("✅ Vehicles fetched:", vehiclesData);
-
-      // Safely set arrays — prevent undefined/null
-      setDrivers(Array.isArray(driversData) ? driversData : []);
-      setVehicles(Array.isArray(vehiclesData) ? vehiclesData : []);
-
+      setDrivers(driversData || []);
+      setVehicles(vehiclesData || []);
     } catch (error) {
       console.error("❌ Failed to fetch drivers/vehicles:", error);
-      // Fallback: use empty arrays
-      setDrivers([]);
-      setVehicles([]);
     }
   };
 
-  fetchNotifications();
-  fetchData();
-
-  const interval = setInterval(fetchNotifications, 10000);
-
-  return () => clearInterval(interval);
-}, []);
-
-  // Position bell dropdown
   useEffect(() => {
     const bell = document.getElementById("notification-bell");
     if (bell && isOpen) {
@@ -116,7 +108,6 @@ export default function NotificationBar({ onRequestUpdate }) {
     }
   }, [isOpen]);
 
-  // Handle Accept/Decline button click
   const handleButtonClick = async (e, action) => {
     e.stopPropagation();
     
@@ -126,49 +117,70 @@ export default function NotificationBar({ onRequestUpdate }) {
       setIsAcceptModalOpen(true);
     }
     
+    // Fetch the request details for the selected notification
     if (latestNotification) {
       try {
         const request = await api.getRequest(latestNotification.requestId);
         setSelectedRequest(request);
-        console.log("✅ Request details fetched:", request);
       } catch (error) {
-        console.error("❌ Error fetching request details:", error);
+        console.error("Error fetching request details:", error);
       }
     }
   };
 
-  // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormValues((prev) => ({ ...prev, [name]: value }));
-    console.log("📝 Form updated:", { [name]: value });
   };
 
-  // Process Accept/Decline
   const handleProcess = async (action) => {
     try {
       if (!selectedRequest) {
         throw new Error("No request selected");
       }
 
-      const updatedRequest = await api.updateRequest(selectedRequest.id, {
-        status: action === "accept" ? "Accepted" : "Declined", // Fixed: was "Accept"/"Decline"
-        ...formValues
-      });
+      // Prepare data for the API call based on action
+      const requestData = {
+        status: action === "accept" ? "Accepted" : "Declined"
+      };
 
-      await api.markNotificationAsRead(latestNotification.id);
+      if (action === "accept") {
+        // Find the selected driver to get contact information
+        const selectedDriver = drivers.find(d => d.name === formValues.driver);
+        requestData.driver_name = formValues.driver;
+        requestData.contact_no = selectedDriver?.contact || selectedDriver?.contact_no || "";
+        requestData.vehicle_type = formValues.vehicleType;
+        requestData.plate_no = formValues.plateNo;
+      } else if (action === "decline") {
+        requestData.reason_for_decline = formValues.reason || "No reason provided";
+      }
 
-      // Reset
+      console.log("📤 Sending request data:", requestData);
+
+      // ✅ FIXED: Use the correct API method
+      const updatedRequest = await api.updateRequestStatus(selectedRequest.id, requestData);
+
+      // ✅ FIXED: Mark notification as read
+      if (latestNotification) {
+        await api.markNotificationAsRead(latestNotification.id);
+      }
+
+      // Reset form and close modals
       setFormValues({ driver: "", vehicleType: "", plateNo: "", reason: "" });
       setIsDeclineModalOpen(false);
       setIsAcceptModalOpen(false);
       setIsOpen(false);
       setSelectedRequest(null);
 
+      // Refresh notifications
+      await fetchNotifications();
+
+      // Notify parent component about the update
       if (onRequestUpdate) {
         onRequestUpdate(updatedRequest);
       }
 
+      // Show success message
       alert(`Request ${action === "accept" ? "accepted" : "declined"} successfully`);
 
     } catch (error) {
@@ -177,31 +189,21 @@ export default function NotificationBar({ onRequestUpdate }) {
     }
   };
 
-  // Validate form
-  const isAcceptFormValid = formValues.driver && formValues.vehicleType && formValues.plateNo;
+  const isAcceptFormValid =
+    formValues.driver && formValues.vehicleType && formValues.plateNo;
 
-  // Compute dropdown options with safety
-  const vehicleTypes = [...new Set(
-    (Array.isArray(vehicles) ? vehicles : [])
-      .map(v => v.vehicleType)
-      .filter(Boolean) // Remove null/undefined
-  )];
+  // Get unique vehicle types for dropdown
+  const vehicleTypes = [...new Set(vehicles.map(v => v.vehicleType || v.vehicle_model))];
 
-  // CASE-INSENSITIVE FILTERING for plate numbers
+  // Get plate numbers for selected vehicle type
   const plateNumbers = formValues.vehicleType 
-    ? (Array.isArray(vehicles) ? vehicles : [])
-        .filter(v => 
-          v.vehicleType && 
-          v.vehicleType.toLowerCase() === formValues.vehicleType.toLowerCase()
-        )
-        .map(v => v.plateNo)
-        .filter(Boolean) // Remove null/undefined plate numbers
+    ? vehicles
+        .filter(v => (v.vehicleType || v.vehicle_model) === formValues.vehicleType)
+        .map(v => v.plateNo || v.plate_no)
     : [];
 
-  // Log for debugging
-  console.log("📋 Available vehicles:", vehicles);
-  console.log("🚗 Selected vehicle type:", formValues.vehicleType);
-  console.log("🔢 Plate numbers for selected type:", plateNumbers);
+  // Get available drivers (non-archived)
+  const availableDrivers = drivers.filter(d => !d.archivedAt);
 
   return (
     <>
@@ -235,8 +237,18 @@ export default function NotificationBar({ onRequestUpdate }) {
               <h4 className="font-medium">New Travel Request!</h4>
               <p>{latestNotification.message}</p>
               <div className="flex justify-end gap-x-2 mt-4">
-                <button onClick={(e) => handleButtonClick(e, "decline")} className="px-5 py-2 bg-red-500 text-white rounded-md text-sm">Decline</button>
-                <button onClick={(e) => handleButtonClick(e, "accept")} className="px-5 py-2 bg-green-500 text-white rounded-md text-sm">Accept</button>
+                <button 
+                  onClick={(e) => handleButtonClick(e, "decline")} 
+                  className="px-5 py-2 bg-red-500 text-white rounded-md text-sm hover:bg-red-600"
+                >
+                  Decline
+                </button>
+                <button 
+                  onClick={(e) => handleButtonClick(e, "accept")} 
+                  className="px-5 py-2 bg-green-500 text-white rounded-md text-sm hover:bg-green-600"
+                >
+                  Accept
+                </button>
               </div>
             </div>
           </div>
@@ -269,8 +281,18 @@ export default function NotificationBar({ onRequestUpdate }) {
               </div>
             </div>
             <div className="flex justify-end gap-x-3 mt-6">
-              <button onClick={() => setIsDeclineModalOpen(false)} className="px-3 py-1 bg-gray-300 text-sm rounded hover:bg-gray-400">Cancel</button>
-              <button onClick={() => handleProcess("decline")} className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-800">Process</button>
+              <button 
+                onClick={() => setIsDeclineModalOpen(false)} 
+                className="px-3 py-1 bg-gray-300 text-sm rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => handleProcess("decline")} 
+                className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-800"
+              >
+                Process
+              </button>
             </div>
           </div>
         </div>
@@ -294,7 +316,7 @@ export default function NotificationBar({ onRequestUpdate }) {
                 name="driver"
                 value={formValues.driver}
                 onChange={handleInputChange}
-                options={(Array.isArray(drivers) ? drivers : []).map(d => d.name).filter(Boolean)}
+                options={availableDrivers.map(d => d.name)}
                 required
               />
               <div className="flex gap-2">
@@ -317,7 +339,12 @@ export default function NotificationBar({ onRequestUpdate }) {
               </div>
             </div>
             <div className="flex justify-end gap-x-2 mt-6">
-              <button onClick={() => setIsAcceptModalOpen(false)} className="px-3 py-1 bg-gray-300 text-sm rounded hover:bg-gray-400">Cancel</button>
+              <button 
+                onClick={() => setIsAcceptModalOpen(false)} 
+                className="px-3 py-1 bg-gray-300 text-sm rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
               <button
                 onClick={() => handleProcess("accept")}
                 disabled={!isAcceptFormValid}
