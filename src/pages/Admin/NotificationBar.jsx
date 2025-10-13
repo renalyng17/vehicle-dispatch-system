@@ -1,4 +1,5 @@
 // NotificationBar.js (updated with complete functionality)
+// NotificationBar.js (updated with complete functionality)
 import { Bell } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -56,7 +57,6 @@ export default function NotificationBar() {
     }
   };
 
-  // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormValues(prev => ({ ...prev, [name]: value }));
@@ -123,8 +123,18 @@ export default function NotificationBar() {
               <h4 className="font-medium">New Travel Request!</h4>
               <p>{latestNotification.message}</p>
               <div className="flex justify-end gap-x-2 mt-4">
-                <button onClick={(e) => handleButtonClick(e, "decline")} className="px-5 py-2 bg-red-500 text-white rounded-md text-sm">Decline</button>
-                <button onClick={(e) => handleButtonClick(e, "accept")} className="px-5 py-2 bg-green-500 text-white rounded-md text-sm">Accept</button>
+                <button 
+                  onClick={(e) => handleButtonClick(e, "decline")} 
+                  className="px-5 py-2 bg-red-500 text-white rounded-md text-sm hover:bg-red-600"
+                >
+                  Decline
+                </button>
+                <button 
+                  onClick={(e) => handleButtonClick(e, "accept")} 
+                  className="px-5 py-2 bg-green-500 text-white rounded-md text-sm hover:bg-green-600"
+                >
+                  Accept
+                </button>
               </div>
             </div>
           </div>
@@ -157,8 +167,18 @@ export default function NotificationBar() {
               </div>
             </div>
             <div className="flex justify-end gap-x-3 mt-6">
-              <button onClick={() => setIsDeclineModalOpen(false)} className="px-3 py-1 bg-gray-300 text-sm rounded hover:bg-gray-400">Cancel</button>
-              <button onClick={() => handleProcess("decline")} className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-800">Process</button>
+              <button 
+                onClick={() => setIsDeclineModalOpen(false)} 
+                className="px-3 py-1 bg-gray-300 text-sm rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => handleProcess("decline")} 
+                className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-800"
+              >
+                Process
+              </button>
             </div>
           </div>
         </div>
@@ -213,7 +233,12 @@ export default function NotificationBar() {
               </div>
             </div>
             <div className="flex justify-end gap-x-2 mt-6">
-              <button onClick={() => setIsAcceptModalOpen(false)} className="px-3 py-1 bg-gray-300 text-sm rounded hover:bg-gray-400">Cancel</button>
+              <button 
+                onClick={() => setIsAcceptModalOpen(false)} 
+                className="px-3 py-1 bg-gray-300 text-sm rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
               <button
                 onClick={() => handleProcess("accept")}
                 disabled={!isAcceptFormValid}

@@ -1,7 +1,7 @@
-import { Bell } from "lucide-react";
+import { Bell, Check, X, Car, User } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { api } from "../../../services/api"; // Using your API service
 
 export default function NotificationBar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -9,6 +9,7 @@ export default function NotificationBar() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const navigate = useNavigate();
 
@@ -22,35 +23,135 @@ export default function NotificationBar() {
       });
     }
 
-    const fetchNotifications = async () => {
-      try {
-        const response = await axios.get('http://localhost:3001/api/notifications');
-        setNotifications(response.data);
-      } catch (err) {
-        setError("Failed to fetch notifications");
-        console.error("Error fetching notifications:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchNotifications();
+    fetchUnreadCount();
   }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getNotifications();
+      setNotifications(data);
+    } catch (err) {
+      setError("Failed to fetch notifications");
+      console.error("Error fetching notifications:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUnreadCount = async () => {
+    try {
+      const data = await api.getUnreadNotificationsCount();
+      setUnreadCount(data.count);
+    } catch (err) {
+      console.error("Error fetching unread count:", err);
+    }
+  };
+
+  const markAsRead = async (notificationId) => {
+    try {
+      await api.markNotificationAsRead(notificationId);
+      // Update local state
+      setNotifications(prev => 
+        prev.map(notif => 
+          notif.id === notificationId ? { ...notif, read: true } : notif
+        )
+      );
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (err) {
+      console.error("Error marking notification as read:", err);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      // This would require a new API endpoint
+      await Promise.all(
+        notifications
+          .filter(notif => !notif.read)
+          .map(notif => api.markNotificationAsRead(notif.id))
+      );
+      setNotifications(prev => 
+        prev.map(notif => ({ ...notif, read: true }))
+      );
+      setUnreadCount(0);
+    } catch (err) {
+      console.error("Error marking all as read:", err);
+    }
+  };
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    const now = new Date();
+    const diffInHours = (now - date) / (1000 * 60 * 60);
+
+    if (diffInHours < 1) {
+      return 'Just now';
+    } else if (diffInHours < 24) {
+      return `${Math.floor(diffInHours)}h ago`;
+    } else {
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    }
   };
 
-  const handleViewClick = (notificationId) => {
-    navigate(`/requests/${notificationId}`);
+  const handleViewClick = async (notification) => {
+    // Mark as read when viewed
+    if (!notification.read) {
+      await markAsRead(notification.id);
+    }
+    
+    // Navigate to request details
+    navigate(`/requests/${notification.requestId}`);
     setIsOpen(false);
+  };
+
+  const getNotificationIcon = (status, type) => {
+    if (type === 'new_request') {
+      return <Bell className="w-4 h-4 text-blue-500" />;
+    }
+    
+    switch (status) {
+      case 'accepted':
+        return <Check className="w-4 h-4 text-green-500" />;
+      case 'declined':
+        return <X className="w-4 h-4 text-red-500" />;
+      default:
+        return <Bell className="w-4 h-4 text-gray-500" />;
+    }
+  };
+
+  const getNotificationStyle = (status, type) => {
+    if (type === 'new_request') {
+      return 'bg-blue-50 border border-blue-200';
+    }
+    
+    switch (status) {
+      case 'accepted':
+        return 'bg-green-50 border border-green-200';
+      case 'declined':
+        return 'bg-red-50 border border-red-200';
+      default:
+        return 'bg-gray-50 border border-gray-200';
+    }
+  };
+
+  const getStatusText = (status, type) => {
+    if (type === 'new_request') {
+      return 'New Request Created';
+    }
+    
+    switch (status) {
+      case 'accepted':
+        return 'Request Accepted';
+      case 'declined':
+        return 'Request Declined';
+      default:
+        return 'Status Updated';
+    }
   };
 
   return (
@@ -61,68 +162,136 @@ export default function NotificationBar() {
         onClick={() => setIsOpen(!isOpen)}
       >
         <Bell className="w-6 h-6" />
-        {notifications.length > 0 && (
+        {unreadCount > 0 && (
           <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-green-500" />
-          
         )}
       </button>
 
       {isOpen && (
         <div
-          className="fixed bg-white rounded-md shadow-lg z-50 border border-gray-200"
+          className="fixed bg-white rounded-lg shadow-xl z-50 border border-gray-200"
           style={{
             top: `calc(${bellPosition.top}px + 2rem)`,
             right: `calc(${bellPosition.right}px + 1rem)`,
-            width: "320px",
+            width: "380px",
+            maxHeight: "500px",
             transform: "translateY(10px)",
           }}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="p-4">
-            <h3 className="font-semibold text-lg mb-4">Notification</h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-semibold text-lg text-gray-800">Notifications</h3>
+              {unreadCount > 0 && (
+                <button
+                  onClick={markAllAsRead}
+                  className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  Mark all as read
+                </button>
+              )}
+            </div>
             
             {loading ? (
-              <div className="text-center text-sm text-gray-500 py-4">Loading...</div>
+              <div className="text-center text-sm text-gray-500 py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                Loading notifications...
+              </div>
             ) : error ? (
-              <div className="text-center text-sm text-red-500 py-4">{error}</div>
+              <div className="text-center text-sm text-red-500 py-8">
+                {error}
+              </div>
             ) : notifications.length > 0 ? (
-              notifications.map((notification) => (
-                <div 
-                  key={notification._id} 
-                  className={`mb-4 p-3 rounded border-l-4 ${
-                    notification.status === 'accepted' ? 'border-green-500' : 'border-red-500'
-                  }`}
-                >
-                  <div className="flex justify-between items-start">
-                    <h4 className="font-medium text-sm">
-                      {notification.status === 'accepted' 
-                        ? 'Admin Accepted your Request' 
-                        : 'Admin Declined your Request'}
-                    </h4>
-                    <span className="text-xs text-gray-500">
-                      {formatDate(notification.updatedAt)}
-                    </span>
-                  </div>
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {notifications.map((notification) => {
+                  const isUnread = !notification.read;
                   
-                  {notification.status === 'declined' && notification.reason && (
-                    <p className="text-sm text-gray-600 mt-1">
-                      {notification.reason}
-                    </p>
-                  )}
-                  
-                  {notification.status === 'accepted' && (
-                    <button 
-                      className="mt-2 text-sm text-green-600 hover:underline"
-                      onClick={() => handleViewClick(notification.requestId)}
+                  return (
+                    <div
+                      key={notification.id}
+                      className={`p-3 rounded-lg cursor-pointer transition-all duration-200 ${
+                        getNotificationStyle(notification.status, notification.type)
+                      } ${isUnread ? 'ring-1 ring-blue-200' : ''}`}
+                      onClick={() => handleViewClick(notification)}
                     >
-                      View
-                    </button>
-                  )}
-                </div>
-              ))
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 mt-0.5">
+                          {getNotificationIcon(notification.status, notification.type)}
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className={`font-medium text-sm ${
+                                notification.status === 'accepted' ? 'text-green-800' :
+                                notification.status === 'declined' ? 'text-red-800' :
+                                'text-gray-800'
+                              }`}>
+                                {getStatusText(notification.status, notification.type)}
+                              </div>
+                              
+                              <div className="text-xs text-gray-600 mt-1">
+                                {notification.destination && (
+                                  <span className="font-medium">To: {notification.destination}</span>
+                                )}
+                                {notification.requestingOffice && (
+                                  <span className="ml-2">• {notification.requestingOffice}</span>
+                                )}
+                              </div>
+
+                              {notification.status === 'accepted' && (
+                                <div className="mt-2 space-y-1">
+                                  {notification.driver && (
+                                    <div className="flex items-center gap-1 text-xs text-gray-600">
+                                      <User className="w-3 h-3" />
+                                      <span>Driver: {notification.driver}</span>
+                                    </div>
+                                  )}
+                                  {notification.vehicleType && (
+                                    <div className="flex items-center gap-1 text-xs text-gray-600">
+                                      <Car className="w-3 h-3" />
+                                      <span>Vehicle: {notification.vehicleType} ({notification.plateNo})</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {notification.status === 'declined' && notification.reason && (
+                                <div className="mt-2 text-xs text-gray-600 bg-white bg-opacity-50 p-2 rounded border">
+                                  <span className="font-medium">Reason:</span> {notification.reason}
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="flex flex-col items-end gap-1">
+                              <span className="text-xs text-gray-500 whitespace-nowrap">
+                                {formatDate(notification.updatedAt || notification.createdAt)}
+                              </span>
+                              {isUnread && (
+                                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <button
+                            className="mt-2 text-xs font-medium text-blue-600 hover:text-blue-800"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewClick(notification);
+                            }}
+                          >
+                            View Details
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             ) : (
-              <div className="text-center text-sm text-gray-500 py-4">
-                No notifications
+              <div className="text-center text-sm text-gray-500 py-8">
+                <Bell className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                No notifications yet
               </div>
             )}
           </div>
