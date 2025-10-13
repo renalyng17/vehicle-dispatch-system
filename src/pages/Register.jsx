@@ -70,7 +70,7 @@ const Register = () => {
       const response = await axios.post('/api/auth/register', dataToSend);
 
       if (response.data.status === 'success') {
-        navigate('/login', {
+        navigate('*', {
           state: {
             registrationSuccess: true,
             registeredEmail: formData.email
@@ -115,7 +115,7 @@ const Register = () => {
                   name="last_name"
                   value={formData.last_name}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-700 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 text-xs"
+                  className="w-full px-3 py-2 border border-gray-500 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 text-xs"
                   required
                 />
                 {errors.last_name && <span className="text-red-300 text-xs">{errors.last_name}</span>}
@@ -187,29 +187,25 @@ const Register = () => {
               </div>
             </div>
             
-           <div>
-  <label className="block text-xs font-medium text-gray-700 mb-1">User Type</label>
-  <select
-    name="user_type"
-    value={formData.user_type}
-    onChange={handleChange}
-    className="w-full px-3 py-2 border border-gray-700 rounded-md 
-               focus:outline-none focus:ring-1 focus:ring-green-500 text-xs
-               transition-all duration-200 ease-in-out"
-    required
-  >
-    <option value="" disabled hidden>Select User Type</option>
-    <option value="admin">Admin</option>
-    <option value="client">Client</option>
-  </select>
-  {errors.user_type && (
-    <span className="text-red-300 text-xs">{errors.user_type}</span>
-  )}
-</div>
-
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">User Type</label>
+              <select
+                name="user_type"
+                value={formData.user_type}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-700 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 text-xs"
+                required
+              >
+                <option value="" disabled hidden>Select User Type</option>
+                <option value="admin">Admin</option>
+                <option value="client">Client</option>
+              </select>
+              {errors.user_type && <span className="text-red-300 text-xs">{errors.user_type}</span>}
+            </div>
+            
             <button
               type="submit"
-              className="w-full py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-xs font-medium"
+              className="w-full py-2 bg-green-700 text-white rounded-md hover:bg-green-800 transition-colors text-xs font-medium"
               disabled={loading}
             >
               {loading ? "Registering..." : "Register"}

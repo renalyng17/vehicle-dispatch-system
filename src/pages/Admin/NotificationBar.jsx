@@ -1,51 +1,46 @@
-// NotificationBar.js (final corrected version)
+// NotificationBar.js (updated with complete functionality)
 import { Bell } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../../services/api";
+import { api } from "../../../services/api";
 
-// --- Input Components (ensure these are defined or imported) ---
-function Input({ label, value, onChange, name, required = false }) {
-  return (
-    <div className="mb-2">
-      <label className="block text-xs font-medium text-gray-700">{label}</label>
-      <input
-        type="text"
-        name={name}
-        value={value}
-        onChange={onChange}
-        required={required}
-        readOnly
-        className="w-full border rounded-md px-3 py-2 text-xs bg-gray-50"
-      />
-    </div>
-  );
-}
+// Input Component
+const Input = ({ label, value, ...props }) => (
+  <div>
+    <label className="block font-medium text-xs text-gray-500 mb-1">{label}</label>
+    <input
+      value={value}
+      readOnly
+      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-50"
+      {...props}
+    />
+  </div>
+);
 
-function SelectInput({ label, name, value, onChange, options = [], required = false }) {
-  return (
-    <div className="mb-2">
-      <label className="block text-xs font-medium text-gray-700">{label}</label>
-      <select
-        name={name}
-        value={value}
-        onChange={onChange}
-        required={required}
-        className="w-full border rounded-md px-3 py-2 text-xs"
-      >
-        <option value="">Select...</option>
-        {options.map((opt, i) => (
-          <option key={i} value={opt}>
-            {opt}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
+// SelectInput Component
+const SelectInput = ({ label, name, value, onChange, options, required = false }) => (
+  <div>
+    <label className="block font-medium text-xs text-gray-500 mb-1">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <select
+      name={name}
+      value={value}
+      onChange={onChange}
+      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+      required={required}
+    >
+      <option value="">Select {label}</option>
+      {options.map((option, index) => (
+        <option key={index} value={option}>
+          {option}
+        </option>
+      ))}
+    </select>
+  </div>
+);
 
-// --- Main Component ---
-export default function NotificationBar() {
+export default function NotificationBar({ onRequestUpdate }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isDeclineModalOpen, setIsDeclineModalOpen] = useState(false);
   const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
@@ -54,7 +49,6 @@ export default function NotificationBar() {
   const [drivers, setDrivers] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
-  const [isLoadingRequest, setIsLoadingRequest] = useState(false); // 👈 NEW
 
   const [formValues, setFormValues] = useState({
     driver: "",
@@ -69,35 +63,39 @@ export default function NotificationBar() {
   const unreadNotifications = notifications.filter(n => !n.read && n.type === "new_request");
   const latestNotification = unreadNotifications.at(-1);
 
+  // Fetch notifications
   useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        const data = await api.getNotifications();
-        setNotifications(data);
-      } catch (error) {
-        console.error("Error fetching notifications:", error);
-      }
-    };
-
-    const fetchData = async () => {
-      try {
-        const [driversData, vehiclesData] = await Promise.all([
-          api.getDrivers(),
-          api.getVehicles()
-        ]);
-        setDrivers(driversData);
-        setVehicles(vehiclesData);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-
     fetchNotifications();
-    fetchData();
+    fetchDriversAndVehicles();
 
     const interval = setInterval(fetchNotifications, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      const data = await api.getNotifications();
+      setNotifications(data);
+      console.log("✅ Notifications fetched:", data);
+    } catch (error) {
+      console.error("❌ Failed to fetch notifications:", error);
+    }
+  };
+
+  const fetchDriversAndVehicles = async () => {
+    try {
+      const [driversData, vehiclesData] = await Promise.all([
+        api.getDrivers(),
+        api.getVehicles()
+      ]);
+      console.log("✅ Drivers fetched:", driversData);
+      console.log("✅ Vehicles fetched:", vehiclesData);
+      setDrivers(driversData || []);
+      setVehicles(vehiclesData || []);
+    } catch (error) {
+      console.error("❌ Failed to fetch drivers/vehicles:", error);
+    }
+  };
 
   useEffect(() => {
     const bell = document.getElementById("notification-bell");
@@ -110,31 +108,23 @@ export default function NotificationBar() {
     }
   }, [isOpen]);
 
-  // ✅ FIXED: Only open modal AFTER request is loaded
   const handleButtonClick = async (e, action) => {
     e.stopPropagation();
-
-    if (!latestNotification?.requestId) {
-      alert("Request ID is missing. Cannot process.");
-      return;
+    
+    if (action === "decline") {
+      setIsDeclineModalOpen(true);
+    } else {
+      setIsAcceptModalOpen(true);
     }
-
-    setIsLoadingRequest(true);
-
-    try {
-      const request = await api.getRequest(latestNotification.requestId);
-      setSelectedRequest(request);
-
-      if (action === "decline") {
-        setIsDeclineModalOpen(true);
-      } else {
-        setIsAcceptModalOpen(true);
+    
+    // Fetch the request details for the selected notification
+    if (latestNotification) {
+      try {
+        const request = await api.getRequest(latestNotification.requestId);
+        setSelectedRequest(request);
+      } catch (error) {
+        console.error("Error fetching request details:", error);
       }
-    } catch (error) {
-      console.error("Error fetching request details:", error);
-      alert("Failed to load request details. Please try again.");
-    } finally {
-      setIsLoadingRequest(false);
     }
   };
 
@@ -145,48 +135,75 @@ export default function NotificationBar() {
 
   const handleProcess = async (action) => {
     try {
-      if (!selectedRequest || !latestNotification) {
-        throw new Error("Missing request or notification data");
+      if (!selectedRequest) {
+        throw new Error("No request selected");
       }
 
-      await api.updateRequest(selectedRequest.id, {
-        status: action === "accept" ? "Accepted" : "Declined",
-        ...formValues
-      });
+      // Prepare data for the API call based on action
+      const requestData = {
+        status: action === "accept" ? "Accepted" : "Declined"
+      };
 
-      await api.markNotificationAsRead(latestNotification.id);
+      if (action === "accept") {
+        // Find the selected driver to get contact information
+        const selectedDriver = drivers.find(d => d.name === formValues.driver);
+        requestData.driver_name = formValues.driver;
+        requestData.contact_no = selectedDriver?.contact || selectedDriver?.contact_no || "";
+        requestData.vehicle_type = formValues.vehicleType;
+        requestData.plate_no = formValues.plateNo;
+      } else if (action === "decline") {
+        requestData.reason_for_decline = formValues.reason || "No reason provided";
+      }
 
-      // Reset
+      console.log("📤 Sending request data:", requestData);
+
+      // ✅ FIXED: Use the correct API method
+      const updatedRequest = await api.updateRequestStatus(selectedRequest.id, requestData);
+
+      // ✅ FIXED: Mark notification as read
+      if (latestNotification) {
+        await api.markNotificationAsRead(latestNotification.id);
+      }
+
+      // Reset form and close modals
       setFormValues({ driver: "", vehicleType: "", plateNo: "", reason: "" });
       setIsDeclineModalOpen(false);
       setIsAcceptModalOpen(false);
       setIsOpen(false);
       setSelectedRequest(null);
 
-      navigate("/dashboard/requests", { 
-        state: { 
-          message: `Request ${action === "accept" ? "accepted" : "declined"} successfully` 
-        } 
-      });
+      // Refresh notifications
+      await fetchNotifications();
+
+      // Notify parent component about the update
+      if (onRequestUpdate) {
+        onRequestUpdate(updatedRequest);
+      }
+
+      // Show success message
+      alert(`Request ${action === "accept" ? "accepted" : "declined"} successfully`);
+
     } catch (error) {
-      console.error("Error processing request:", error);
+      console.error("❌ Error processing request:", error);
       alert("Error processing request. Please try again.");
     }
-  };
-
-  const handleCloseModals = () => {
-    setIsDeclineModalOpen(false);
-    setIsAcceptModalOpen(false);
-    setSelectedRequest(null); // 👈 Important cleanup
   };
 
   const isAcceptFormValid =
     formValues.driver && formValues.vehicleType && formValues.plateNo;
 
-  const vehicleTypes = [...new Set(vehicles.map(v => v.type))];
+  // Get unique vehicle types for dropdown
+  const vehicleTypes = [...new Set(vehicles.map(v => v.vehicleType || v.vehicle_model))];
+
+  // Get plate numbers for selected vehicle type
   const plateNumbers = formValues.vehicleType 
-    ? vehicles.filter(v => v.type === formValues.vehicleType).map(v => v.plateNo)
+    ? vehicles
+        .filter(v => (v.vehicleType || v.vehicle_model) === formValues.vehicleType)
+        .map(v => v.plateNo || v.plate_no)
     : [];
+
+  // Get available drivers (non-archived)
+  const availableDrivers = drivers.filter(d => !d.archivedAt);
 
   return (
     <>
@@ -222,29 +239,18 @@ export default function NotificationBar() {
               <div className="flex justify-end gap-x-2 mt-4">
                 <button 
                   onClick={(e) => handleButtonClick(e, "decline")} 
-                  className="px-5 py-2 bg-red-500 text-white rounded-md text-sm"
-                  disabled={isLoadingRequest}
+                  className="px-5 py-2 bg-red-500 text-white rounded-md text-sm hover:bg-red-600"
                 >
                   {isLoadingRequest ? "Loading..." : "Decline"}
                 </button>
                 <button 
                   onClick={(e) => handleButtonClick(e, "accept")} 
-                  className="px-5 py-2 bg-green-500 text-white rounded-md text-sm"
-                  disabled={isLoadingRequest}
+                  className="px-5 py-2 bg-green-500 text-white rounded-md text-sm hover:bg-green-600"
                 >
                   {isLoadingRequest ? "Loading..." : "Accept"}
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Optional: Global Loading Overlay */}
-      {isLoadingRequest && (
-        <div className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-[55]">
-          <div className="bg-white p-4 rounded-lg shadow-lg">
-            <p className="text-sm">Loading request details...</p>
           </div>
         </div>
       )}
@@ -270,13 +276,13 @@ export default function NotificationBar() {
                   onChange={handleInputChange}
                   rows="3"
                   placeholder="Enter reason here..."
-                  className="w-full border rounded-md px-3 py-2 mt-1 text-xs"
+                  className="w-full border rounded-md px-3 py-2 mt-1"
                 />
               </div>
             </div>
             <div className="flex justify-end gap-x-3 mt-6">
               <button 
-                onClick={handleCloseModals} 
+                onClick={() => setIsDeclineModalOpen(false)} 
                 className="px-3 py-1 bg-gray-300 text-sm rounded hover:bg-gray-400"
               >
                 Cancel
@@ -310,7 +316,7 @@ export default function NotificationBar() {
                 name="driver"
                 value={formValues.driver}
                 onChange={handleInputChange}
-                options={drivers.map(d => d.name)}
+                options={availableDrivers.map(d => d.name)}
                 required
               />
               <div className="flex gap-2">
@@ -334,7 +340,7 @@ export default function NotificationBar() {
             </div>
             <div className="flex justify-end gap-x-2 mt-6">
               <button 
-                onClick={handleCloseModals} 
+                onClick={() => setIsAcceptModalOpen(false)} 
                 className="px-3 py-1 bg-gray-300 text-sm rounded hover:bg-gray-400"
               >
                 Cancel
