@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { CalendarCheck2, CalendarX2, CalendarClock, ChevronRight, MapPin, Clock, User, Car, AlertCircle, TrendingUp, TrendingDown } from "lucide-react";
+import React from "react";
+import { CalendarCheck2, CalendarX2, CalendarClock } from "lucide-react";
+import { api } from "../../services/api";
 
 export default function Client_Home() {
   const [recentRequests, setRecentRequests] = useState([]);

@@ -66,11 +66,11 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const { ForgotPassword, ...dataToSend } = formData;
+      const { confirmPassword, ...dataToSend } = formData; // ✅ Remove confirmPassword before sending
       const response = await axios.post('/api/auth/register', dataToSend);
 
       if (response.data.status === 'success') {
-        navigate('*', {
+        navigate('/login', { // ✅ Better to go to login after register
           state: {
             registrationSuccess: true,
             registeredEmail: formData.email
@@ -127,7 +127,7 @@ const Register = () => {
                   name="first_name"
                   value={formData.first_name}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-700 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 text-xs"
+                  className="w-full px-3 py-2 border border-gray-500 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 text-xs"
                   required
                 />
                 {errors.first_name && <span className="text-red-300 text-xs">{errors.first_name}</span>}
@@ -141,7 +141,7 @@ const Register = () => {
                 name="contact_no"
                 value={formData.contact_no}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-700 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 text-xs"
+                className="w-full px-3 py-2 border border-gray-500 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 text-xs"
                 required
               />
               {errors.contact_no && <span className="text-red-300 text-xs">{errors.contact_no}</span>}
@@ -154,7 +154,7 @@ const Register = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-700 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 text-xs"
+                className="w-full px-3 py-2 border border-gray-500 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 text-xs"
                 required
               />
               {errors.email && <span className="text-red-300 text-xs">{errors.email}</span>}
@@ -168,7 +168,7 @@ const Register = () => {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-700 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 text-xs"
+                  className="w-full px-3 py-2 border border-gray-500 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 text-xs"
                   required
                 />
                 {errors.password && <span className="text-red-300 text-xs">{errors.password}</span>}
@@ -180,20 +180,21 @@ const Register = () => {
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-700 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 text-xs"
+                  className="w-full px-3 py-2 border border-gray-500 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 text-xs"
                   required
                 />
                 {errors.confirmPassword && <span className="text-red-300 text-xs">{errors.confirmPassword}</span>}
               </div>
             </div>
-            
+
+            {/* ✅ Only one User Type select */}
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">User Type</label>
               <select
                 name="user_type"
                 value={formData.user_type}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-700 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 text-xs"
+                className="w-full px-3 py-2 border border-gray-500 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500 text-xs"
                 required
               >
                 <option value="" disabled hidden>Select User Type</option>
@@ -202,15 +203,17 @@ const Register = () => {
               </select>
               {errors.user_type && <span className="text-red-300 text-xs">{errors.user_type}</span>}
             </div>
-            
+
+            {/* ✅ Fixed button: properly closed */}
             <button
               type="submit"
-              className="w-full py-2 bg-green-700 text-white rounded-md hover:bg-green-800 transition-colors text-xs font-medium"
               disabled={loading}
+              className="w-full py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-xs font-medium"
             >
               {loading ? "Registering..." : "Register"}
             </button>
           </form>
+
           <p className="mt-4 text-xs text-center text-gray-700">
             Already have an account?{' '}
             <Link to="/login" className="text-green-700 hover:underline">
@@ -222,10 +225,10 @@ const Register = () => {
 
       {/* Car image on right side */}
       <img
-              src={car}
-              alt="Car"
-              className="absolute bottom-0 right-0 w-1/2 md:w-1/2 object-contain h-auto"
-            />
+        src={car}
+        alt="Car"
+        className="absolute bottom-0 right-0 w-1/2 md:w-1/2 object-contain h-auto"
+      />
     </div>
   );
 };

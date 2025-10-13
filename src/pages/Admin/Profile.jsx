@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import profile from "../../assets/profile.png";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 axios.defaults.baseURL = "http://localhost:3001";
 
 function Profile() {
-  const location = useLocation();
+  const location = useLocation(); // ✅ Only once
+  const navigate = useNavigate();
+
   const [isEditing, setIsEditing] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
   const [userData, setUserData] = useState({
     firstName: "",
     lastName: "",
@@ -19,6 +22,7 @@ function Profile() {
     office: "",
   });
 
+  // Prevent background scroll
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -26,11 +30,12 @@ function Profile() {
     };
   }, []);
 
+  // Load user data
   useEffect(() => {
     const loadUserData = async () => {
       try {
         setIsLoading(true);
-        
+
         if (location.state?.registrationSuccess) {
           const { userData } = location.state;
           setUserData({
@@ -134,11 +139,11 @@ function Profile() {
       ...prev,
       [name]: value,
     }));
-  }
+  };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen ">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center">
           <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
           <p className="mt-4 text-gray-600">Loading profile...</p>
@@ -148,7 +153,7 @@ function Profile() {
   }
 
   return (
-    <div className="min-h-screen  p-6 font-sans">
+    <div className="min-h-screen p-6 font-sans">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -195,7 +200,7 @@ function Profile() {
                   />
                 </div>
                 {isEditing && (
-                  <button className="absolute bottom-2 right-2 bg-white p-2 rounded-full shadow-md hover:bg-gray-50 transition-all transform hover:scale-105  border border-gray-200">
+                  <button className="absolute bottom-2 right-2 bg-white p-2 rounded-full shadow-md hover:bg-gray-50 transition-all transform hover:scale-105 border border-gray-200">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className="h-5 w-5 text-gray-600"
@@ -211,7 +216,7 @@ function Profile() {
                   </button>
                 )}
               </div>
-              
+
               <div className="mt-6 text-center lg:text-left">
                 <h2 className="text-2xl font-semibold text-gray-800">
                   {`${userData.firstName} ${userData.lastName}`}
@@ -231,7 +236,7 @@ function Profile() {
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">
                   Personal Information
                 </h3>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-1">
                     <label className="block text-sm font-medium text-gray-600">
