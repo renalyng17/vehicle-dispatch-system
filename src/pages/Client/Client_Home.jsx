@@ -70,20 +70,7 @@ export default function Client_Home() {
       <h1 className="text-3xl font-bold mb-6">Home</h1>
 
       {/* Statistics Cards - Updated to match the image */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        {/* Total Requests Card */}
-        <div className="bg-white rounded-xl shadow p-6">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-gray-500 text-sm">Total Requests</p>
-              <h2 className="text-3xl font-bold mt-1">12</h2>
-            </div>
-            <div className="bg-blue-100 p-2 rounded-lg">
-              <CalendarCheck2 className="w-6 h-6 text-blue-600" />
-            </div>
-          </div>
-        </div>
-
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {/* Pending Approval Card */}
         <div className="bg-white rounded-xl shadow p-6">
           <div className="flex justify-between items-start">

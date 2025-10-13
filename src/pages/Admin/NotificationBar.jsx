@@ -1,11 +1,50 @@
-// NotificationBar.js (updated)
+// NotificationBar.js (final corrected version)
 import { Bell } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../services/api";
 
-// ... (Input and SelectInput components remain the same)
+// --- Input Components (ensure these are defined or imported) ---
+function Input({ label, value, onChange, name, required = false }) {
+  return (
+    <div className="mb-2">
+      <label className="block text-xs font-medium text-gray-700">{label}</label>
+      <input
+        type="text"
+        name={name}
+        value={value}
+        onChange={onChange}
+        required={required}
+        readOnly
+        className="w-full border rounded-md px-3 py-2 text-xs bg-gray-50"
+      />
+    </div>
+  );
+}
 
+function SelectInput({ label, name, value, onChange, options = [], required = false }) {
+  return (
+    <div className="mb-2">
+      <label className="block text-xs font-medium text-gray-700">{label}</label>
+      <select
+        name={name}
+        value={value}
+        onChange={onChange}
+        required={required}
+        className="w-full border rounded-md px-3 py-2 text-xs"
+      >
+        <option value="">Select...</option>
+        {options.map((opt, i) => (
+          <option key={i} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+// --- Main Component ---
 export default function NotificationBar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isDeclineModalOpen, setIsDeclineModalOpen] = useState(false);
@@ -15,6 +54,7 @@ export default function NotificationBar() {
   const [drivers, setDrivers] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [isLoadingRequest, setIsLoadingRequest] = useState(false); // 👈 NEW
 
   const [formValues, setFormValues] = useState({
     driver: "",
@@ -30,7 +70,6 @@ export default function NotificationBar() {
   const latestNotification = unreadNotifications.at(-1);
 
   useEffect(() => {
-    // Fetch notifications
     const fetchNotifications = async () => {
       try {
         const data = await api.getNotifications();
@@ -40,7 +79,6 @@ export default function NotificationBar() {
       }
     };
 
-    // Fetch drivers and vehicles
     const fetchData = async () => {
       try {
         const [driversData, vehiclesData] = await Promise.all([
@@ -57,9 +95,7 @@ export default function NotificationBar() {
     fetchNotifications();
     fetchData();
 
-    // Set up polling for new notifications
-    const interval = setInterval(fetchNotifications, 10000); // Poll every 10 seconds
-
+    const interval = setInterval(fetchNotifications, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -74,23 +110,31 @@ export default function NotificationBar() {
     }
   }, [isOpen]);
 
+  // ✅ FIXED: Only open modal AFTER request is loaded
   const handleButtonClick = async (e, action) => {
     e.stopPropagation();
-    
-    if (action === "decline") {
-      setIsDeclineModalOpen(true);
-    } else {
-      setIsAcceptModalOpen(true);
+
+    if (!latestNotification?.requestId) {
+      alert("Request ID is missing. Cannot process.");
+      return;
     }
-    
-    // Fetch the request details for the selected notification
-    if (latestNotification) {
-      try {
-        const request = await api.getRequest(latestNotification.requestId);
-        setSelectedRequest(request);
-      } catch (error) {
-        console.error("Error fetching request details:", error);
+
+    setIsLoadingRequest(true);
+
+    try {
+      const request = await api.getRequest(latestNotification.requestId);
+      setSelectedRequest(request);
+
+      if (action === "decline") {
+        setIsDeclineModalOpen(true);
+      } else {
+        setIsAcceptModalOpen(true);
       }
+    } catch (error) {
+      console.error("Error fetching request details:", error);
+      alert("Failed to load request details. Please try again.");
+    } finally {
+      setIsLoadingRequest(false);
     }
   };
 
@@ -101,27 +145,24 @@ export default function NotificationBar() {
 
   const handleProcess = async (action) => {
     try {
-      if (!selectedRequest) {
-        throw new Error("No request selected");
+      if (!selectedRequest || !latestNotification) {
+        throw new Error("Missing request or notification data");
       }
 
-      // Update the request status
       await api.updateRequest(selectedRequest.id, {
         status: action === "accept" ? "Accepted" : "Declined",
         ...formValues
       });
 
-      // Mark notification as read
       await api.markNotificationAsRead(latestNotification.id);
 
-      // Reset form and close modals
+      // Reset
       setFormValues({ driver: "", vehicleType: "", plateNo: "", reason: "" });
       setIsDeclineModalOpen(false);
       setIsAcceptModalOpen(false);
       setIsOpen(false);
       setSelectedRequest(null);
 
-      // Navigate to requests page
       navigate("/dashboard/requests", { 
         state: { 
           message: `Request ${action === "accept" ? "accepted" : "declined"} successfully` 
@@ -133,13 +174,16 @@ export default function NotificationBar() {
     }
   };
 
+  const handleCloseModals = () => {
+    setIsDeclineModalOpen(false);
+    setIsAcceptModalOpen(false);
+    setSelectedRequest(null); // 👈 Important cleanup
+  };
+
   const isAcceptFormValid =
     formValues.driver && formValues.vehicleType && formValues.plateNo;
 
-  // Get unique vehicle types for dropdown
   const vehicleTypes = [...new Set(vehicles.map(v => v.type))];
-  
-  // Get plate numbers for selected vehicle type
   const plateNumbers = formValues.vehicleType 
     ? vehicles.filter(v => v.type === formValues.vehicleType).map(v => v.plateNo)
     : [];
@@ -176,10 +220,31 @@ export default function NotificationBar() {
               <h4 className="font-medium">New Travel Request!</h4>
               <p>{latestNotification.message}</p>
               <div className="flex justify-end gap-x-2 mt-4">
-                <button onClick={(e) => handleButtonClick(e, "decline")} className="px-5 py-2 bg-red-500 text-white rounded-md text-sm">Decline</button>
-                <button onClick={(e) => handleButtonClick(e, "accept")} className="px-5 py-2 bg-green-500 text-white rounded-md text-sm">Accept</button>
+                <button 
+                  onClick={(e) => handleButtonClick(e, "decline")} 
+                  className="px-5 py-2 bg-red-500 text-white rounded-md text-sm"
+                  disabled={isLoadingRequest}
+                >
+                  {isLoadingRequest ? "Loading..." : "Decline"}
+                </button>
+                <button 
+                  onClick={(e) => handleButtonClick(e, "accept")} 
+                  className="px-5 py-2 bg-green-500 text-white rounded-md text-sm"
+                  disabled={isLoadingRequest}
+                >
+                  {isLoadingRequest ? "Loading..." : "Accept"}
+                </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Optional: Global Loading Overlay */}
+      {isLoadingRequest && (
+        <div className="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-[55]">
+          <div className="bg-white p-4 rounded-lg shadow-lg">
+            <p className="text-sm">Loading request details...</p>
           </div>
         </div>
       )}
@@ -198,20 +263,30 @@ export default function NotificationBar() {
               <Input label="Destination" value={selectedRequest.destination} />
               <Input label="Office Department" value={selectedRequest.requestingOffice} />
               <div>
-                <label className="block font-medium">Reason (optional)</label>
+                <label className="block font-medium text-xs">Reason (optional)</label>
                 <textarea
                   name="reason"
                   value={formValues.reason}
                   onChange={handleInputChange}
                   rows="3"
                   placeholder="Enter reason here..."
-                  className="w-full border rounded-md px-3 py-2 mt-1"
+                  className="w-full border rounded-md px-3 py-2 mt-1 text-xs"
                 />
               </div>
             </div>
             <div className="flex justify-end gap-x-3 mt-6">
-              <button onClick={() => setIsDeclineModalOpen(false)} className="px-3 py-1 bg-gray-300 text-sm rounded hover:bg-gray-400">Cancel</button>
-              <button onClick={() => handleProcess("decline")} className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-800">Process</button>
+              <button 
+                onClick={handleCloseModals} 
+                className="px-3 py-1 bg-gray-300 text-sm rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => handleProcess("decline")} 
+                className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-800"
+              >
+                Process
+              </button>
             </div>
           </div>
         </div>
@@ -258,7 +333,12 @@ export default function NotificationBar() {
               </div>
             </div>
             <div className="flex justify-end gap-x-2 mt-6">
-              <button onClick={() => setIsAcceptModalOpen(false)} className="px-3 py-1 bg-gray-300 text-sm rounded hover:bg-gray-400">Cancel</button>
+              <button 
+                onClick={handleCloseModals} 
+                className="px-3 py-1 bg-gray-300 text-sm rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
               <button
                 onClick={() => handleProcess("accept")}
                 disabled={!isAcceptFormValid}

@@ -12,29 +12,50 @@ export default function NotificationBar() {
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const bell = document.getElementById("notification-bell");
-    if (bell) {
-      const rect = bell.getBoundingClientRect();
-      setBellPosition({
-        top: rect.top + window.scrollY,
-        right: window.innerWidth - rect.right,
-      });
+  // Fetch notifications
+  const fetchNotifications = async () => {
+    try {
+      const response = await axios.get('http://localhost:3001/api/notifications');
+      setNotifications(response.data);
+      console.log("Fetched notifications:", response.data); // 👈 Debug log
+    } catch (err) {
+      setError("Failed to fetch notifications");
+      console.error("Error fetching notifications:", err);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const fetchNotifications = async () => {
-      try {
-        const response = await axios.get('http://localhost:3001/api/notifications');
-        setNotifications(response.data);
-      } catch (err) {
-        setError("Failed to fetch notifications");
-        console.error("Error fetching notifications:", err);
-      } finally {
-        setLoading(false);
+  // Get bell position on mount and window resize
+  useEffect(() => {
+    const updateBellPosition = () => {
+      const bell = document.getElementById("notification-bell");
+      if (bell) {
+        const rect = bell.getBoundingClientRect();
+        setBellPosition({
+          top: rect.top + window.scrollY,
+          right: window.innerWidth - rect.right,
+        });
       }
     };
 
+    updateBellPosition();
+    window.addEventListener("resize", updateBellPosition);
+    return () => window.removeEventListener("resize", updateBellPosition);
+  }, []);
+
+  // Fetch on mount
+  useEffect(() => {
     fetchNotifications();
+  }, []);
+
+  // Poll every 30 seconds for new notifications
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchNotifications();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
   }, []);
 
   const formatDate = (dateString) => {
@@ -53,6 +74,17 @@ export default function NotificationBar() {
     setIsOpen(false);
   };
 
+  // Optional: Mark all as read (if backend supports it)
+  const handleMarkAllRead = async () => {
+    try {
+      await axios.post('http://localhost:3001/api/notifications/mark-read');
+      setNotifications([]); // or refetch
+      fetchNotifications(); // refresh list
+    } catch (err) {
+      console.error("Failed to mark notifications as read:", err);
+    }
+  };
+
   return (
     <>
       <button
@@ -61,6 +93,7 @@ export default function NotificationBar() {
         onClick={() => setIsOpen(!isOpen)}
       >
         <Bell className="w-6 h-6" />
+        {/* Show green dot only if there are notifications */}
         {notifications.length > 0 && (
           <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-green-500" />
         )}
@@ -78,7 +111,17 @@ export default function NotificationBar() {
           onClick={(e) => e.stopPropagation()}
         >
           <div className="p-4">
-            <h3 className="font-semibold text-lg mb-4">Notifications</h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-semibold text-lg">Notifications</h3>
+              {notifications.length > 0 && (
+                <button
+                  onClick={handleMarkAllRead}
+                  className="text-xs text-blue-600 hover:underline"
+                >
+                  Mark all read
+                </button>
+              )}
+            </div>
             
             {loading ? (
               <div className="text-center text-sm text-gray-500 py-4">Loading...</div>
