@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { ChevronsUpDown, Archive, Plus, X, Check, ChevronUp, ChevronDown } from "lucide-react";
-<<<<<<< HEAD
+
 import { api } from "../../services/api"; // Import your API service
-=======
->>>>>>> 06a123cb1635fea48cd7564a16a0fa74b8b954dc
+
 
 export default function Management() {
   // dropdown states
@@ -11,11 +10,9 @@ export default function Management() {
   const [showFleetCardDropdown, setShowFleetCardDropdown] = useState(false);
   const [showRfidDropdown, setShowRfidDropdown] = useState(false);
 
-<<<<<<< HEAD
+
   // main states
-=======
-  // Main state
->>>>>>> 06a123cb1635fea48cd7564a16a0fa74b8b954dc
+
   const [activeTab, setActiveTab] = useState("vehicle");
   const [showModal, setShowModal] = useState(false);
   const [vehicles, setVehicles] = useState([]);
@@ -24,7 +21,7 @@ export default function Management() {
   const [archivedDrivers, setArchivedDrivers] = useState([]);
   const [confirmDelete, setConfirmDelete] = useState({ type: null, idx: null });
   const [duplicateModal, setDuplicateModal] = useState({ show: false, type: "" });
-<<<<<<< HEAD
+
   const [isSubmittingVehicle, setIsSubmittingVehicle] = useState(false);
   const [isSubmittingDriver, setIsSubmittingDriver] = useState(false);
 
@@ -63,10 +60,6 @@ export default function Management() {
     return () => { mounted = false; };
   }, []);
 
-=======
-
-  // Form state
->>>>>>> 06a123cb1635fea48cd7564a16a0fa74b8b954dc
   const [vehicleForm, setVehicleForm] = useState({
     vehicleType: "",
     plateNo: "",
@@ -75,19 +68,14 @@ export default function Management() {
     fleetCard: "",
     rfid: "",
   });
-<<<<<<< HEAD
 
-=======
->>>>>>> 06a123cb1635fea48cd7564a16a0fa74b8b954dc
   const [driverForm, setDriverForm] = useState({
     name: "",
     contact: "",
     email: "",
   });
 
-<<<<<<< HEAD
-  // open add modal and reset form
-=======
+
   // Prevent page scroll when modals open (optional)
   useEffect(() => {
     if (showModal || duplicateModal.show || confirmDelete.type) {
@@ -127,7 +115,7 @@ export default function Management() {
   };
 
   // Handle modal open and reset form
->>>>>>> 06a123cb1635fea48cd7564a16a0fa74b8b954dc
+
   const handleAddClick = () => {
     setShowModal(true);
     setVehicleForm({
@@ -152,7 +140,7 @@ export default function Management() {
         : "text-gray-500 hover:text-green-600 hover:bg-green-50"
     }`;
 
-<<<<<<< HEAD
+
   // helper to normalize contact to E.164 (+63...)
   const toE164 = (contact) => {
     let digits = contact.replace(/\D/g, "");
@@ -169,7 +157,7 @@ export default function Management() {
     if (
       vehicles.some(
         (v) => v.plateNo?.trim().toLowerCase() === vehicleForm.plateNo.trim().toLowerCase()
-=======
+
   // 🚚 Handle vehicle modal submit — POST to backend
   const handleVehicleSubmit = async (e) => {
     e.preventDefault();
@@ -179,14 +167,14 @@ export default function Management() {
       vehicles.some(
         (v) =>
           v.plateNo?.trim().toLowerCase() === vehicleForm.plateNo.trim().toLowerCase()
->>>>>>> 06a123cb1635fea48cd7564a16a0fa74b8b954dc
+
       )
     ) {
       setDuplicateModal({ show: true, type: "vehicle" });
       return;
     }
 
-<<<<<<< HEAD
+
     setIsSubmittingVehicle(true);
     try {
       const payload = {
@@ -238,7 +226,7 @@ export default function Management() {
     }
   };
 
-=======
+
     try {
       const response = await fetch('http://localhost:3001/api/vehicles', {
         method: 'POST',
@@ -310,20 +298,17 @@ export default function Management() {
   };
 
   // 🗑️ Open confirmation modal for vehicle
->>>>>>> 06a123cb1635fea48cd7564a16a0fa74b8b954dc
+
   const handleDeleteVehicle = (idx) => {
     setConfirmDelete({ type: "vehicle", idx });
   };
 
-<<<<<<< HEAD
-=======
-  // 🗑️ Open confirmation modal for driver
->>>>>>> 06a123cb1635fea48cd7564a16a0fa74b8b954dc
+
   const handleDeleteDriver = (idx) => {
     setConfirmDelete({ type: "driver", idx });
   };
 
-<<<<<<< HEAD
+
   // confirm archive -> call API
   const confirmDeleteAction = async () => {
     if (confirmDelete.type === "vehicle") {
@@ -345,7 +330,7 @@ export default function Management() {
       } catch (err) {
         console.error(err);
         alert("Failed to archive driver.");
-=======
+
   // ✅ Confirm deletion — DELETE from backend
   const confirmDeleteAction = async () => {
     if (confirmDelete.type === "vehicle") {
@@ -387,21 +372,18 @@ export default function Management() {
       } catch (error) {
         console.error('Error archiving driver:', error);
         alert('Network error. Failed to archive driver.');
->>>>>>> 06a123cb1635fea48cd7564a16a0fa74b8b954dc
+
       }
     }
     setConfirmDelete({ type: null, idx: null });
   };
 
-<<<<<<< HEAD
-=======
-  // ❌ Cancel deletion
->>>>>>> 06a123cb1635fea48cd7564a16a0fa74b8b954dc
+
   const cancelDeleteAction = () => {
     setConfirmDelete({ type: null, idx: null });
   };
 
-<<<<<<< HEAD
+
   // restore -> call backend
   const handleRestore = async (type, idx) => {
     if (type === "vehicle") {
@@ -424,7 +406,7 @@ export default function Management() {
         console.error(err);
         alert("Failed to restore driver.");
       }
-=======
+
   // 🔁 Handle restoring items from archive — POST to re-add
   const handleRestore = async (type, idx) => {
     const item = type === "vehicle" ? archivedVehicles[idx] : archivedDrivers[idx];
@@ -474,7 +456,7 @@ export default function Management() {
     } catch (error) {
       console.error('Error restoring item:', error);
       alert('Network error. Failed to restore item.');
->>>>>>> 06a123cb1635fea48cd7564a16a0fa74b8b954dc
+
     }
   };
 
@@ -514,28 +496,17 @@ export default function Management() {
     );
   };
 
-<<<<<<< HEAD
-=======
-  // Toggle archive view
->>>>>>> 06a123cb1635fea48cd7564a16a0fa74b8b954dc
+
   const toggleArchiveView = () => {
     setActiveTab(activeTab === "archive" ? "vehicle" : "archive");
   };
 
-<<<<<<< HEAD
-  // The rest of your JSX remains the same...
-  // [Keep all your JSX code as is, it doesn't need changes]
-=======
-  // 🎨 RETURN YOUR EXISTING UI — UNCHANGED
->>>>>>> 06a123cb1635fea48cd7564a16a0fa74b8b954dc
+
   return (
     <div className="p-6 relative pb-16 min-h-screen">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800">Management</h1>
-<<<<<<< HEAD
 
-=======
->>>>>>> 06a123cb1635fea48cd7564a16a0fa74b8b954dc
         {(activeTab === "vehicle" || activeTab === "driver") && (
           <div className="flex justify-end mb-4">
             <button
@@ -547,12 +518,12 @@ export default function Management() {
             </button>
           </div>
         )}
-<<<<<<< HEAD
+
         
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-6">
-=======
+
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
->>>>>>> 06a123cb1635fea48cd7564a16a0fa74b8b954dc
+
           <div className="flex border-b">
             <button 
               className={tabClass("vehicle")} 
@@ -566,7 +537,7 @@ export default function Management() {
             >
               Driver Information
             </button>
-<<<<<<< HEAD
+
           </div>
 
           <div className="p-4">
@@ -1182,7 +1153,7 @@ export default function Management() {
                 className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                 onClick={() => setDuplicateModal({ show: false, type: "" })}
               >
-=======
+
           </div>
           <div className="p-4">
             {activeTab === "vehicle" && (
@@ -1795,7 +1766,7 @@ export default function Management() {
                 className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                 onClick={() => setDuplicateModal({ show: false, type: "" })}
               >
->>>>>>> 06a123cb1635fea48cd7564a16a0fa74b8b954dc
+
                 OK
               </button>
             </div>
@@ -1835,13 +1806,13 @@ export default function Management() {
 
         {/* Archive button in bottom right corner */}
         <button
-<<<<<<< HEAD
+
           className={`fixed bottom-4 right-13 py-2 px-4 rounded-lg hover:bg-green-500 hover:text-white transition-colors flex items-center gap-2 shadow-sm mb-8 ${activeTab === "archive" ? "bg-green-600 text-white" : "bg-white text-green-600"}`}
-=======
+
           className={`fixed bottom-4 right-13 py-2 px-4 rounded-lg hover:bg-green-500 hover:text-white transition-colors flex items-center gap-2 shadow-sm mb-8 ${
             activeTab === "archive" ? "bg-green-600 text-white" : "bg-white text-green-600"
           }`}
->>>>>>> 06a123cb1635fea48cd7564a16a0fa74b8b954dc
+
           onClick={toggleArchiveView}
         >
           <Archive size={18} />
