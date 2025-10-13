@@ -1,7 +1,7 @@
 import { Bell, Check, X, Car, User } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../../../services/api"; // Using your API service
+import { api } from "../../services/api";
 
 export default function NotificationBar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -9,6 +9,7 @@ export default function NotificationBar() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
   const [unreadCount, setUnreadCount] = useState(0);
 
   const navigate = useNavigate();

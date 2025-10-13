@@ -4,6 +4,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./Context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
+
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
