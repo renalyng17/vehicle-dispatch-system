@@ -255,7 +255,7 @@ function Client_Requests() {
 
       {/* CREATE NEW REQUEST Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[60] p-4">
+       <div className="fixed inset-0 flex items-center justify-center z-50  backdrop-blur-[1px]">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-sm relative">
             <div className="p-5">
               <h2 className="text-xl font-bold text-gray-800 mb-5">Create New Request</h2>
