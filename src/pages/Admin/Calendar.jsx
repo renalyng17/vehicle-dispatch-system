@@ -106,15 +106,15 @@ const Calendar = () => {
       </div>
 
       {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-px border border-transparent rounded bg-gray-300 text-center text-sm font-medium overflow-hidden">
-        {daysOfWeek.map((day) => (
-          <div
-            key={day}
-            className="bg-green-600 py-2 text-white font-semibold tracking-wide"
-          >
-            {day}
-          </div>
-        ))}
+     <div className="grid grid-cols-7 gap-px bg-gray-300 rounded text-center text-sm font-medium">
+  {daysOfWeek.map((day) => (
+    <div
+      key={day}
+      className="bg-green-600 py-2 text-white font-semibold tracking-wide"
+    >
+      {day}
+    </div>
+  ))}
 
         {weeks.map((week, i) =>
           week.map((date, j) => {
@@ -167,7 +167,7 @@ const Calendar = () => {
 
       {/* Modal */}
       {selectedEvent && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-30">
+       <div className="fixed inset-0 flex items-center justify-center z-50  backdrop-blur-[1px]">
           <div
             className="bg-white p-6 rounded-lg shadow-xl w-[400px] relative z-50"
             onClick={(e) => e.stopPropagation()}
@@ -178,7 +178,7 @@ const Calendar = () => {
               </h4>
               <button
                 onClick={() => setSelectedEvent(null)}
-                className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 text-xl"
+                className="absolute right-4 top-4 text-gray-500 hover:text-gray-00 text-xl"
               >
                 ✕
               </button>
