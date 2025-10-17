@@ -1,6 +1,6 @@
 // NotificationBar.js
 import { Bell, ChevronDown } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../services/api";
 
@@ -78,27 +78,13 @@ const SelectInput = ({ label, name, value, onChange, options, required = false }
   );
 };
 
-// Helper: Get booked drivers and vehicles on a specific date
-const getBookedResourcesOnDate = (notifications, date) => {
-  const bookedDrivers = new Set();
-  const bookedVehicles = new Set();
-
-  notifications.forEach(req => {
-    if (req.fromDate === date && (req.status === "Accepted" || req.status === "Pending")) {
-      if (req.driver_name) bookedDrivers.add(req.driver_name);
-      if (req.plate_no) bookedVehicles.add(req.plate_no);
-    }
-  });
-
-  return { bookedDrivers, bookedVehicles };
-};
-
 export default function NotificationBar({ onRequestUpdate }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isDeclineModalOpen, setIsDeclineModalOpen] = useState(false);
   const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
   const [bellPosition, setBellPosition] = useState({ top: 0, right: 10 });
-  const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState([]); // Only Pending
+  const [allActiveRequests, setAllActiveRequests] = useState([]); // Pending + Accepted
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [formValues, setFormValues] = useState({
     driver: "",
@@ -112,19 +98,24 @@ export default function NotificationBar({ onRequestUpdate }) {
 
   const navigate = useNavigate();
 
+  // Fetch all requests and split into notifications (Pending) and allActive (Pending + Accepted)
   useEffect(() => {
-    const fetchPendingRequests = async () => {
+    const fetchRequests = async () => {
       try {
         const allRequests = await api.getRequests();
         const pending = allRequests.filter((req) => req.status === "Pending");
+        const active = allRequests.filter(
+          (req) => req.status === "Pending" || req.status === "Accepted"
+        );
         setNotifications(pending);
+        setAllActiveRequests(active);
       } catch (error) {
         console.error("Failed to fetch notifications:", error);
       }
     };
 
-    fetchPendingRequests();
-    const interval = setInterval(fetchPendingRequests, 30000);
+    fetchRequests();
+    const interval = setInterval(fetchRequests, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -156,6 +147,13 @@ export default function NotificationBar({ onRequestUpdate }) {
     }
   }, [isOpen]);
 
+  // Reset form when Accept modal opens
+  useEffect(() => {
+    if (isAcceptModalOpen) {
+      setFormValues({ driver: "", vehicleType: "", plateNo: "", reason: "" });
+    }
+  }, [isAcceptModalOpen]);
+
   const handleButtonClick = (e, action, request) => {
     e.stopPropagation();
     setSelectedRequest(request);
@@ -171,14 +169,29 @@ export default function NotificationBar({ onRequestUpdate }) {
     setFormValues((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Compute available resources based on selected request date
-  const { bookedDrivers, bookedVehicles } = selectedRequest
-    ? getBookedResourcesOnDate(notifications, selectedRequest.fromDate)
-    : { bookedDrivers: new Set(), bookedVehicles: new Set() };
+  // ✅ Compute booked resources using ALL active requests (Pending + Accepted)
+  const { bookedDrivers, bookedVehicles } = useMemo(() => {
+    if (!selectedRequest) {
+      return { bookedDrivers: new Set(), bookedVehicles: new Set() };
+    }
+
+    const date = selectedRequest.fromDate;
+    const bookedDrivers = new Set();
+    const bookedVehicles = new Set();
+
+    allActiveRequests.forEach((req) => {
+      if (req.fromDate === date && (req.status === "Accepted" || req.status === "Pending")) {
+        if (req.driver_name) bookedDrivers.add(req.driver_name.trim());
+        if (req.plate_no) bookedVehicles.add(req.plate_no.trim());
+      }
+    });
+
+    return { bookedDrivers, bookedVehicles };
+  }, [selectedRequest, allActiveRequests]);
 
   const availableDrivers = drivers
-    .filter(d => !bookedDrivers.has(d.name))
-    .map(d => d.name);
+    .filter((d) => !bookedDrivers.has(d.name?.trim()))
+    .map((d) => d.name);
 
   const vehicleTypes = [...new Set(
     vehicles.map(v => v.vehicleType || v.vehicle_model).filter(Boolean)
@@ -188,7 +201,7 @@ export default function NotificationBar({ onRequestUpdate }) {
     ? vehicles
         .filter(v => 
           (v.vehicleType || v.vehicle_model) === formValues.vehicleType &&
-          !bookedVehicles.has(v.plateNo || v.plate_no)
+          !bookedVehicles.has((v.plateNo || v.plate_no)?.trim())
         )
         .map(v => v.plateNo || v.plate_no)
         .filter(Boolean)
@@ -198,6 +211,30 @@ export default function NotificationBar({ onRequestUpdate }) {
 
   const handleProcess = async (action) => {
     if (!selectedRequest?.id) return;
+
+    // ✅ Final validation to prevent race conditions or stale UI
+    if (action === "accept") {
+      const driverConflict = allActiveRequests.some(req =>
+        req.fromDate === selectedRequest.fromDate &&
+        (req.status === "Accepted" || req.status === "Pending") &&
+        req.driver_name?.trim() === formValues.driver.trim()
+      );
+
+      const vehicleConflict = allActiveRequests.some(req =>
+        req.fromDate === selectedRequest.fromDate &&
+        (req.status === "Accepted" || req.status === "Pending") &&
+        req.plate_no?.trim() === formValues.plateNo.trim()
+      );
+
+      if (driverConflict) {
+        alert("This driver is already assigned to another trip on this date.");
+        return;
+      }
+      if (vehicleConflict) {
+        alert("This vehicle is already assigned on this date.");
+        return;
+      }
+    }
 
     setIsProcessing(true);
     try {
@@ -447,39 +484,40 @@ export default function NotificationBar({ onRequestUpdate }) {
             </div>
 
             {/* Vehicle Capacity - Show ONLY for current selected car */}
-            {formValues.plateNo && (
-              <div className="mb-3 p-2 bg-blue-50 rounded border border-blue-200 text-xs">
-                <div className="font-medium text-blue-800">Vehicle Capacity</div>
-                {(() => {
-                  const vehicle = vehicles.find(v => 
-                    (v.plateNo || v.plate_no) === formValues.plateNo
-                  );
-                  const totalSeats = vehicle?.totalSeats || 0;
+           {formValues.plateNo && (
+  <div className="mb-3 p-2 bg-blue-50 rounded border border-blue-200 text-xs">
+    <div className="font-medium text-blue-800">Vehicle Capacity</div>
+    {(() => {
+      const normalizedPlate = formValues.plateNo.trim().toUpperCase();
+      const vehicle = vehicles.find(v => 
+        v.plateNo?.trim().toUpperCase() === normalizedPlate
+      );
 
-                  // Count already accepted passengers in this car on this date
-                  const assignedToThisVehicle = notifications
-                    .filter(req => 
-                      req.plate_no === formValues.plateNo && 
-                      req.fromDate === selectedRequest.fromDate &&
-                      req.status === "Accepted"
-                    )
-                    .reduce((sum, req) => sum + (req.names?.length || 1), 0);
+      const totalSeats = vehicle?.capacity || 0; // ✅ FIXED: Use 'capacity'
 
-                  const currentPassengers = selectedRequest.names?.length || 1;
-                  const usedSeats = assignedToThisVehicle + currentPassengers;
-                  const available = Math.max(0, totalSeats - usedSeats);
+      const assignedToThisVehicle = allActiveRequests
+        .filter(req => 
+          req.plate_no?.trim().toUpperCase() === normalizedPlate && 
+          req.fromDate === selectedRequest.fromDate &&
+          req.status === "Accepted"
+        )
+        .reduce((sum, req) => sum + (req.names?.length || 1), 0);
 
-                  return (
-                    <>
-                      <div>{usedSeats} / {totalSeats} seats used</div>
-                      <div className={`mt-1 ${available > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {available > 0 ? `${available} left` : 'No seats left!'}
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-            )}
+      const currentPassengers = selectedRequest.names?.length || 1;
+      const usedSeats = assignedToThisVehicle + currentPassengers;
+      const available = Math.max(0, totalSeats - usedSeats);
+
+      return (
+        <>
+          <div>{usedSeats} / {totalSeats} seats used</div>
+          <div className={`mt-1 ${available > 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {available > 0 ? `${available} left` : 'No seats left!'}
+          </div>
+        </>
+      );
+    })()}
+  </div>
+)}
 
             {/* Action Buttons */}
             <div className="flex justify-end gap-x-2 mt-3">
