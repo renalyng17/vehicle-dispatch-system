@@ -24,21 +24,16 @@ const apiRequest = async (endpoint, options = {}) => {
     const data = await response.json();
 
     if (!response.ok) {
-      // If the backend returns an error object with 'error' property
       const errorMessage = data.error || data.message || `Request failed with status ${response.status}`;
       throw new Error(errorMessage);
     }
 
     return data;
-
   } catch (error) {
     console.error(`❌ API request to ${endpoint} failed:`, error);
-    
-    // More specific error messages
     if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
       throw new Error('Network error: Unable to connect to server');
     }
-    
     throw error;
   }
 };
@@ -56,7 +51,20 @@ export const api = {
   getRequests: () => apiRequest('/requests'),
   getRequest: (id) => apiRequest(`/requests/${id}`),
   createRequest: (data) => apiRequest('/requests', { method: 'POST', body: JSON.stringify(data) }),
-  updateRequestStatus: (id, data) => apiRequest(`/requests/${id}/status`, { method: 'PUT', body: JSON.stringify(data) }),
+  
+  // ✅ FIXED: Match backend route (PUT /requests/:id) AND frontend payload structure
+  updateRequestStatus: (id, data) => {
+    // Transform frontend payload to match backend expectations
+    const payload = {
+      status: data.status,
+      driver: data.driver_name,          // frontend sends driver_name → backend expects driver
+      vehicleType: data.vehicle_type,    // frontend sends vehicle_type → backend expects vehicleType
+      plateNo: data.plate_no,            // frontend sends plate_no → backend expects plateNo
+      reason: data.reason_for_decline,   // frontend sends reason_for_decline → backend expects reason
+    };
+    return apiRequest(`/requests/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+  },
+  
   deleteRequest: (id) => apiRequest(`/requests/${id}`, { method: 'DELETE' }),
 
   // 🔔 NOTIFICATIONS
@@ -71,11 +79,10 @@ export const api = {
   getVehicles: async () => {
     try {
       const data = await apiRequest('/vehicles');
-      // Ensure we always return an array
       return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error('Error in getVehicles:', error);
-      return []; // Return empty array on error
+      return [];
     }
   },
   
@@ -96,11 +103,10 @@ export const api = {
   getDrivers: async () => {
     try {
       const data = await apiRequest('/drivers');
-      // Ensure we always return an array
       return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error('Error in getDrivers:', error);
-      return []; // Return empty array on error
+      return [];
     }
   },
   
