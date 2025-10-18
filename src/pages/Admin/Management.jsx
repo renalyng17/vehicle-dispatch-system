@@ -1,3 +1,4 @@
+// src/components/Management.js
 import React, { useState, useEffect } from "react";
 import { ChevronsUpDown, Archive, Plus, X, Check, ChevronUp, ChevronDown } from "lucide-react";
 import { api } from "../../services/api";
@@ -7,7 +8,6 @@ export default function Management() {
   const [showFuelTypeDropdown, setShowFuelTypeDropdown] = useState(false);
   const [showFleetCardDropdown, setShowFleetCardDropdown] = useState(false);
   const [showRfidDropdown, setShowRfidDropdown] = useState(false);
-
   // Main states
   const [activeTab, setActiveTab] = useState("vehicle");
   const [showModal, setShowModal] = useState(false);
@@ -19,7 +19,6 @@ export default function Management() {
   const [duplicateModal, setDuplicateModal] = useState({ show: false, type: "" });
   const [isSubmittingVehicle, setIsSubmittingVehicle] = useState(false);
   const [isSubmittingDriver, setIsSubmittingDriver] = useState(false);
-
   const [vehicleForm, setVehicleForm] = useState({
     vehicleType: "",
     plateNo: "",
@@ -28,7 +27,6 @@ export default function Management() {
     fleetCard: "",
     rfid: "",
   });
-
   const [driverForm, setDriverForm] = useState({
     name: "",
     contact: "",
@@ -60,7 +58,6 @@ export default function Management() {
           api.getArchivedVehicles(),
           api.getArchivedDrivers(),
         ]);
-
         if (!mounted) return;
         setVehicles(vehiclesData || []);
         setDrivers(driversData || []);
@@ -70,7 +67,6 @@ export default function Management() {
         console.error("Failed to fetch data:", err);
       }
     };
-
     fetchData();
     return () => {
       mounted = false;
@@ -119,7 +115,7 @@ export default function Management() {
     setDriverForm({ ...driverForm, contact: formatted });
   };
 
-  // Normalize to E.164 (optional helper if needed)
+  // Normalize to E.164
   const toE164 = (contact) => {
     let clean = contact.replace(/\D/g, "");
     if (clean.startsWith("9") && clean.length === 10) {
@@ -152,7 +148,6 @@ export default function Management() {
       setDuplicateModal({ show: true, type: "vehicle" });
       return;
     }
-
     setIsSubmittingVehicle(true);
     try {
       const payload = {
@@ -184,7 +179,6 @@ export default function Management() {
       setDuplicateModal({ show: true, type: "driver" });
       return;
     }
-
     setIsSubmittingDriver(true);
     try {
       const payload = {
@@ -261,7 +255,7 @@ export default function Management() {
     setActiveTab(activeTab === "archive" ? "vehicle" : "archive");
   };
 
-  // Render helpers for consistent field fallbacks
+  // Render helpers
   const getVehicleField = (v, key) => {
     const map = {
       vehicleType: v.vehicleType || v.vehicle_model,
@@ -283,12 +277,11 @@ export default function Management() {
   };
 
   return (
-    <div className="p-6 relative pb-16 min-h-screen">
+    <div className="p-4 sm:p-6 pt-8 pb-16 overflow-x-hidden">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800">Management</h1>
-
+        {/* Add New Button */}
         {(activeTab === "vehicle" || activeTab === "driver") && (
-          <div className="flex justify-end mb-4">
+          <div className="flex justify-end mb-3">
             <button
               className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
               onClick={handleAddClick}
@@ -299,7 +292,7 @@ export default function Management() {
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <div className="flex border-b">
             <button className={tabClass("vehicle")} onClick={() => setActiveTab("vehicle")}>
               Vehicle Details
@@ -310,191 +303,206 @@ export default function Management() {
           </div>
 
           <div className="p-4">
+            {/* VEHICLE TABLE */}
             {activeTab === "vehicle" && (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <table className="w-full divide-y divide-gray-200 table-fixed">
                   <thead className="bg-green-600">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Vehicle</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Plate No.</th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Capacity</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Fuel Type</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Fleet Card</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">RFID</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">Actions</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/5">Vehicle</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/6">Plate No.</th>
+                      <th className="px-3 py-2 text-center text-[10px] font-medium text-white uppercase tracking-wider w-1/12">Capacity</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/6">Fuel Type</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/6">Fleet Card</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/6">RFID</th>
+                      <th className="px-3 py-2 text-right text-[10px] font-medium text-white uppercase tracking-wider w-20">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {vehicles.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
-                          No vehicles added yet
-                        </td>
-                      </tr>
-                    ) : (
-                      vehicles.map((v, idx) => (
-                        <tr key={idx} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {getVehicleField(v, "vehicleType")}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {getVehicleField(v, "plateNo")}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                            {v.capacity}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-semibold">
-                            {getVehicleField(v, "fuelType")}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              getVehicleField(v, "fleetCard")?.toLowerCase() === "available"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-red-100 text-red-800"
-                            }`}>
-                              {getVehicleField(v, "fleetCard")?.toUpperCase()}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              getVehicleField(v, "rfid")?.toLowerCase() === "available"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-red-100 text-red-800"
-                            }`}>
-                              {getVehicleField(v, "rfid")?.toUpperCase()}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button
-                              className="text-red-600 hover:text-red-900 flex items-center gap-1"
-                              onClick={() => handleDeleteVehicle(idx)}
-                            >
-                              <Archive size={14} />
-                              <span>Archive</span>
-                            </button>
+                </table>
+                <div className="max-h-[60vh] overflow-y-auto">
+                  <table className="w-full divide-y divide-gray-200 table-fixed">
+                    <tbody className="bg-white">
+                      {vehicles.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="px-3 py-4 text-center text-gray-500 text-sm">
+                            No vehicles added yet
                           </td>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                      ) : (
+                        vehicles.map((v, idx) => (
+                          <tr key={idx} className="hover:bg-gray-50">
+                            <td className="px-3 py-2 text-sm font-medium text-gray-900 truncate">
+                              {getVehicleField(v, "vehicleType")}
+                            </td>
+                            <td className="px-3 py-2 text-sm text-gray-500 truncate">
+                              {getVehicleField(v, "plateNo")}
+                            </td>
+                            <td className="px-3 py-2 text-sm text-gray-500 text-center">
+                              {v.capacity}
+                            </td>
+                            <td className="px-3 py-2 text-sm text-gray-500 truncate">
+                              {getVehicleField(v, "fuelType")}
+                            </td>
+                            <td className="px-3 py-2">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                getVehicleField(v, "fleetCard")?.toLowerCase() === "available"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}>
+                                {getVehicleField(v, "fleetCard")?.toUpperCase()}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                getVehicleField(v, "rfid")?.toLowerCase() === "available"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}>
+                                {getVehicleField(v, "rfid")?.toUpperCase()}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 text-right text-sm font-medium">
+                              <button
+                                className="text-red-600 hover:text-red-900 flex items-center gap-1 justify-end"
+                                onClick={() => handleDeleteVehicle(idx)}
+                              >
+                                <Archive size={14} />
+                                <span>Archive</span>
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 
+            {/* DRIVER TABLE */}
             {activeTab === "driver" && (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <table className="w-full divide-y divide-gray-200 table-fixed">
                   <thead className="bg-green-600">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Name</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Contact No.</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Email Address</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">Actions</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/4">Name</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/5">Contact No.</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/4">Email Address</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/6">Status</th>
+                      <th className="px-3 py-2 text-right text-[10px] font-medium text-white uppercase tracking-wider w-20">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {drivers.length === 0 ? (
-                      <tr>
-                        <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
-                          No drivers added yet
-                        </td>
-                      </tr>
-                    ) : (
-                      drivers.map((d, idx) => (
-                        <tr key={idx} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {d.name}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {getDriverField(d, "contact")}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {getDriverField(d, "email")}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              {getDriverField(d, "status")}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button
-                              className="text-red-600 hover:text-red-900 flex items-center gap-1"
-                              onClick={() => handleDeleteDriver(idx)}
-                            >
-                              <Archive size={14} />
-                              <span>Archive</span>
-                            </button>
+                </table>
+                <div className="max-h-[60vh] overflow-y-auto">
+                  <table className="w-full divide-y divide-gray-200 table-fixed">
+                    <tbody className="bg-white">
+                      {drivers.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="px-3 py-4 text-center text-gray-500 text-sm">
+                            No drivers added yet
                           </td>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                      ) : (
+                        drivers.map((d, idx) => (
+                          <tr key={idx} className="hover:bg-gray-50">
+                            <td className="px-3 py-2 text-sm font-medium text-gray-900 truncate">
+                              {d.name}
+                            </td>
+                            <td className="px-3 py-2 text-sm text-gray-500 truncate">
+                              {getDriverField(d, "contact")}
+                            </td>
+                            <td className="px-3 py-2 text-sm text-gray-500 truncate">
+                              {getDriverField(d, "email")}
+                            </td>
+                            <td className="px-3 py-2">
+                              <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                {getDriverField(d, "status")}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 text-right text-sm font-medium">
+                              <button
+                                className="text-red-600 hover:text-red-900 flex items-center gap-1 justify-end"
+                                onClick={() => handleDeleteDriver(idx)}
+                              >
+                                <Archive size={14} />
+                                <span>Archive</span>
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 
+            {/* ARCHIVE SECTION — FIXED */}
             {activeTab === "archive" && (
-              <div className="space-y-6">
+              <div className="space-y-6 max-w-4xl mx-auto">
                 {/* Archived Vehicles */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                  <div className="px-6 py-4 border-b border-gray-200">
-                    <h2 className="text-lg font-semibold text-gray-800">Archived Vehicles</h2>
+                  <div className="px-4 py-3 border-b border-gray-200">
+                    <h2 className="text-base font-semibold text-gray-800 text-center">Archived Vehicles</h2>
                   </div>
                   <div className="p-4">
                     {archivedVehicles.length === 0 ? (
-                      <p className="text-gray-500 text-center py-4">No archived vehicles</p>
+                      <p className="text-gray-500 text-center py-4 text-sm">No archived vehicles</p>
                     ) : (
-                      <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
+                      <div className="border border-gray-200 rounded-lg overflow-hidden">
+                        <table className="w-full divide-y divide-gray-200 table-fixed">
                           <thead className="bg-gray-50">
                             <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plate No.</th>
-                              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Capacity</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fuel Type</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fleet Card</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RFID</th>
-                              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/5">Vehicle</th>
+                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/6">Plate No.</th>
+                              <th className="px-3 py-2 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/12">Capacity</th>
+                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/6">Fuel Type</th>
+                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/6">Fleet Card</th>
+                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/6">RFID</th>
+                              <th className="px-3 py-2 text-right text-[10px] font-medium text-gray-500 uppercase tracking-wider w-20">Actions</th>
                             </tr>
                           </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
-                            {archivedVehicles.map((v, idx) => (
-                              <tr key={idx} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {getVehicleField(v, "vehicleType")}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {getVehicleField(v, "plateNo")}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                                  {v.capacity}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {getVehicleField(v, "fuelType")}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                    {getVehicleField(v, "fleetCard")?.toUpperCase()}
-                                  </span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                    {getVehicleField(v, "rfid")?.toUpperCase()}
-                                  </span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                  <button
-                                    className="text-green-600 hover:text-green-900"
-                                    onClick={() => handleRestore("vehicle", idx)}
-                                  >
-                                    Restore
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
                         </table>
+                        <div className="max-h-[200px] overflow-y-auto">
+                          <table className="w-full divide-y divide-gray-200 table-fixed">
+                            <tbody className="bg-white">
+                              {archivedVehicles.map((v, idx) => (
+                                <tr key={idx} className="hover:bg-gray-50">
+                                  <td className="px-3 py-2 text-sm text-gray-500 truncate">
+                                    {getVehicleField(v, "vehicleType")}
+                                  </td>
+                                  <td className="px-3 py-2 text-sm text-gray-500 truncate">
+                                    {getVehicleField(v, "plateNo")}
+                                  </td>
+                                  <td className="px-3 py-2 text-sm text-gray-500 text-center">
+                                    {v.capacity}
+                                  </td>
+                                  <td className="px-3 py-2 text-sm text-gray-500 truncate">
+                                    {getVehicleField(v, "fuelType")}
+                                  </td>
+                                  <td className="px-3 py-2">
+                                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                      {getVehicleField(v, "fleetCard")?.toUpperCase()}
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-2">
+                                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                      {getVehicleField(v, "rfid")?.toUpperCase()}
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-2 text-right text-sm font-medium">
+                                    <button
+                                      className="text-green-600 hover:text-green-900"
+                                      onClick={() => handleRestore("vehicle", idx)}
+                                    >
+                                      Restore
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -502,53 +510,57 @@ export default function Management() {
 
                 {/* Archived Drivers */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                  <div className="px-6 py-4 border-b border-gray-200">
-                    <h2 className="text-lg font-semibold text-gray-800">Archived Drivers</h2>
+                  <div className="px-4 py-3 border-b border-gray-200">
+                    <h2 className="text-base font-semibold text-gray-800 text-center">Archived Drivers</h2>
                   </div>
                   <div className="p-4">
                     {archivedDrivers.length === 0 ? (
-                      <p className="text-gray-500 text-center py-4">No archived drivers</p>
+                      <p className="text-gray-500 text-center py-4 text-sm">No archived drivers</p>
                     ) : (
-                      <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
+                      <div className="border border-gray-200 rounded-lg overflow-hidden">
+                        <table className="w-full divide-y divide-gray-200 table-fixed">
                           <thead className="bg-gray-50">
                             <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact No.</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email Address</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/4">Name</th>
+                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/5">Contact No.</th>
+                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/4">Email Address</th>
+                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/6">Status</th>
+                              <th className="px-3 py-2 text-right text-[10px] font-medium text-gray-500 uppercase tracking-wider w-20">Actions</th>
                             </tr>
                           </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
-                            {archivedDrivers.map((d, idx) => (
-                              <tr key={idx} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {d.name}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {getDriverField(d, "contact")}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {getDriverField(d, "email")}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                    {getDriverField(d, "status")}
-                                  </span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                  <button
-                                    className="text-green-600 hover:text-green-900"
-                                    onClick={() => handleRestore("driver", idx)}
-                                  >
-                                    Restore
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
                         </table>
+                        <div className="max-h-[200px] overflow-y-auto">
+                          <table className="w-full divide-y divide-gray-200 table-fixed">
+                            <tbody className="bg-white">
+                              {archivedDrivers.map((d, idx) => (
+                                <tr key={idx} className="hover:bg-gray-50">
+                                  <td className="px-3 py-2 text-sm text-gray-500 truncate">
+                                    {d.name}
+                                  </td>
+                                  <td className="px-3 py-2 text-sm text-gray-500 truncate">
+                                    {getDriverField(d, "contact")}
+                                  </td>
+                                  <td className="px-3 py-2 text-sm text-gray-500 truncate">
+                                    {getDriverField(d, "email")}
+                                  </td>
+                                  <td className="px-3 py-2">
+                                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                      {getDriverField(d, "status")}
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-2 text-right text-sm font-medium">
+                                    <button
+                                      className="text-green-600 hover:text-green-900"
+                                      onClick={() => handleRestore("driver", idx)}
+                                    >
+                                      Restore
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -558,7 +570,7 @@ export default function Management() {
           </div>
         </div>
 
-        {/* Vehicle Modal */}
+        {/* ===== MODALS ===== */}
         {activeTab === "vehicle" && showModal && (
           <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
@@ -775,7 +787,6 @@ export default function Management() {
           </div>
         )}
 
-        {/* Driver Modal */}
         {activeTab === "driver" && showModal && (
           <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
@@ -854,7 +865,6 @@ export default function Management() {
           </div>
         )}
 
-        {/* Duplicate Modal */}
         {duplicateModal.show && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-xs p-6 text-center">
@@ -875,7 +885,6 @@ export default function Management() {
           </div>
         )}
 
-        {/* Confirm Archive Modal */}
         {confirmDelete.type && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-xs p-6 text-center">
