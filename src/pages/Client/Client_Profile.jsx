@@ -88,11 +88,7 @@ function Profile() {
           <p className="ml-5 text-xl font-bold">{`${profileData.first_name} ${profileData.last_name}`}</p>
         </div>
 
-        {isEditing && (
-          <button className="px-4 py-2 bg-green-700 text-white rounded-md text-sm">
-            Upload Image
-          </button>
-        )}
+       
       </div>
 
       {/* Personal Info Section */}

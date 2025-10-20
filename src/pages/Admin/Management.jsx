@@ -1,13 +1,14 @@
+// src/components/Management.js
 import React, { useState, useEffect } from "react";
 import { ChevronsUpDown, Archive, Plus, X, Check, ChevronUp, ChevronDown } from "lucide-react";
+import { api } from "../../services/api";
 
 export default function Management() {
-  // State for dropdown visibility
+  // Dropdown states
   const [showFuelTypeDropdown, setShowFuelTypeDropdown] = useState(false);
   const [showFleetCardDropdown, setShowFleetCardDropdown] = useState(false);
   const [showRfidDropdown, setShowRfidDropdown] = useState(false);
-
-  // Main state
+  // Main states
   const [activeTab, setActiveTab] = useState("vehicle");
   const [showModal, setShowModal] = useState(false);
   const [vehicles, setVehicles] = useState([]);
@@ -16,8 +17,8 @@ export default function Management() {
   const [archivedDrivers, setArchivedDrivers] = useState([]);
   const [confirmDelete, setConfirmDelete] = useState({ type: null, idx: null });
   const [duplicateModal, setDuplicateModal] = useState({ show: false, type: "" });
-
-  // Form state
+  const [isSubmittingVehicle, setIsSubmittingVehicle] = useState(false);
+  const [isSubmittingDriver, setIsSubmittingDriver] = useState(false);
   const [vehicleForm, setVehicleForm] = useState({
     vehicleType: "",
     plateNo: "",
@@ -32,45 +33,47 @@ export default function Management() {
     email: "",
   });
 
-  // Prevent page scroll when modals open (optional)
+  // Prevent background scroll when modals are open
   useEffect(() => {
-    if (showModal || duplicateModal.show || confirmDelete.type) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
+    const hasModalOpen = showModal || duplicateModal.show || confirmDelete.type;
+    document.body.style.overflow = hasModalOpen ? "hidden" : "auto";
     return () => {
       document.body.style.overflow = "auto";
     };
   }, [showModal, duplicateModal.show, confirmDelete.type]);
 
-  // 🚀 FETCH DATA FROM BACKEND ON MOUNT
+  // Fetch all data on mount
   useEffect(() => {
-    fetchVehicles();
-    fetchDrivers();
+    let mounted = true;
+    const fetchData = async () => {
+      try {
+        const [
+          vehiclesData,
+          driversData,
+          archivedVehiclesData,
+          archivedDriversData,
+        ] = await Promise.all([
+          api.getVehicles(),
+          api.getDrivers(),
+          api.getArchivedVehicles(),
+          api.getArchivedDrivers(),
+        ]);
+        if (!mounted) return;
+        setVehicles(vehiclesData || []);
+        setDrivers(driversData || []);
+        setArchivedVehicles(archivedVehiclesData || []);
+        setArchivedDrivers(archivedDriversData || []);
+      } catch (err) {
+        console.error("Failed to fetch data:", err);
+      }
+    };
+    fetchData();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  const fetchVehicles = async () => {
-    try {
-      const response = await fetch('http://localhost:3001/api/vehicles');
-      const data = await response.json();
-      setVehicles(data);
-    } catch (error) {
-      console.error('Error fetching vehicles:', error);
-    }
-  };
-
-  const fetchDrivers = async () => {
-    try {
-      const response = await fetch('http://localhost:3001/api/drivers');
-      const data = await response.json();
-      setDrivers(data);
-    } catch (error) {
-      console.error('Error fetching drivers:', error);
-    }
-  };
-
-  // Handle modal open and reset form
+  // Reset form and open modal
   const handleAddClick = () => {
     setShowModal(true);
     setVehicleForm({
@@ -88,7 +91,7 @@ export default function Management() {
     });
   };
 
-  // Tab styling function
+  // Tab styling helper
   const tabClass = (tab) =>
     `py-3 px-6 text-sm font-medium transition-colors ${
       activeTab === tab
@@ -96,254 +99,189 @@ export default function Management() {
         : "text-gray-500 hover:text-green-600 hover:bg-green-50"
     }`;
 
-  // 🚚 CORRECTED: Handle vehicle modal submit — POST to backend
-  const handleVehicleSubmit = async (e) => {
-    e.preventDefault();
-
-    // Client-side duplicate check (optional, backend should also check)
-    if (
-      vehicles.some(
-        (v) =>
-          v.plateNo?.trim().toLowerCase() === vehicleForm.plateNo.trim().toLowerCase() ||
-          v.plate_no?.trim().toLowerCase() === vehicleForm.plateNo.trim().toLowerCase()
-      )
-    ) {
-      setDuplicateModal({ show: true, type: "vehicle" });
-      return;
-    }
-
-    try {
-      const response = await fetch('http://localhost:3001/api/vehicles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          vehicleType: vehicleForm.vehicleType,    // ✅ Correct field name
-          plateNo: vehicleForm.plateNo,            // ✅ Correct field name
-          capacity: parseInt(vehicleForm.capacity),
-          fuelType: vehicleForm.fuelType,          // ✅ Correct field name
-          fleetCard: vehicleForm.fleetCard,        // ✅ Correct field name
-          rfid: vehicleForm.rfid,                  // ✅ Correct field name
-        }),
-      });
-
-      if (response.ok) {
-        const newVehicle = await response.json();
-        setVehicles([...vehicles, newVehicle]);
-        setShowModal(false);
-      } else {
-        const errorData = await response.json();
-        alert(errorData.error || 'Failed to add vehicle');
-      }
-    } catch (error) {
-      console.error('Error adding vehicle:', error);
-      alert('Network error. Failed to add vehicle.');
-    }
-  };
-
-  // 👨‍✈️ CORRECTED: Handle driver modal submit — POST to backend
-  const handleDriverSubmit = async (e) => {
-    e.preventDefault();
-
-    // Client-side duplicate check
-    if (
-      drivers.some(
-        (d) =>
-          d.email?.trim().toLowerCase() === driverForm.email.trim().toLowerCase() ||
-          d.email_address?.trim().toLowerCase() === driverForm.email.trim().toLowerCase()
-      )
-    ) {
-      setDuplicateModal({ show: true, type: "driver" });
-      return;
-    }
-
-    try {
-      const response = await fetch('http://localhost:3001/api/drivers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: driverForm.name,
-          contact: driverForm.contact.replace('+63 ', ''), // Remove +63 prefix
-          email: driverForm.email,
-        }),
-      });
-
-      if (response.ok) {
-        const newDriver = await response.json();
-        setDrivers([...drivers, newDriver]);
-        setShowModal(false);
-      } else {
-        const errorData = await response.json();
-        alert(errorData.error || 'Failed to add driver');
-      }
-    } catch (error) {
-      console.error('Error adding driver:', error);
-      alert('Network error. Failed to add driver.');
-    }
-  };
-
-  // 🗑️ Open confirmation modal for vehicle
-  const handleDeleteVehicle = (idx) => {
-    setConfirmDelete({ type: "vehicle", idx });
-  };
-
-  // 🗑️ Open confirmation modal for driver
-  const handleDeleteDriver = (idx) => {
-    setConfirmDelete({ type: "driver", idx });
-  };
-
-  // ✅ Confirm deletion — DELETE from backend
-  const confirmDeleteAction = async () => {
-    if (confirmDelete.type === "vehicle") {
-      const vehicleId = vehicles[confirmDelete.idx]?.vehicle_id;
-      if (!vehicleId) return;
-
-      try {
-        const response = await fetch(`http://localhost:3001/api/vehicles/${vehicleId}`, {
-          method: 'DELETE',
-        });
-
-        if (response.ok) {
-          const archivedVehicle = vehicles[confirmDelete.idx];
-          setVehicles(vehicles.filter((_, i) => i !== confirmDelete.idx));
-          setArchivedVehicles(prev => [...prev, archivedVehicle]);
-        } else {
-          alert('Failed to archive vehicle');
-        }
-      } catch (error) {
-        console.error('Error archiving vehicle:', error);
-        alert('Network error. Failed to archive vehicle.');
-      }
-    } else if (confirmDelete.type === "driver") {
-      const driverId = drivers[confirmDelete.idx]?.id;
-      if (!driverId) return;
-
-      try {
-        const response = await fetch(`http://localhost:3001/api/drivers/${driverId}`, {
-          method: 'DELETE',
-        });
-
-        if (response.ok) {
-          const archivedDriver = drivers[confirmDelete.idx];
-          setDrivers(drivers.filter((_, i) => i !== confirmDelete.idx));
-          setArchivedDrivers(prev => [...prev, archivedDriver]);
-        } else {
-          alert('Failed to archive driver');
-        }
-      } catch (error) {
-        console.error('Error archiving driver:', error);
-        alert('Network error. Failed to archive driver.');
-      }
-    }
-    setConfirmDelete({ type: null, idx: null });
-  };
-
-  // ❌ Cancel deletion
-  const cancelDeleteAction = () => {
-    setConfirmDelete({ type: null, idx: null });
-  };
-
-  // 🔁 Handle restoring items from archive — POST to re-add
-  const handleRestore = async (type, idx) => {
-    const item = type === "vehicle" ? archivedVehicles[idx] : archivedDrivers[idx];
-    if (!item) return;
-
-    try {
-      let response;
-      if (type === "vehicle") {
-        response = await fetch('http://localhost:3001/api/vehicles', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            vehicleType: item.vehicle_model || item.vehicleType,
-            plateNo: item.plate_no || item.plateNo,
-            capacity: item.capacity,
-            fuelType: item.fuel_type || item.fuelType,
-            fleetCard: item.fleet_card_status || item.fleetCard,
-            rfid: item.rfid_status || item.rfid,
-          }),
-        });
-        if (response.ok) {
-          const restoredItem = await response.json();
-          setVehicles([...vehicles, restoredItem]);
-          setArchivedVehicles(archivedVehicles.filter((_, i) => i !== idx));
-        }
-      } else if (type === "driver") {
-        response = await fetch('http://localhost:3001/api/drivers', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: item.name,
-            contact: item.contact_no || item.contact,
-            email: item.email_address || item.email,
-          }),
-        });
-        if (response.ok) {
-          const restoredItem = await response.json();
-          setDrivers([...drivers, restoredItem]);
-          setArchivedDrivers(archivedDrivers.filter((_, i) => i !== idx));
-        }
-      }
-
-      if (!response?.ok) {
-        alert(`Failed to restore ${type}`);
-      }
-    } catch (error) {
-      console.error('Error restoring item:', error);
-      alert('Network error. Failed to restore item.');
-    }
-  };
-
-  // Format contact number as 0912-234-2345
+  // Format contact number (Philippines style)
   const formatContact = (value) => {
     let digits = value.replace(/\D/g, "").slice(0, 11);
-    let formatted = digits;
     if (digits.length > 4 && digits.length <= 7) {
-      formatted = `${digits.slice(0, 4)}-${digits.slice(4)}`;
+      return `${digits.slice(0, 4)}-${digits.slice(4)}`;
     } else if (digits.length > 7) {
-      formatted = `${digits.slice(0, 4)}-${digits.slice(4, 7)}-${digits.slice(7)}`;
+      return `${digits.slice(0, 4)}-${digits.slice(4, 7)}-${digits.slice(7)}`;
     }
-    return formatted;
+    return digits;
   };
 
-  // Handle contact input change
   const handleContactChange = (e) => {
     const formatted = formatContact(e.target.value);
     setDriverForm({ ...driverForm, contact: formatted });
   };
 
-  // Validation for vehicle form
-  const isVehicleFormValid = () => {
-    return (
-      vehicleForm.vehicleType.trim() &&
-      vehicleForm.plateNo.trim() &&
-      vehicleForm.capacity &&
-      vehicleForm.fuelType &&
-      vehicleForm.fleetCard &&
-      vehicleForm.rfid
-    );
+  // Normalize to E.164
+  const toE164 = (contact) => {
+    let clean = contact.replace(/\D/g, "");
+    if (clean.startsWith("9") && clean.length === 10) {
+      return "+63" + clean;
+    }
+    if (clean.startsWith("63") && clean.length === 11) {
+      return "+" + clean;
+    }
+    return "+" + clean;
   };
 
-  // Validation for driver form
-  const isDriverFormValid = () => {
-    return (
-      driverForm.name.trim() &&
-      driverForm.contact.trim() &&
-      driverForm.email.trim()
-    );
+  // Form validation
+  const isVehicleFormValid = () =>
+    vehicleForm.vehicleType.trim() &&
+    vehicleForm.plateNo.trim() &&
+    vehicleForm.capacity &&
+    vehicleForm.fuelType &&
+    vehicleForm.fleetCard &&
+    vehicleForm.rfid;
+
+  const isDriverFormValid = () =>
+    driverForm.name.trim() &&
+    driverForm.contact.trim() &&
+    driverForm.email.trim();
+
+  // Submit handlers
+  const handleVehicleSubmit = async (e) => {
+    e.preventDefault();
+    if (vehicles.some(v => v.plateNo?.trim().toLowerCase() === vehicleForm.plateNo.trim().toLowerCase())) {
+      setDuplicateModal({ show: true, type: "vehicle" });
+      return;
+    }
+    setIsSubmittingVehicle(true);
+    try {
+      const payload = {
+        vehicleType: vehicleForm.vehicleType,
+        plateNo: vehicleForm.plateNo,
+        capacity: parseInt(vehicleForm.capacity, 10),
+        fuelType: vehicleForm.fuelType,
+        fleetCard: vehicleForm.fleetCard,
+        rfid: vehicleForm.rfid,
+      };
+      const newVehicle = await api.createVehicle(payload);
+      setVehicles((prev) => [...prev, newVehicle]);
+      setShowModal(false);
+    } catch (err) {
+      if (err.response?.status === 409) {
+        setDuplicateModal({ show: true, type: "vehicle" });
+      } else {
+        console.error("Vehicle submit error:", err);
+        alert("Could not add vehicle. See console for details.");
+      }
+    } finally {
+      setIsSubmittingVehicle(false);
+    }
   };
 
-  // Toggle archive view
+  const handleDriverSubmit = async (e) => {
+    e.preventDefault();
+    if (drivers.some(d => d.email?.trim().toLowerCase() === driverForm.email.trim().toLowerCase())) {
+      setDuplicateModal({ show: true, type: "driver" });
+      return;
+    }
+    setIsSubmittingDriver(true);
+    try {
+      const payload = {
+        name: driverForm.name,
+        contact: toE164(driverForm.contact),
+        email: driverForm.email,
+      };
+      const newDriver = await api.createDriver(payload);
+      setDrivers((prev) => [...prev, newDriver]);
+      setShowModal(false);
+    } catch (err) {
+      if (err.response?.status === 409) {
+        setDuplicateModal({ show: true, type: "driver" });
+      } else {
+        console.error("Driver submit error:", err);
+        alert("Could not add driver. See console for details.");
+      }
+    } finally {
+      setIsSubmittingDriver(false);
+    }
+  };
+
+  // Delete/archive handlers
+  const handleDeleteVehicle = (idx) => setConfirmDelete({ type: "vehicle", idx });
+  const handleDeleteDriver = (idx) => setConfirmDelete({ type: "driver", idx });
+
+  const confirmDeleteAction = async () => {
+    const { type, idx } = confirmDelete;
+    try {
+      if (type === "vehicle") {
+        const vehicle = vehicles[idx];
+        await api.archiveVehicle(vehicle.id);
+        setArchivedVehicles((prev) => [...prev, vehicle]);
+        setVehicles((prev) => prev.filter((_, i) => i !== idx));
+      } else if (type === "driver") {
+        const driver = drivers[idx];
+        await api.archiveDriver(driver.id);
+        setArchivedDrivers((prev) => [...prev, driver]);
+        setDrivers((prev) => prev.filter((_, i) => i !== idx));
+      }
+    } catch (err) {
+      console.error("Archive error:", err);
+      alert(`Failed to archive ${type}.`);
+    } finally {
+      setConfirmDelete({ type: null, idx: null });
+    }
+  };
+
+  const cancelDeleteAction = () => {
+    setConfirmDelete({ type: null, idx: null });
+  };
+
+  // Restore from archive
+  const handleRestore = async (type, idx) => {
+    try {
+      if (type === "vehicle") {
+        const vehicle = archivedVehicles[idx];
+        await api.restoreVehicle(vehicle.id);
+        setVehicles((prev) => [...prev, vehicle]);
+        setArchivedVehicles((prev) => prev.filter((_, i) => i !== idx));
+      } else if (type === "driver") {
+        const driver = archivedDrivers[idx];
+        await api.restoreDriver(driver.id);
+        setDrivers((prev) => [...prev, driver]);
+        setArchivedDrivers((prev) => prev.filter((_, i) => i !== idx));
+      }
+    } catch (err) {
+      console.error("Restore error:", err);
+      alert(`Failed to restore ${type}.`);
+    }
+  };
+
   const toggleArchiveView = () => {
     setActiveTab(activeTab === "archive" ? "vehicle" : "archive");
   };
 
+  // Render helpers
+  const getVehicleField = (v, key) => {
+    const map = {
+      vehicleType: v.vehicleType || v.vehicle_model,
+      plateNo: v.plateNo || v.plate_no,
+      fuelType: v.fuelType || v.fuel_type,
+      fleetCard: v.fleetCard || v.fleet_card_status,
+      rfid: v.rfid || v.rfid_status,
+    };
+    return map[key] || v[key];
+  };
+
+  const getDriverField = (d, key) => {
+    const map = {
+      contact: d.contact || d.contact_no,
+      email: d.email || d.email_address,
+      status: d.status || (d.assigned_boolean ? "AVAILABLE" : "UNAVAILABLE"),
+    };
+    return map[key] || d[key];
+  };
 
   return (
-    <div className="p-6 relative pb-16 min-h-screen">
+    <div className="p-4 sm:p-6 pt-8 pb-16 overflow-x-hidden">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800">Management</h1>
+        {/* Add New Button */}
         {(activeTab === "vehicle" || activeTab === "driver") && (
-          <div className="flex justify-end mb-4">
+          <div className="flex justify-end mb-3">
             <button
               className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
               onClick={handleAddClick}
@@ -353,258 +291,276 @@ export default function Management() {
             </button>
           </div>
         )}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <div className="flex border-b">
-            <button 
-              className={tabClass("vehicle")} 
-              onClick={() => setActiveTab("vehicle")}
-            >
+            <button className={tabClass("vehicle")} onClick={() => setActiveTab("vehicle")}>
               Vehicle Details
             </button>
-            <button 
-              className={tabClass("driver")} 
-              onClick={() => setActiveTab("driver")}
-            >
+            <button className={tabClass("driver")} onClick={() => setActiveTab("driver")}>
               Driver Information
             </button>
           </div>
+
           <div className="p-4">
+            {/* VEHICLE TABLE */}
             {activeTab === "vehicle" && (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <table className="w-full divide-y divide-gray-200 table-fixed">
                   <thead className="bg-green-600">
-                    <tr className="text-left text-xs font-medium text-white -500 uppercase tracking-wider">
-                      <th className="px-6 py-3">Vehicle</th>
-                      <th className="px-6 py-3">Plate No.</th>
-                      <th className="px-6 py-3 text-center">Capacity</th>
-                      <th className="px-6 py-3">Fuel Type</th>
-                      <th className="px-6 py-3">Fleet Card</th>
-                      <th className="px-6 py-3">RFID</th>
-                      <th className="px-6 py-3 text-right">Actions</th>
+                    <tr>
+                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/5">Vehicle</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/6">Plate No.</th>
+                      <th className="px-3 py-2 text-center text-[10px] font-medium text-white uppercase tracking-wider w-1/12">Capacity</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/6">Fuel Type</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/6">Fleet Card</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/6">RFID</th>
+                      <th className="px-3 py-2 text-right text-[10px] font-medium text-white uppercase tracking-wider w-20">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {vehicles.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
-                          No vehicles added yet
-                        </td>
-                      </tr>
-                    ) : (
-                      vehicles.map((v, idx) => (
-                        <tr key={idx} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {v.vehicle_model || v.vehicleType}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {v.plate_no || v.plateNo}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                            {v.capacity}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-semibold">
-                            {v.fuel_type || v.fuelType}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              (v.fleet_card_status || v.fleetCard)?.toLowerCase() === "available" 
-                                ? "bg-green-100 text-green-800" 
-                                : "bg-red-100 text-red-800"
-                            }`}>
-                              {(v.fleet_card_status || v.fleetCard)?.toUpperCase()}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              (v.rfid_status || v.rfid)?.toLowerCase() === "available" 
-                                ? "bg-green-100 text-green-800" 
-                                : "bg-red-100 text-red-800"
-                            }`}>
-                              {(v.rfid_status || v.rfid)?.toUpperCase()}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button
-                              className="text-red-600 hover:text-red-900 flex items-center gap-1"
-                              onClick={() => handleDeleteVehicle(idx)}
-                            >
-                              <Archive size={14} />
-                              <span>Archive</span>
-                            </button>
+                </table>
+                <div className="max-h-[60vh] overflow-y-auto">
+                  <table className="w-full divide-y divide-gray-200 table-fixed">
+                    <tbody className="bg-white">
+                      {vehicles.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="px-3 py-4 text-center text-gray-500 text-sm">
+                            No vehicles added yet
                           </td>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                      ) : (
+                        vehicles.map((v, idx) => (
+                          <tr key={idx} className="hover:bg-gray-50">
+                            <td className="px-3 py-2 text-sm font-medium text-gray-900 truncate">
+                              {getVehicleField(v, "vehicleType")}
+                            </td>
+                            <td className="px-3 py-2 text-sm text-gray-500 truncate">
+                              {getVehicleField(v, "plateNo")}
+                            </td>
+                            <td className="px-3 py-2 text-sm text-gray-500 text-center">
+                              {v.capacity}
+                            </td>
+                            <td className="px-3 py-2 text-sm text-gray-500 truncate">
+                              {getVehicleField(v, "fuelType")}
+                            </td>
+                            <td className="px-3 py-2">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                getVehicleField(v, "fleetCard")?.toLowerCase() === "available"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}>
+                                {getVehicleField(v, "fleetCard")?.toUpperCase()}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                getVehicleField(v, "rfid")?.toLowerCase() === "available"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}>
+                                {getVehicleField(v, "rfid")?.toUpperCase()}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 text-right text-sm font-medium">
+                              <button
+                                className="text-red-600 hover:text-red-900 flex items-center gap-1 justify-end"
+                                onClick={() => handleDeleteVehicle(idx)}
+                              >
+                                <Archive size={14} />
+                                <span>Archive</span>
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
+
+            {/* DRIVER TABLE */}
             {activeTab === "driver" && (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <table className="w-full divide-y divide-gray-200 table-fixed">
                   <thead className="bg-green-600">
-                    <tr className="text-left text-xs font-medium text-white -500 uppercase tracking-wider">
-                      <th className="px-6 py-3">Name</th>
-                      <th className="px-6 py-3">Contact No.</th>
-                      <th className="px-6 py-3">Email Address</th>
-                      <th className="px-6 py-3">Status</th>
-                      <th className="px-6 py-3 text-right">Actions</th>
+                    <tr>
+                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/4">Name</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/5">Contact No.</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/4">Email Address</th>
+                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/6">Status</th>
+                      <th className="px-3 py-2 text-right text-[10px] font-medium text-white uppercase tracking-wider w-20">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {drivers.length === 0 ? (
-                      <tr>
-                        <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
-                          No drivers added yet
-                        </td>
-                      </tr>
-                    ) : (
-                      drivers.map((d, idx) => (
-                        <tr key={idx} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {d.name}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {d.contact_no || d.contact}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {d.email_address || d.email}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              {d.status || (d.assigned_boolean ? "AVAILABLE" : "UNAVAILABLE")}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button
-                              className="text-red-600 hover:text-red-900 flex items-center gap-1"
-                              onClick={() => handleDeleteDriver(idx)}
-                            >
-                              <Archive size={14} />
-                              <span>Archive</span>
-                            </button>
+                </table>
+                <div className="max-h-[60vh] overflow-y-auto">
+                  <table className="w-full divide-y divide-gray-200 table-fixed">
+                    <tbody className="bg-white">
+                      {drivers.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="px-3 py-4 text-center text-gray-500 text-sm">
+                            No drivers added yet
                           </td>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                      ) : (
+                        drivers.map((d, idx) => (
+                          <tr key={idx} className="hover:bg-gray-50">
+                            <td className="px-3 py-2 text-sm font-medium text-gray-900 truncate">
+                              {d.name}
+                            </td>
+                            <td className="px-3 py-2 text-sm text-gray-500 truncate">
+                              {getDriverField(d, "contact")}
+                            </td>
+                            <td className="px-3 py-2 text-sm text-gray-500 truncate">
+                              {getDriverField(d, "email")}
+                            </td>
+                            <td className="px-3 py-2">
+                              <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                {getDriverField(d, "status")}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 text-right text-sm font-medium">
+                              <button
+                                className="text-red-600 hover:text-red-900 flex items-center gap-1 justify-end"
+                                onClick={() => handleDeleteDriver(idx)}
+                              >
+                                <Archive size={14} />
+                                <span>Archive</span>
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
+
+            {/* ARCHIVE SECTION — FIXED */}
             {activeTab === "archive" && (
-              <div className="space-y-6">
+              <div className="space-y-6 max-w-4xl mx-auto">
                 {/* Archived Vehicles */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                  <div className="px-6 py-4 border-b border-gray-200">
-                    <h2 className="text-lg font-semibold text-gray-800">Archived Vehicles</h2>
+                  <div className="px-4 py-3 border-b border-gray-200">
+                    <h2 className="text-base font-semibold text-gray-800 text-center">Archived Vehicles</h2>
                   </div>
                   <div className="p-4">
                     {archivedVehicles.length === 0 ? (
-                      <p className="text-gray-500 text-center py-4">No archived vehicles</p>
+                      <p className="text-gray-500 text-center py-4 text-sm">No archived vehicles</p>
                     ) : (
-                      <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
+                      <div className="border border-gray-200 rounded-lg overflow-hidden">
+                        <table className="w-full divide-y divide-gray-200 table-fixed">
                           <thead className="bg-gray-50">
-                            <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              <th className="px-6 py-3">Vehicle</th>
-                              <th className="px-6 py-3">Plate No.</th>
-                              <th className="px-6 py-3 text-center">Capacity</th>
-                              <th className="px-6 py-3">Fuel Type</th>
-                              <th className="px-6 py-3">Fleet Card</th>
-                              <th className="px-6 py-3">RFID</th>
-                              <th className="px-6 py-3 text-right">Actions</th>
+                            <tr>
+                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/5">Vehicle</th>
+                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/6">Plate No.</th>
+                              <th className="px-3 py-2 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/12">Capacity</th>
+                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/6">Fuel Type</th>
+                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/6">Fleet Card</th>
+                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/6">RFID</th>
+                              <th className="px-3 py-2 text-right text-[10px] font-medium text-gray-500 uppercase tracking-wider w-20">Actions</th>
                             </tr>
                           </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
-                            {archivedVehicles.map((v, idx) => (
-                              <tr key={idx} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {v.vehicle_model || v.vehicleType}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {v.plate_no || v.plateNo}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                                  {v.capacity}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {v.fuel_type || v.fuelType}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                    {(v.fleet_card_status || v.fleetCard)?.toUpperCase()}
-                                  </span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                    {(v.rfid_status || v.rfid)?.toUpperCase()}
-                                  </span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                  <button
-                                    className="text-green-600 hover:text-green-900"
-                                    onClick={() => handleRestore("vehicle", idx)}
-                                  >
-                                    Restore
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
                         </table>
+                        <div className="max-h-[200px] overflow-y-auto">
+                          <table className="w-full divide-y divide-gray-200 table-fixed">
+                            <tbody className="bg-white">
+                              {archivedVehicles.map((v, idx) => (
+                                <tr key={idx} className="hover:bg-gray-50">
+                                  <td className="px-3 py-2 text-sm text-gray-500 truncate">
+                                    {getVehicleField(v, "vehicleType")}
+                                  </td>
+                                  <td className="px-3 py-2 text-sm text-gray-500 truncate">
+                                    {getVehicleField(v, "plateNo")}
+                                  </td>
+                                  <td className="px-3 py-2 text-sm text-gray-500 text-center">
+                                    {v.capacity}
+                                  </td>
+                                  <td className="px-3 py-2 text-sm text-gray-500 truncate">
+                                    {getVehicleField(v, "fuelType")}
+                                  </td>
+                                  <td className="px-3 py-2">
+                                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                      {getVehicleField(v, "fleetCard")?.toUpperCase()}
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-2">
+                                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                      {getVehicleField(v, "rfid")?.toUpperCase()}
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-2 text-right text-sm font-medium">
+                                    <button
+                                      className="text-green-600 hover:text-green-900"
+                                      onClick={() => handleRestore("vehicle", idx)}
+                                    >
+                                      Restore
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     )}
                   </div>
                 </div>
+
                 {/* Archived Drivers */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                  <div className="px-6 py-4 border-b border-gray-200">
-                    <h2 className="text-lg font-semibold text-gray-800">Archived Drivers</h2>
+                  <div className="px-4 py-3 border-b border-gray-200">
+                    <h2 className="text-base font-semibold text-gray-800 text-center">Archived Drivers</h2>
                   </div>
                   <div className="p-4">
                     {archivedDrivers.length === 0 ? (
-                      <p className="text-gray-500 text-center py-4">No archived drivers</p>
+                      <p className="text-gray-500 text-center py-4 text-sm">No archived drivers</p>
                     ) : (
-                      <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
+                      <div className="border border-gray-200 rounded-lg overflow-hidden">
+                        <table className="w-full divide-y divide-gray-200 table-fixed">
                           <thead className="bg-gray-50">
-                            <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              <th className="px-6 py-3">Name</th>
-                              <th className="px-6 py-3">Contact No.</th>
-                              <th className="px-6 py-3">Email Address</th>
-                              <th className="px-6 py-3">Status</th>
-                              <th className="px-6 py-3 text-right">Actions</th>
+                            <tr>
+                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/4">Name</th>
+                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/5">Contact No.</th>
+                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/4">Email Address</th>
+                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/6">Status</th>
+                              <th className="px-3 py-2 text-right text-[10px] font-medium text-gray-500 uppercase tracking-wider w-20">Actions</th>
                             </tr>
                           </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
-                            {archivedDrivers.map((d, idx) => (
-                              <tr key={idx} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {d.name}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {d.contact_no || d.contact}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {d.email_address || d.email}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                    {d.status || (d.assigned_boolean ? "AVAILABLE" : "UNAVAILABLE")}
-                                  </span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                  <button
-                                    className="text-green-600 hover:text-green-900"
-                                    onClick={() => handleRestore("driver", idx)}
-                                  >
-                                    Restore
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
                         </table>
+                        <div className="max-h-[200px] overflow-y-auto">
+                          <table className="w-full divide-y divide-gray-200 table-fixed">
+                            <tbody className="bg-white">
+                              {archivedDrivers.map((d, idx) => (
+                                <tr key={idx} className="hover:bg-gray-50">
+                                  <td className="px-3 py-2 text-sm text-gray-500 truncate">
+                                    {d.name}
+                                  </td>
+                                  <td className="px-3 py-2 text-sm text-gray-500 truncate">
+                                    {getDriverField(d, "contact")}
+                                  </td>
+                                  <td className="px-3 py-2 text-sm text-gray-500 truncate">
+                                    {getDriverField(d, "email")}
+                                  </td>
+                                  <td className="px-3 py-2">
+                                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                      {getDriverField(d, "status")}
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-2 text-right text-sm font-medium">
+                                    <button
+                                      className="text-green-600 hover:text-green-900"
+                                      onClick={() => handleRestore("driver", idx)}
+                                    >
+                                      Restore
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -614,29 +570,25 @@ export default function Management() {
           </div>
         </div>
 
-        {/* Modal for Vehicle Information */}
+        {/* ===== MODALS ===== */}
         {activeTab === "vehicle" && showModal && (
           <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-bold text-gray-800">Add New Vehicle</h2>
-                  <button 
-                    onClick={() => setShowModal(false)}
-                    className="text-gray-400 hover:text-gray-500"
-                  >
+                  <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-500">
                     <X size={20} />
                   </button>
                 </div>
                 <form className="space-y-4" onSubmit={handleVehicleSubmit}>
-                  {/* Vehicle Type */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Type</label>
                     <input
                       type="text"
-                      className={`w-full border ${document.activeElement === this ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-300'} rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500`}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       value={vehicleForm.vehicleType}
-                      onChange={e => setVehicleForm({ ...vehicleForm, vehicleType: e.target.value })}
+                      onChange={(e) => setVehicleForm({ ...vehicleForm, vehicleType: e.target.value })}
                       onFocus={() => {
                         setShowFuelTypeDropdown(false);
                         setShowFleetCardDropdown(false);
@@ -645,29 +597,19 @@ export default function Management() {
                       required
                     />
                   </div>
-                  {/* Plate No. and Capacity */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Plate No.</label>
                       <input
                         type="text"
-                        className={`w-full border ${document.activeElement === this ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-300'} rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500`}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500"
                         value={vehicleForm.plateNo}
-                        onChange={e => {
-                          let val = e.target.value.toUpperCase();
-                          val = val.replace(/[^A-Z0-9\- ]/g, "");
+                        onChange={(e) => {
+                          let val = e.target.value.toUpperCase().replace(/[^A-Z0-9\- ]/g, "");
                           const match = val.match(/^([A-Z]{0,3})([- ]?)([0-9]{0,4})$/);
-                          if (match) {
-                            setVehicleForm({ ...vehicleForm, plateNo: val });
-                          }
-                        }}
-                        onFocus={() => {
-                          setShowFuelTypeDropdown(false);
-                          setShowFleetCardDropdown(false);
-                          setShowRfidDropdown(false);
+                          if (match) setVehicleForm({ ...vehicleForm, plateNo: val });
                         }}
                         maxLength={8}
-                        pattern="^[A-Za-z]{3}[\- ]?[0-9]{3,4}$"
                         required
                       />
                     </div>
@@ -677,19 +619,13 @@ export default function Management() {
                         <input
                           type="text"
                           inputMode="numeric"
-                          pattern="[0-9]*"
-                          className={`w-full border ${document.activeElement === this ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-300'} rounded-lg px-3 py-2 text-center focus:ring-2 focus:ring-green-500 focus:border-green-500`}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-center focus:ring-2 focus:ring-green-500 focus:border-green-500"
                           value={vehicleForm.capacity}
-                          onChange={e => {
+                          onChange={(e) => {
                             let val = e.target.value.replace(/[^0-9]/g, "").slice(0, 2);
                             if (val === "" || (parseInt(val) >= 1 && parseInt(val) <= 20)) {
                               setVehicleForm({ ...vehicleForm, capacity: val });
                             }
-                          }}
-                          onFocus={() => {
-                            setShowFuelTypeDropdown(false);
-                            setShowFleetCardDropdown(false);
-                            setShowRfidDropdown(false);
                           }}
                           maxLength={2}
                           required
@@ -697,24 +633,20 @@ export default function Management() {
                         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col space-y-0.5">
                           <button
                             type="button"
-                            className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                            className="text-gray-500 hover:text-gray-700"
                             onClick={() => {
                               const current = parseInt(vehicleForm.capacity) || 0;
-                              if (current < 20) {
-                                setVehicleForm({ ...vehicleForm, capacity: (current + 1).toString() });
-                              }
+                              if (current < 20) setVehicleForm({ ...vehicleForm, capacity: (current + 1).toString() });
                             }}
                           >
                             <ChevronUp size={16} />
                           </button>
                           <button
                             type="button"
-                            className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                            className="text-gray-500 hover:text-gray-700"
                             onClick={() => {
                               const current = parseInt(vehicleForm.capacity) || 1;
-                              if (current > 1) {
-                                setVehicleForm({ ...vehicleForm, capacity: (current - 1).toString() });
-                              }
+                              if (current > 1) setVehicleForm({ ...vehicleForm, capacity: (current - 1).toString() });
                             }}
                           >
                             <ChevronDown size={16} />
@@ -723,12 +655,12 @@ export default function Management() {
                       </div>
                     </div>
                   </div>
-                  {/* Fuel Type Dropdown */}
+                  {/* Fuel Type */}
                   <div className="relative">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Fuel Type</label>
                     <button
                       type="button"
-                      className={`w-full border ${showFuelTypeDropdown ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-300'} rounded-lg px-3 py-2 flex items-center justify-between hover:bg-gray-50`}
+                      className={`w-full border ${showFuelTypeDropdown ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-300'} rounded-lg px-3 py-2 flex items-center justify-between`}
                       onClick={(e) => {
                         e.stopPropagation();
                         setShowFuelTypeDropdown(!showFuelTypeDropdown);
@@ -739,22 +671,15 @@ export default function Management() {
                       <span className={vehicleForm.fuelType ? "text-gray-900" : "text-gray-400"}>
                         {vehicleForm.fuelType || "Select Fuel Type"}
                       </span>
-                      <ChevronDown 
-                        className={`h-4 w-4 text-gray-400 transition-transform ${showFuelTypeDropdown ? "rotate-180" : ""}`}
-                      />
+                      <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showFuelTypeDropdown ? "rotate-180" : ""}`} />
                     </button>
                     {showFuelTypeDropdown && (
-                      <div 
-                        className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg transition-all duration-200 ease-in-out transform origin-top"
-                        onClick={(e) => e.stopPropagation()}
-                      >
+                      <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg">
                         {["BIO-DIESEL", "DIESEL", "KEROSENE"].map((type) => (
                           <button
                             key={type}
                             type="button"
-                            className={`w-full text-left px-3 py-2 hover:bg-gray-100 text-sm ${
-                              vehicleForm.fuelType === type ? "bg-gray-100 font-medium" : ""
-                            }`}
+                            className={`w-full text-left px-3 py-2 hover:bg-gray-100 text-sm ${vehicleForm.fuelType === type ? "bg-gray-100 font-medium" : ""}`}
                             onClick={() => {
                               setVehicleForm({ ...vehicleForm, fuelType: type });
                               setShowFuelTypeDropdown(false);
@@ -766,12 +691,12 @@ export default function Management() {
                       </div>
                     )}
                   </div>
-                  {/* Fleet Card Dropdown */}
+                  {/* Fleet Card */}
                   <div className="relative">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Fleet Card</label>
                     <button
                       type="button"
-                      className={`w-full border ${showFleetCardDropdown ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-300'} rounded-lg px-3 py-2 flex items-center justify-between hover:bg-gray-50`}
+                      className={`w-full border ${showFleetCardDropdown ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-300'} rounded-lg px-3 py-2 flex items-center justify-between`}
                       onClick={(e) => {
                         e.stopPropagation();
                         setShowFleetCardDropdown(!showFleetCardDropdown);
@@ -782,22 +707,15 @@ export default function Management() {
                       <span className={vehicleForm.fleetCard ? "text-gray-900" : "text-gray-400"}>
                         {vehicleForm.fleetCard || "Select Fleet Card"}
                       </span>
-                      <ChevronDown 
-                        className={`h-4 w-4 text-gray-400 transition-transform ${showFleetCardDropdown ? "rotate-180" : ""}`}
-                      />
+                      <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showFleetCardDropdown ? "rotate-180" : ""}`} />
                     </button>
                     {showFleetCardDropdown && (
-                      <div 
-                        className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg transition-all duration-200 ease-in-out transform origin-top"
-                        onClick={(e) => e.stopPropagation()}
-                      >
+                      <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg">
                         {["Available", "Unavailable"].map((status) => (
                           <button
                             key={status}
                             type="button"
-                            className={`w-full text-left px-3 py-2 hover:bg-gray-100 text-sm ${
-                              vehicleForm.fleetCard === status ? "bg-gray-100 font-medium" : ""
-                            }`}
+                            className={`w-full text-left px-3 py-2 hover:bg-gray-100 text-sm ${vehicleForm.fleetCard === status ? "bg-gray-100 font-medium" : ""}`}
                             onClick={() => {
                               setVehicleForm({ ...vehicleForm, fleetCard: status });
                               setShowFleetCardDropdown(false);
@@ -809,12 +727,12 @@ export default function Management() {
                       </div>
                     )}
                   </div>
-                  {/* RFID Dropdown */}
+                  {/* RFID */}
                   <div className="relative">
                     <label className="block text-sm font-medium text-gray-700 mb-1">RFID</label>
                     <button
                       type="button"
-                      className={`w-full border ${showRfidDropdown ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-300'} rounded-lg px-3 py-2 flex items-center justify-between hover:bg-gray-50`}
+                      className={`w-full border ${showRfidDropdown ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-300'} rounded-lg px-3 py-2 flex items-center justify-between`}
                       onClick={(e) => {
                         e.stopPropagation();
                         setShowRfidDropdown(!showRfidDropdown);
@@ -825,22 +743,15 @@ export default function Management() {
                       <span className={vehicleForm.rfid ? "text-gray-900" : "text-gray-400"}>
                         {vehicleForm.rfid || "Select RFID"}
                       </span>
-                      <ChevronDown 
-                        className={`h-4 w-4 text-gray-400 transition-transform ${showRfidDropdown ? "rotate-180" : ""}`}
-                      />
+                      <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showRfidDropdown ? "rotate-180" : ""}`} />
                     </button>
                     {showRfidDropdown && (
-                      <div 
-                        className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg transition-all duration-200 ease-in-out transform origin-top"
-                        onClick={(e) => e.stopPropagation()}
-                      >
+                      <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg">
                         {["Available", "Unavailable"].map((status) => (
                           <button
                             key={status}
                             type="button"
-                            className={`w-full text-left px-3 py-2 hover:bg-gray-100 text-sm ${
-                              vehicleForm.rfid === status ? "bg-gray-100 font-medium" : ""
-                            }`}
+                            className={`w-full text-left px-3 py-2 hover:bg-gray-100 text-sm ${vehicleForm.rfid === status ? "bg-gray-100 font-medium" : ""}`}
                             onClick={() => {
                               setVehicleForm({ ...vehicleForm, rfid: status });
                               setShowRfidDropdown(false);
@@ -852,23 +763,22 @@ export default function Management() {
                       </div>
                     )}
                   </div>
-                  {/* Buttons */}
                   <div className="flex justify-end gap-3 pt-4">
                     <button
                       type="button"
-                      className="px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50"
                       onClick={() => setShowModal(false)}
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className={`px-4 py-2 bg-green-600 rounded-lg font-medium text-white hover:bg-green-700 transition-colors ${
-                        !isVehicleFormValid() ? "opacity-50 cursor-not-allowed" : ""
+                      className={`px-4 py-2 bg-green-600 rounded-lg font-medium text-white hover:bg-green-700 ${
+                        !isVehicleFormValid() || isSubmittingVehicle ? "opacity-50 cursor-not-allowed" : ""
                       }`}
-                      disabled={!isVehicleFormValid()}
+                      disabled={!isVehicleFormValid() || isSubmittingVehicle}
                     >
-                      Add Vehicle
+                      {isSubmittingVehicle ? "Adding..." : "Add Vehicle"}
                     </button>
                   </div>
                 </form>
@@ -877,36 +787,30 @@ export default function Management() {
           </div>
         )}
 
-        {/* Modal for Driver Information */}
         {activeTab === "driver" && showModal && (
-          <div className="fixed inset-0  flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-bold text-gray-800">Add New Driver</h2>
-                  <button 
-                    onClick={() => setShowModal(false)}
-                    className="text-gray-400 hover:text-gray-500"
-                  >
+                  <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-500">
                     <X size={20} />
                   </button>
                 </div>
                 <form className="space-y-4" onSubmit={handleDriverSubmit}>
-                  {/* Name */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                     <input
                       type="text"
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       value={driverForm.name}
-                      onChange={e => setDriverForm({ ...driverForm, name: e.target.value })}
+                      onChange={(e) => setDriverForm({ ...driverForm, name: e.target.value })}
                       required
                     />
                   </div>
-                  {/* Contact No. */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Contact No.</label>
-                    <div className="flex"> 
+                    <div className="flex">
                       <div className="w-20 mr-2">
                         <input
                           type="text"
@@ -919,7 +823,6 @@ export default function Management() {
                         <input
                           type="text"
                           className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                          maxLength={13}
                           value={driverForm.contact.replace('+63 ', '')}
                           onChange={handleContactChange}
                           placeholder="912 345 6789"
@@ -928,34 +831,32 @@ export default function Management() {
                       </div>
                     </div>
                   </div>
-                  {/* Email Address */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                     <input
                       type="email"
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       value={driverForm.email}
-                      onChange={e => setDriverForm({ ...driverForm, email: e.target.value })}
+                      onChange={(e) => setDriverForm({ ...driverForm, email: e.target.value })}
                       required
                     />
                   </div>
-                  {/* Buttons */}
                   <div className="flex justify-end gap-3 pt-4">
                     <button
                       type="button"
-                      className="px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50"
                       onClick={() => setShowModal(false)}
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className={`px-4 py-2 bg-green-600 rounded-lg font-medium text-white hover:bg-green-700 transition-colors ${
-                        !isDriverFormValid() ? "opacity-50 cursor-not-allowed" : ""
+                      className={`px-4 py-2 bg-green-600 rounded-lg font-medium text-white hover:bg-green-700 ${
+                        !isDriverFormValid() || isSubmittingDriver ? "opacity-50 cursor-not-allowed" : ""
                       }`}
-                      disabled={!isDriverFormValid()}
+                      disabled={!isDriverFormValid() || isSubmittingDriver}
                     >
-                      Add Driver
+                      {isSubmittingDriver ? "Adding..." : "Add Driver"}
                     </button>
                   </div>
                 </form>
@@ -964,9 +865,8 @@ export default function Management() {
           </div>
         )}
 
-        {/* Duplicate Modal - Already Exists on the list */}
         {duplicateModal.show && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center ">
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-xs p-6 text-center">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 mb-4">
                 <X className="h-6 w-6 text-red-600" />
@@ -985,7 +885,6 @@ export default function Management() {
           </div>
         )}
 
-        {/* Archive Confirmation Modal */}
         {confirmDelete.type && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-xs p-6 text-center">
@@ -1016,10 +915,10 @@ export default function Management() {
           </div>
         )}
 
-        {/* Archive button in bottom right corner */}
+        {/* Archive Toggle Button */}
         <button
-          className={`fixed bottom-4 right-3.5 py-2 px-4 rounded-lg hover:bg-green-500 hover:text-white transition-colors flex items-center gap-2 shadow-sm mb-8 ${
-            activeTab === "archive" ? "bg-green-600 text-white" : "bg-white text-green-600"
+          className={`fixed bottom-4 right-4 py-2 px-4 rounded-lg transition-colors flex items-center gap-2 shadow-sm ${
+            activeTab === "archive" ? "bg-green-600 text-white" : "bg-white text-green-600 border border-green-600"
           }`}
           onClick={toggleArchiveView}
         >

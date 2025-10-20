@@ -65,7 +65,7 @@ const handleSubmit = async (e) => {
       
       <div className="absolute top-1 left-6 flex items-center space-x-2">
         <img src={logo} alt="VDS Logo" className="h-15 w-auto" />
-        <h1 className="text-black text-xl font-bold">Vehicle Dispatch System</h1>
+        <h1 className="text-gray-700 text-xl font-bold">Vehicle Dispatch System</h1>
       </div>
 
       <div className="bg-opacity-90 rounded-xl p-11 w-90 max-w-md z-10">
@@ -159,4 +159,4 @@ const handleSubmit = async (e) => {
   );
 };
 
-export default Login;
+export default Login; 

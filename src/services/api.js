@@ -5,7 +5,7 @@ const getAuthToken = () => {
   return localStorage.getItem('token');
 };
 
-// 🌐 Enhanced API request handler with better error handling
+// 🌐 Enhanced API request handler
 const apiRequest = async (endpoint, options = {}) => {
   const token = getAuthToken();
   const headers = {
@@ -21,24 +21,43 @@ const apiRequest = async (endpoint, options = {}) => {
       credentials: 'include',
     });
 
-    const data = await response.json();
+    // Parse JSON, but be safe if response is empty or not JSON
+    let data;
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      data = await response.text();
+    }
 
     if (!response.ok) {
-      // If the backend returns an error object with 'error' property
-      const errorMessage = data.error || data.message || `Request failed with status ${response.status}`;
-      throw new Error(errorMessage);
+      // ✅ Use the backend's error message directly if available
+      let errorMessage = 'An unknown error occurred';
+      
+      if (typeof data === 'object' && data !== null && data.error) {
+        errorMessage = data.error; // This is your snackbar message!
+      } else if (typeof data === 'string' && data) {
+        errorMessage = data;
+      } else {
+        errorMessage = `Request failed: ${response.status} ${response.statusText}`;
+      }
+
+      // Throw with ONLY the message — no extra wrapping
+      const error = new Error(errorMessage);
+      error.status = response.status;
+      error.isApiError = true; // Optional flag for UI to distinguish
+      throw error;
     }
 
     return data;
-
   } catch (error) {
-    console.error(`❌ API request to ${endpoint} failed:`, error);
-    
-    // More specific error messages
+    // Handle network-level errors (e.g., server down)
     if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-      throw new Error('Network error: Unable to connect to server');
+      const networkError = new Error('Network error: Unable to connect to server');
+      networkError.isNetworkError = true;
+      throw networkError;
     }
-    
+    // Re-throw API or other errors
     throw error;
   }
 };
@@ -56,7 +75,19 @@ export const api = {
   getRequests: () => apiRequest('/requests'),
   getRequest: (id) => apiRequest(`/requests/${id}`),
   createRequest: (data) => apiRequest('/requests', { method: 'POST', body: JSON.stringify(data) }),
-  updateRequestStatus: (id, data) => apiRequest(`/requests/${id}/status`, { method: 'PUT', body: JSON.stringify(data) }),
+  
+  // ✅ FIXED: Match backend route (PUT /requests/:id)
+  updateRequestStatus: (id, data) => {
+    const payload = {
+      status: data.status,
+      driver: data.driver_name,
+      vehicleType: data.vehicle_type,
+      plateNo: data.plate_no,
+      reason: data.reason_for_decline,
+    };
+    return apiRequest(`/requests/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+  },
+  
   deleteRequest: (id) => apiRequest(`/requests/${id}`, { method: 'DELETE' }),
 
   // 🔔 NOTIFICATIONS
@@ -71,17 +102,16 @@ export const api = {
   getVehicles: async () => {
     try {
       const data = await apiRequest('/vehicles');
-      // Ensure we always return an array
       return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error('Error in getVehicles:', error);
-      return []; // Return empty array on error
+      return [];
     }
   },
   
   createVehicle: (data) => apiRequest('/vehicles', { method: 'POST', body: JSON.stringify(data) }),
   archiveVehicle: (id) => apiRequest(`/vehicles/${id}/archive`, { method: 'PATCH' }),
-  restoreVehicle: (id) => apiRequest(`/vehicles/${id}/restore`, { method: 'PUT' }),
+  restoreVehicle: (id) => apiRequest(`/vehicles/${id}/restore`, { method: 'PATCH' }), // ⚠️ Fixed: was PUT, but backend uses PATCH
   getArchivedVehicles: async () => {
     try {
       const data = await apiRequest('/vehicles/archived');
@@ -96,17 +126,16 @@ export const api = {
   getDrivers: async () => {
     try {
       const data = await apiRequest('/drivers');
-      // Ensure we always return an array
       return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error('Error in getDrivers:', error);
-      return []; // Return empty array on error
+      return [];
     }
   },
   
   createDriver: (data) => apiRequest('/drivers', { method: 'POST', body: JSON.stringify(data) }),
   archiveDriver: (id) => apiRequest(`/drivers/${id}/archive`, { method: 'PATCH' }),
-  restoreDriver: (id) => apiRequest(`/drivers/${id}/restore`, { method: 'PUT' }),
+  restoreDriver: (id) => apiRequest(`/drivers/${id}/restore`, { method: 'PATCH' }), // ⚠️ Fixed: was PUT, but backend uses PATCH
   getArchivedDrivers: async () => {
     try {
       const data = await apiRequest('/drivers/archived');
