@@ -89,38 +89,31 @@ export default function Client_Nav() {
         </button>
       </div>
 
-{/* Logout Confirmation Modal */}
-{showLogoutModal && (
-  <div 
-    className="fixed inset-0 bg-black-20 bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50"
-    onClick={() => setShowLogoutModal(false)} // Optional: close on outside click
-  >
-    <div 
-      className="bg-white rounded-lg p-6 w-80 max-w-sm border border-gray-300 shadow-xl"
-      onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
-    >
-      <h3 className="text-lg font-semibold text-gray-800 mb-2">Confirm Logout</h3>
-      <p className="text-gray-600 mb-4">
-        Are you sure you want to log out?
-      </p>
-      <div className="flex justify-end space-x-3">
-        <button
-          onClick={() => setShowLogoutModal(false)}
-          className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition border border-gray-300"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleLogoutConfirm}
-          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition border border-green-600"
-        >
-          OK
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-      
+      {/* ✅ Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-80 max-w-sm">
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">Confirm Logout</h3>
+            <p className="text-gray-600 mb-4">
+              Are you sure you want to log out? You'll need to sign in again to access your account.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLogoutConfirm}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
