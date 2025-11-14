@@ -1,37 +1,23 @@
-import React, { useState } from "react";
+import React from "react";
 import { Home, GitPullRequest, User, LogOut } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../../Context/AuthContext";
 import logo from "../../assets/logo.png";
+import profile from "../../assets/Profile2.png";
 import Client_NavItem from "./Client_NavItem";
-import profile from "../../assets/profile2.png";
 
 export default function Client_Nav() {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const [showLogoutModal, setShowLogoutModal] = useState(false); // 👈 Modal state
 
   const handleLogout = () => {
+    // Clear all auth storage
     localStorage.clear();
     sessionStorage.clear();
     navigate("/login");
   };
 
-  const confirmLogout = () => {
-    setShowLogoutModal(true);
-  };
-
-  const handleLogoutConfirm = () => {
-    setShowLogoutModal(false);
-    handleLogout();
-  };
-
+  // Improved active route detection
   const activePath = pathname.split('/')[2] || 'home';
-
-  const fullName = user
-    ? `${user.first_name || user.firstName || ''} ${user.last_name || user.lastName || ''}`.trim()
-    : "User";
 
   return (
     <div className="h-screen w-74 bg-green-800 text-white p-4 flex flex-col">
@@ -73,47 +59,21 @@ export default function Client_Nav() {
 
       {/* Footer Section */}
       <div className="ml-2 flex items-center space-x-3 p-2 border-t-2 border-white">
-        <img src={profile} alt="User" className="w-5 h-5 rounded-full" />
+        <img src={profile} alt="User" className="w-10 h-10 rounded-full" />
         <Link
           to="/client/profile"
-          className="flex-1 text-md font-semibold hover:text-lime-300 transition truncate"
+          className="flex-1 text-md font-semibold hover:text-lime-300 transition"
         >
-          {fullName}
+          John Doe
         </Link>
         <button
-          onClick={confirmLogout} // 👈 Trigger modal instead of direct logout
+          onClick={handleLogout}
           className="text-white hover:text-lime-300 transition"
           aria-label="Logout"
         >
           <LogOut className="w-6 h-6" />
         </button>
       </div>
-
-      {/* ✅ Logout Confirmation Modal */}
-      {showLogoutModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-80 max-w-sm">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Confirm Logout</h3>
-            <p className="text-gray-600 mb-4">
-              Are you sure you want to log out? You'll need to sign in again to access your account.
-            </p>
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setShowLogoutModal(false)}
-                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleLogoutConfirm}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition"
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

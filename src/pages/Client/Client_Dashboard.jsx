@@ -7,7 +7,7 @@ const Client_Dashboard = () => {
   return (
     <div className="flex min-h-screen">
       {/* Client Navigation Sidebar */}
-      <Client_Nav />
+      <Client_nav />
       
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
