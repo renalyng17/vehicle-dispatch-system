@@ -1,17 +1,16 @@
+// src/pages/Profile.jsx
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import profile from "../../assets/profile.png";
-import { useLocation, useNavigate } from "react-router-dom";
-
-axios.defaults.baseURL = "http://localhost:3001";
+import { useAuth } from "../../Context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import profile from "../../assets/profile2.png";
 
 function Profile() {
-  const location = useLocation(); // ✅ Only once
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [isEditing, setIsEditing] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [userData, setUserData] = useState({
     firstName: "",
@@ -30,108 +29,27 @@ function Profile() {
     };
   }, []);
 
-  // Load user data
+  // Redirect if not authenticated
   useEffect(() => {
-    const loadUserData = async () => {
-      try {
-        setIsLoading(true);
+    if (!authLoading && !user) {
+      navigate("/login");
+    }
+  }, [user, authLoading, navigate]);
 
-        if (location.state?.registrationSuccess) {
-          const { userData } = location.state;
-          setUserData({
-            firstName: userData.firstName,
-            lastName: userData.lastName,
-            email: userData.email,
-            contact: userData.contact,
-            userType: userData.userType,
-            office: userData.office || "",
-          });
-          return;
-        }
-
-        const local = localStorage.getItem("userData");
-        if (local) {
-          setUserData(JSON.parse(local));
-          return;
-        }
-
-        const session = sessionStorage.getItem("userData");
-        if (session) {
-          setUserData(JSON.parse(session));
-          return;
-        }
-
-        const userId = localStorage.getItem("userId");
-        const token = localStorage.getItem("token");
-
-        if (!userId || !token) {
-          throw new Error("User not authenticated");
-        }
-
-        const response = await axios.get(`/api/auth/user/${userId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const data = response.data;
-        const parsedUser = {
-          firstName: data.first_name || "",
-          lastName: data.last_name || "",
-          email: data.email || "",
-          contact: data.contact_no || "",
-          userType: data.user_type || "",
-          office: data.office || "",
-        };
-
-        setUserData(parsedUser);
-        localStorage.setItem("userData", JSON.stringify(parsedUser));
-      } catch (err) {
-        console.error("Failed to fetch user data:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadUserData();
-  }, [location.state]);
-
-  const handleSave = async () => {
-    try {
-      setIsLoading(true);
-      const userId = localStorage.getItem("userId");
-      const token = localStorage.getItem("token");
-
-      if (!userId || !token) {
-        throw new Error("User not authenticated");
-      }
-
-      localStorage.setItem("userData", JSON.stringify(userData));
-      sessionStorage.setItem("userData", JSON.stringify(userData));
-
-      await axios.put(
-        `/api/auth/user/${userId}`,
-        {
-          first_name: userData.firstName,
-          last_name: userData.lastName,
-          contact_no: userData.contact,
-          office: userData.office,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      setIsEditing(false);
-      setShowPopup(true);
-    } catch (error) {
-      console.error("Failed to update profile:", error);
-    } finally {
+  // Load user data into local state
+  useEffect(() => {
+    if (user && !authLoading) {
+      setUserData({
+        firstName: user.first_name || user.firstName || "",
+        lastName: user.last_name || user.lastName || "",
+        email: user.email || "",
+        contact: user.contact_no || user.contact || "",
+        userType: user.user_type || user.userType || "",
+        office: user.office || "",
+      });
       setIsLoading(false);
     }
-  };
+  }, [user, authLoading]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -141,7 +59,51 @@ function Profile() {
     }));
   };
 
-  if (isLoading) {
+  // ✅ Updated handleSave to actually save to backend
+  const handleSave = async () => {
+    try {
+      setIsLoading(true);
+
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      if (!token) {
+        throw new Error("Authentication required");
+      }
+
+      const response = await fetch("http://localhost:3001/profile", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          first_name: userData.firstName,
+          last_name: userData.lastName,
+          contact_no: userData.contact,
+          office: userData.office,
+          // ❌ Email is NOT included → cannot be changed
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to update profile");
+      }
+
+      // Update local storage
+      const storage = localStorage.getItem("user") ? localStorage : sessionStorage;
+      storage.setItem("user", JSON.stringify(result.user));
+
+      setIsEditing(false);
+      setShowPopup(true);
+    } catch (error) {
+      console.error("Profile save error:", error);
+      alert("Failed to save changes: " + error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading || authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center">
@@ -192,7 +154,7 @@ function Profile() {
             {/* Avatar Section */}
             <div className="lg:w-1/4 flex flex-col items-center lg:items-start lg:pr-8 mb-8 lg:mb-0">
               <div className="relative group">
-                <div className="w-40 h-40 rounded-full bg-gradient-to-br from-green-100 to-gray-100 overflow-hidden border-4 border-white shadow-md">
+                <div className="w-40 h-40 rounded-full bg-gradient-to-br from-grey-100 to-white-100 overflow-hidden border-4 border-white shadow-md">
                   <img
                     src={profile}
                     alt="User"
@@ -274,22 +236,12 @@ function Profile() {
                     )}
                   </div>
 
+                  {/* ✅ EMAIL: Read-only (never editable) */}
                   <div className="space-y-1">
                     <label className="block text-sm font-medium text-gray-600">
                       Email Address
                     </label>
-                    {isEditing ? (
-                      <input
-                        type="email"
-                        name="email"
-                        value={userData.email}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                        placeholder="Enter your email"
-                      />
-                    ) : (
-                      <p className="text-gray-800 py-2.5 px-1">{userData.email}</p>
-                    )}
+                    <p className="text-gray-800 py-2.5 px-1">{userData.email}</p>
                   </div>
 
                   <div className="space-y-1">

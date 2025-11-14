@@ -5,6 +5,7 @@ import background from "../assets/background.png";
 import car from "../assets/car.png";
 import logo from "../assets/logo.png";
 
+// Set base API URL
 axios.defaults.baseURL = 'http://localhost:3001';
 
 const Register = () => {
@@ -23,6 +24,7 @@ const Register = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
+  const [successMessage, setSuccessMessage] = useState(''); // ✅ New: success state
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -33,6 +35,9 @@ const Register = () => {
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
+    // Clear server error or success when user types
+    if (serverError) setServerError('');
+    if (successMessage) setSuccessMessage('');
   };
 
   const validateForm = () => {
@@ -62,30 +67,37 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setServerError('');
+    setSuccessMessage('');
     if (!validateForm()) return;
     setLoading(true);
 
     try {
-      const { confirmPassword, ...dataToSend } = formData; // ✅ Remove confirmPassword before sending
+      const { confirmPassword: _confirmPassword, ...dataToSend } = formData;
       const response = await axios.post('/api/auth/register', dataToSend);
 
-      if (response.data.status === 'success') {
-        navigate('/login', { // ✅ Better to go to login after register
-          state: {
-            registrationSuccess: true,
-            registeredEmail: formData.email
-          },
-          replace: true
-        });
+      if (response.status === 201) {
+        // ✅ Show success message
+        setSuccessMessage('Registration successful! Redirecting to login...');
+        setLoading(false);
+
+        // ✅ Wait 2 seconds, then redirect
+        setTimeout(() => {
+          navigate('/login', {
+            state: {
+              registrationSuccess: true,
+              registeredEmail: formData.email
+            },
+            replace: true
+          });
+        }, 2000);
       }
     } catch (err) {
+      setLoading(false);
       setServerError(
         err.response?.data?.message ||
         err.message ||
         'Registration failed. Please try again.'
       );
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -101,11 +113,21 @@ const Register = () => {
       <div className="w-1/2 flex items-center justify-center">
         <div className="rounded-xl p-8 w-full max-w-md">
           <h1 className="text-xl font-semibold mb-6 text-center text-green-700">Register</h1>
+
+          {/* ✅ Success Message */}
+          {successMessage && (
+            <div className="p-3 mb-4 text-green-700 bg-green-100 rounded-md text-xs">
+              {successMessage}
+            </div>
+          )}
+
+          {/* ❌ Error Message */}
           {serverError && (
             <div className="p-3 mb-4 text-red-700 bg-red-100 rounded-md text-xs">
               <p>{serverError}</p>
             </div>
           )}
+
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="flex space-x-4">
               <div className="flex-1">
@@ -187,7 +209,6 @@ const Register = () => {
               </div>
             </div>
 
-            {/* ✅ Only one User Type select */}
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">User Type</label>
               <select
@@ -204,7 +225,6 @@ const Register = () => {
               {errors.user_type && <span className="text-red-300 text-xs">{errors.user_type}</span>}
             </div>
 
-            {/* ✅ Fixed button: properly closed */}
             <button
               type="submit"
               disabled={loading}

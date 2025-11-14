@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { CalendarCheck2, CalendarClock, ChevronRight, Clock, User, Car, RefreshCw, AlertCircle } from "lucide-react";
 
-export default function Client_Home() {
+export default function Home() {
   const [recentRequests, setRecentRequests] = useState([]);
   const [vehicleStatus, setVehicleStatus] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,8 +21,7 @@ export default function Client_Home() {
       try {
         setLoading(true);
         
-        // In a real application, these would be actual API endpoints
-        // For demo purposes, we'll use the mock data directly
+        
         setTimeout(() => {
           setRecentRequests([
             { 

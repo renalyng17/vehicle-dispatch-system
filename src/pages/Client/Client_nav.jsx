@@ -2,6 +2,7 @@ import React from "react";
 import { Home, GitPullRequest, User, LogOut } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import logo from "../../assets/logo.png";
+import profile from "../../assets/Profile2.png";
 import Client_NavItem from "./Client_NavItem";
 
 export default function Client_Nav() {
@@ -58,7 +59,7 @@ export default function Client_Nav() {
 
       {/* Footer Section */}
       <div className="ml-2 flex items-center space-x-3 p-2 border-t-2 border-white">
-        <img src={logo} alt="User" className="w-10 h-10 rounded-full" />
+        <img src={profile} alt="User" className="w-10 h-10 rounded-full" />
         <Link
           to="/client/profile"
           className="flex-1 text-md font-semibold hover:text-lime-300 transition"
