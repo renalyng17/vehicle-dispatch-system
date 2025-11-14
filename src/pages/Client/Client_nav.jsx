@@ -1,4 +1,5 @@
 import React from "react";
+import React from "react";
 import { Home, GitPullRequest, User, LogOut } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import logo from "../../assets/logo.png";
@@ -11,11 +12,13 @@ export default function Client_Nav() {
 
   const handleLogout = () => {
     // Clear all auth storage
+    // Clear all auth storage
     localStorage.clear();
     sessionStorage.clear();
     navigate("/login");
   };
 
+  // Improved active route detection
   // Improved active route detection
   const activePath = pathname.split('/')[2] || 'home';
 
@@ -63,10 +66,13 @@ export default function Client_Nav() {
         <Link
           to="/client/profile"
           className="flex-1 text-md font-semibold hover:text-lime-300 transition"
+          className="flex-1 text-md font-semibold hover:text-lime-300 transition"
         >
+          John Doe
           John Doe
         </Link>
         <button
+          onClick={handleLogout}
           onClick={handleLogout}
           className="text-white hover:text-lime-300 transition"
           aria-label="Logout"

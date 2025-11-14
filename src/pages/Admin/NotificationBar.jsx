@@ -1,5 +1,5 @@
 // NotificationBar.js
-import { Bell, ChevronDown } from "lucide-react";
+import { Bell, AlertTriangle } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../services/api";
@@ -50,11 +50,16 @@ const SelectInput = ({ label, name, value, onChange, options, required = false }
         <span className={`${value ? "text-gray-800" : "text-gray-400"}`}>
           {displayValue}
         </span>
-        <ChevronDown
+        <svg
           className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
           }`}
-        />
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+        </svg>
       </div>
 
       {isOpen && (
@@ -63,7 +68,7 @@ const SelectInput = ({ label, name, value, onChange, options, required = false }
             options.map((option, index) => (
               <li
                 key={index}
-                className="px-3 py-2 text-sm cursor-pointer hover:bg-green-50 hover:text-green-800 transition-colors"
+                className="px-3 py-2 text-sm cursor-pointer hover:bg-teal-50 hover:text-green-800 transition-colors"
                 onClick={() => handleSelect(option)}
               >
                 {option}
@@ -82,9 +87,11 @@ export default function NotificationBar({ onRequestUpdate }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isDeclineModalOpen, setIsDeclineModalOpen] = useState(false);
   const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
+  const [isConflictModalOpen, setIsConflictModalOpen] = useState(false);
+  const [conflictMessage, setConflictMessage] = useState("");
   const [bellPosition, setBellPosition] = useState({ top: 0, right: 10 });
-  const [notifications, setNotifications] = useState([]); // Only Pending
-  const [allActiveRequests, setAllActiveRequests] = useState([]); // Pending + Accepted
+  const [notifications, setNotifications] = useState([]);
+  const [allActiveRequests, setAllActiveRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [formValues, setFormValues] = useState({
     driver: "",
@@ -98,7 +105,7 @@ export default function NotificationBar({ onRequestUpdate }) {
 
   const navigate = useNavigate();
 
-  // Fetch all requests and split into notifications (Pending) and allActive (Pending + Accepted)
+  // Fetch requests
   useEffect(() => {
     const fetchRequests = async () => {
       try {
@@ -111,6 +118,8 @@ export default function NotificationBar({ onRequestUpdate }) {
         setAllActiveRequests(active);
       } catch (error) {
         console.error("Failed to fetch notifications:", error);
+        setConflictMessage("Failed to load notifications. Please try again.");
+        setIsConflictModalOpen(true);
       }
     };
 
@@ -119,6 +128,7 @@ export default function NotificationBar({ onRequestUpdate }) {
     return () => clearInterval(interval);
   }, []);
 
+  // Fetch drivers & vehicles
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -131,11 +141,14 @@ export default function NotificationBar({ onRequestUpdate }) {
         setVehicles(vehiclesData || []);
       } catch (error) {
         console.error("Failed to fetch drivers or vehicles:", error);
+        setConflictMessage("Failed to load drivers or vehicles.");
+        setIsConflictModalOpen(true);
       }
     };
     fetchData();
   }, []);
 
+  // Bell position for dropdown
   useEffect(() => {
     const bell = document.getElementById("notification-bell");
     if (bell && isOpen) {
@@ -147,7 +160,7 @@ export default function NotificationBar({ onRequestUpdate }) {
     }
   }, [isOpen]);
 
-  // Reset form when Accept modal opens
+  // Reset form on Accept modal open
   useEffect(() => {
     if (isAcceptModalOpen) {
       setFormValues({ driver: "", vehicleType: "", plateNo: "", reason: "" });
@@ -169,7 +182,7 @@ export default function NotificationBar({ onRequestUpdate }) {
     setFormValues((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ✅ Compute booked resources using ALL active requests (Pending + Accepted)
+  // Compute booked resources using ALL active requests
   const { bookedDrivers, bookedVehicles } = useMemo(() => {
     if (!selectedRequest) {
       return { bookedDrivers: new Set(), bookedVehicles: new Set() };
@@ -212,7 +225,7 @@ export default function NotificationBar({ onRequestUpdate }) {
   const handleProcess = async (action) => {
     if (!selectedRequest?.id) return;
 
-    // ✅ Final validation to prevent race conditions or stale UI
+    // 🔒 Final validation before submission
     if (action === "accept") {
       const driverConflict = allActiveRequests.some(req =>
         req.fromDate === selectedRequest.fromDate &&
@@ -227,17 +240,20 @@ export default function NotificationBar({ onRequestUpdate }) {
       );
 
       if (driverConflict) {
-        alert("This driver is already assigned to another trip on this date.");
+        setConflictMessage("This driver is already assigned to another trip on this date.");
+        setIsConflictModalOpen(true);
         return;
       }
       if (vehicleConflict) {
-        alert("This vehicle is already assigned on this date.");
+        setConflictMessage("This vehicle is already assigned on this date.");
+        setIsConflictModalOpen(true);
         return;
       }
     }
 
     setIsProcessing(true);
     try {
+      let updatedRequest;
       if (action === "accept") {
         const selectedDriver = drivers.find(d => d.name === formValues.driver);
         const mainUpdate = {
@@ -247,26 +263,28 @@ export default function NotificationBar({ onRequestUpdate }) {
           vehicle_type: formValues.vehicleType,
           plate_no: formValues.plateNo,
         };
-        await api.updateRequestStatus(selectedRequest.id, mainUpdate);
+        updatedRequest = await api.updateRequestStatus(selectedRequest.id, mainUpdate);
         if (onRequestUpdate) onRequestUpdate({ ...selectedRequest, ...mainUpdate });
       } else {
         const updateData = {
           status: "Declined",
           reason_for_decline: formValues.reason || "No reason provided",
         };
-        const updatedRequest = await api.updateRequestStatus(selectedRequest.id, updateData);
+        updatedRequest = await api.updateRequestStatus(selectedRequest.id, updateData);
         if (onRequestUpdate) onRequestUpdate(updatedRequest);
       }
 
-      // Reset
+      // Reset & close
       setFormValues({ driver: "", vehicleType: "", plateNo: "", reason: "" });
       setIsDeclineModalOpen(false);
       setIsAcceptModalOpen(false);
+      setIsConflictModalOpen(false);
       setIsOpen(false);
       setSelectedRequest(null);
     } catch (error) {
       console.error("Error processing request:", error);
-      alert(`Failed to ${action} request: ${error.message}`);
+      setConflictMessage(`Failed to ${action} request: ${error.message || "Unknown error"}`);
+      setIsConflictModalOpen(true);
     } finally {
       setIsProcessing(false);
     }
@@ -287,20 +305,20 @@ export default function NotificationBar({ onRequestUpdate }) {
   };
 
   const getNotificationIcon = () => <Bell className="w-4 h-4 text-green-500" />;
-  const getNotificationStyle = () => 'bg-white border border-green-200';
+  const getNotificationStyle = () => 'bg-white border border-teal-100';
 
   return (
     <>
       {/* Bell Button */}
       <button
         id="notification-bell"
-        className="fixed top-5 right-7 hover:text-lime-200 transition duration-200 z-50"
+        className="fixed top-5 right-7 hover:text-green-500 transition duration-200 z-50"
         onClick={() => setIsOpen(!isOpen)}
-        aria-label="Notifications"
+        aria-label={`Notifications${notifications.length > 0 ? `, ${notifications.length} new` : ''}`}
       >
         <Bell className="w-6 h-6" />
         {notifications.length > 0 && (
-          <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-green-500" />
+          <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-green-800" />
         )}
       </button>
 
@@ -355,20 +373,20 @@ export default function NotificationBar({ onRequestUpdate }) {
                             <span className="text-xs text-gray-500 whitespace-nowrap">
                               {formatDate(request.createdAt)}
                             </span>
-                            <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                            <span className="w-2 h-2 rounded-full bg-green-800"></span>
                           </div>
                         </div>
                         <div className="mt-3 flex justify-end gap-2">
                           <button
                             onClick={(e) => handleButtonClick(e, "decline", request)}
-                            className="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600"
+                            className="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 disabled:opacity-50"
                             disabled={isProcessing}
                           >
                             Decline
                           </button>
                           <button
                             onClick={(e) => handleButtonClick(e, "accept", request)}
-                            className="px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600"
+                            className="px-3 py-1 bg-green-800 text-white text-xs rounded hover:bg-green-700 disabled:opacity-50"
                             disabled={isProcessing}
                           >
                             Accept
@@ -391,8 +409,14 @@ export default function NotificationBar({ onRequestUpdate }) {
 
       {/* Decline Modal */}
       {isDeclineModalOpen && selectedRequest && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-[1px]">
-          <div className="bg-white p-6 rounded-lg shadow-2xl w-full max-w-md mx-4">
+        <div 
+          className="fixed inset-0 flex items-center justify-center z-50  bg-opacity-20 backdrop-blur-[1px]"
+          onClick={() => setIsDeclineModalOpen(false)}
+        >
+          <div 
+            className="bg-white p-6 rounded-lg shadow-2xl w-full max-w-md mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h2 className="text-2xl font-bold text-center text-red-700 mb-6">DECLINE REQUEST</h2>
             <div className="space-y-4 text-xs text-gray-800">
               <Input label="Employee Name" value={selectedRequest.names?.join(", ") || ""} />
@@ -439,11 +463,17 @@ export default function NotificationBar({ onRequestUpdate }) {
 
       {/* Accept Modal */}
       {isAcceptModalOpen && selectedRequest && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-[1px]">
-          <div className="bg-white p-4 rounded-lg shadow-2xl w-full max-w-md mx-4">
+        <div 
+          className="fixed inset-0 flex items-center justify-center z-50  bg-opacity-20 backdrop-blur-[1px]"
+          onClick={() => setIsAcceptModalOpen(false)}
+        >
+          <div 
+            className="bg-white p-4 rounded-lg shadow-2xl w-full max-w-md mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h2 className="text-xl font-bold text-center text-green-800 mb-3">APPROVE REQUEST</h2>
 
-            {/* Request Info - Compact Grid */}
+            {/* Request Info */}
             <div className="grid grid-cols-2 gap-2 text-xs text-gray-800 mb-3">
               <Input label="Name" value={selectedRequest.names?.join(", ") || ""} className="col-span-2" />
               <Input label="Date" value={`${selectedRequest.fromDate} - ${selectedRequest.toDate}`} />
@@ -483,43 +513,42 @@ export default function NotificationBar({ onRequestUpdate }) {
               />
             </div>
 
-            {/* Vehicle Capacity - Show ONLY for current selected car */}
-           {formValues.plateNo && (
-  <div className="mb-3 p-2 bg-blue-50 rounded border border-blue-200 text-xs">
-    <div className="font-medium text-blue-800">Vehicle Capacity</div>
-    {(() => {
-      const normalizedPlate = formValues.plateNo.trim().toUpperCase();
-      const vehicle = vehicles.find(v => 
-        v.plateNo?.trim().toUpperCase() === normalizedPlate
-      );
+            {/* Vehicle Capacity */}
+            {formValues.plateNo && (
+              <div className="mb-3 p-2 bg-blue-50 rounded border border-blue-200 text-xs">
+                <div className="font-medium text-blue-800">Vehicle Capacity</div>
+                {(() => {
+                  const normalizedPlate = formValues.plateNo.trim().toUpperCase();
+                  const vehicle = vehicles.find(v => 
+                    v.plateNo?.trim().toUpperCase() === normalizedPlate
+                  );
 
-      const totalSeats = vehicle?.capacity || 0; // ✅ FIXED: Use 'capacity'
+                  const totalSeats = vehicle?.capacity || 0;
+                  const assignedToThisVehicle = allActiveRequests
+                    .filter(req => 
+                      req.plate_no?.trim().toUpperCase() === normalizedPlate && 
+                      req.fromDate === selectedRequest.fromDate &&
+                      req.status === "Accepted"
+                    )
+                    .reduce((sum, req) => sum + (req.names?.length || 1), 0);
 
-      const assignedToThisVehicle = allActiveRequests
-        .filter(req => 
-          req.plate_no?.trim().toUpperCase() === normalizedPlate && 
-          req.fromDate === selectedRequest.fromDate &&
-          req.status === "Accepted"
-        )
-        .reduce((sum, req) => sum + (req.names?.length || 1), 0);
+                  const currentPassengers = selectedRequest.names?.length || 1;
+                  const usedSeats = assignedToThisVehicle + currentPassengers;
+                  const available = Math.max(0, totalSeats - usedSeats);
 
-      const currentPassengers = selectedRequest.names?.length || 1;
-      const usedSeats = assignedToThisVehicle + currentPassengers;
-      const available = Math.max(0, totalSeats - usedSeats);
+                  return (
+                    <>
+                      <div>{usedSeats} / {totalSeats} seats used</div>
+                      <div className={`mt-1 ${available > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {available > 0 ? `${available} left` : 'No seats left!'}
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
 
-      return (
-        <>
-          <div>{usedSeats} / {totalSeats} seats used</div>
-          <div className={`mt-1 ${available > 0 ? 'text-green-600' : 'text-red-600'}`}>
-            {available > 0 ? `${available} left` : 'No seats left!'}
-          </div>
-        </>
-      );
-    })()}
-  </div>
-)}
-
-            {/* Action Buttons */}
+            {/* Actions */}
             <div className="flex justify-end gap-x-2 mt-3">
               <button
                 onClick={() => {
@@ -536,10 +565,37 @@ export default function NotificationBar({ onRequestUpdate }) {
                 className={`px-3 py-1.5 text-white text-xs rounded transition ${
                   !isAcceptFormValid || isProcessing
                     ? "bg-green-400 opacity-50 cursor-not-allowed"
-                    : "bg-green-600 hover:bg-green-800"
+                    : "bg-green-600 hover:bg-teal-700"
                 }`}
               >
-                {isProcessing ? "..." : "Assign"}
+                {isProcessing ? "Assigning..." : "Assign"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ Conflict / Error Modal (replaces alert) */}
+      {isConflictModalOpen && (
+        <div 
+          className="fixed inset-0 flex items-center justify-center z-50  bg-opacity-20 backdrop-blur-[1px]"
+          onClick={() => setIsConflictModalOpen(false)}
+        >
+          <div 
+            className="bg-white p-5 rounded-lg shadow-2xl w-full max-w-sm mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center">
+              <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <AlertTriangle className="w-6 h-6 text-amber-600" />
+              </div>
+              <h3 className="font-bold text-gray-800 text-lg mb-2">Notice</h3>
+              <p className="text-sm text-gray-600 mb-4">{conflictMessage}</p>
+              <button
+                onClick={() => setIsConflictModalOpen(false)}
+                className="px-4 py-2 bg-green-800 text-white text-sm rounded-md hover:bg-green-700 transition focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                OK
               </button>
             </div>
           </div>
