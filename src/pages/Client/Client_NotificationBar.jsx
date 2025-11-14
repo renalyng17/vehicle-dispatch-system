@@ -1,7 +1,7 @@
 // Client_NotificationBar.js
 import { Bell, ChevronDown } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { api } from "../../services/api";
 
 // Unified Input Component (Read-only)
@@ -16,8 +16,8 @@ const Input = ({ label, value, className = "" }) => (
 
 // Unified SelectInput with animated chevron
 const SelectInput = ({ label, name, value, onChange, options, required = false }) => {
-  const [isOpen, setIsOpen] = useState(false);
   const selectRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -134,7 +134,14 @@ export default function NotificationBar({ onRequestUpdate }) {
   const [vehicles, setVehicles] = useState([]);
 
   const navigate = useNavigate();
+  const location = useLocation(); // Added for navigation detection
   const bellRef = useRef(null);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown on navigation
+  useEffect(() => {
+    setIsOpen(false); // Close dropdown whenever location changes
+  }, [location.pathname, location.search]);
 
   // Fetch all requests and split into notifications (Accepted or Declined) and allActive (Pending + Accepted + Declined)
   useEffect(() => {
@@ -208,6 +215,24 @@ export default function NotificationBar({ onRequestUpdate }) {
     return () => {
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition);
+    };
+  }, [isOpen]);
+
+  // Handle clicks outside the notification dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (bellRef.current && !bellRef.current.contains(event.target) &&
+          dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen]);
 
@@ -356,36 +381,56 @@ export default function NotificationBar({ onRequestUpdate }) {
     return 'bg-white border border-gray-200'; // fallback for other statuses
   };
 
+  // Mark all as read handler (optional: implement server-side logic later)
+  const handleMarkAllAsRead = () => {
+    // You can add API call here to mark all as read
+    // For now, just close the dropdown
+    setIsOpen(false);
+    // Optionally: reset notifications state if needed
+  };
+
   return (
     <>
-      {/* Bell Button */}
+     {/* Bell Button */}
       <button
         ref={bellRef}
+        id="notification-bell"
         className="fixed top-5 right-7 hover:text-lime-200 transition duration-200 z-50"
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Notifications"
       >
         <Bell className="w-6 h-6" />
         {notifications.length > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-2 w-2 items-center justify-center rounded-full bg-green-500"></span>
+          <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-green-500" />
         )}
       </button>
 
       {/* Notification Dropdown */}
       {isOpen && (
         <div
+          ref={dropdownRef}
           className="fixed bg-white rounded-lg shadow-xl z-50 border border-gray-200"
           style={{
             top: `${bellPosition.top}px`,
-            right: `${bellPosition.right}px`,
+            right: `${bellPosition.right - 10}px`, // Adjusted position: 20px to the left
             width: "380px",
             maxHeight: "500px",
             transform: "translateY(8px)",
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="p-4">
-            <h3 className="font-semibold text-lg text-gray-800 mb-4">Notifications</h3>
+          {/* Header Bar - Matches your image */}
+          <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200 bg-white rounded-t-lg">
+            <h3 className="font-semibold text-lg text-gray-800">Notifications</h3>
+            <button
+              onClick={handleMarkAllAsRead}
+              className="text-sm text-gray-500 hover:text-gray-700 font-medium transition"
+            >
+              Mark all as read
+            </button>
+          </div>
+
+          <div className="p-4 pt-2">
             {notifications.length > 0 ? (
               <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
                 {notifications.map((request) => (

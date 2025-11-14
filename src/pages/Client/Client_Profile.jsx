@@ -32,6 +32,14 @@ function Profile() {
     fetchProfile();
   }, []);
 
+   // Prevent body scroll (optional: consider if needed)
+    useEffect(() => {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "auto";
+      };
+    }, []);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setProfileData(prev => ({ ...prev, [name]: value }));

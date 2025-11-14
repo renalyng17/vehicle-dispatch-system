@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CalendarCheck2, CalendarX2, CalendarClock, ChevronRight, MapPin, Clock, User, Car, AlertCircle, TrendingUp, TrendingDown } from "lucide-react";
+import { CalendarCheck2, CalendarClock, ChevronRight, MapPin, Clock, User, Car } from "lucide-react";
 
 export default function Client_Home() {
   const [recentRequests, setRecentRequests] = useState([]);
