@@ -318,7 +318,7 @@ export default function NotificationBar({ onRequestUpdate }) {
       >
         <Bell className="w-6 h-6" />
         {notifications.length > 0 && (
-          <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-green-800" />
+          <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-green-500" />
         )}
       </button>
 
@@ -373,7 +373,7 @@ export default function NotificationBar({ onRequestUpdate }) {
                             <span className="text-xs text-gray-500 whitespace-nowrap">
                               {formatDate(request.createdAt)}
                             </span>
-                            <span className="w-2 h-2 rounded-full bg-green-800"></span>
+                            <span className="w-2 h-2 rounded-full bg-green-500"></span>
                           </div>
                         </div>
                         <div className="mt-3 flex justify-end gap-2">
