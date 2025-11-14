@@ -179,6 +179,24 @@ export default function NotificationBar({ onRequestUpdate }) {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
+    // 🔄 AUTO-SYNC: When plate number changes, auto-fill correct vehicle type
+    if (name === "plateNo") {
+      const selectedVehicle = vehicles.find(v => 
+        (v.plateNo || v.plate_no)?.trim() === value.trim()
+      );
+      
+      if (selectedVehicle) {
+        const correctVehicleType = selectedVehicle.vehicleType || selectedVehicle.vehicle_model;
+        setFormValues((prev) => ({ 
+          ...prev, 
+          plateNo: value,
+          vehicleType: correctVehicleType // Auto-fill the correct vehicle type
+        }));
+        return;
+      }
+    }
+    
     setFormValues((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -225,18 +243,38 @@ export default function NotificationBar({ onRequestUpdate }) {
   const handleProcess = async (action) => {
     if (!selectedRequest?.id) return;
 
-    // 🔒 Final validation before submission
+    // 🔒 CRITICAL VALIDATION BEFORE SUBMISSION
     if (action === "accept") {
+      // ✅ 1. Validate Vehicle Type matches Plate Number
+      const selectedVehicle = vehicles.find(v => 
+        (v.plateNo || v.plate_no)?.trim().toLowerCase() === formValues.plateNo.trim().toLowerCase()
+      );
+
+      if (!selectedVehicle) {
+        setConflictMessage(`Error: Plate number "${formValues.plateNo}" not found in the system!`);
+        setIsConflictModalOpen(true);
+        return;
+      }
+
+      const correctVehicleType = selectedVehicle.vehicleType || selectedVehicle.vehicle_model;
+      
+      if (correctVehicleType?.trim().toLowerCase() !== formValues.vehicleType.trim().toLowerCase()) {
+        setConflictMessage(
+          `❌ Vehicle Mismatch Error!\n\n` +
+          `Plate No: ${formValues.plateNo}\n` +
+          `Expected Vehicle: ${correctVehicleType}\n` +
+          `You Selected: ${formValues.vehicleType}\n\n` +
+          `Please select the correct vehicle type for this plate number.`
+        );
+        setIsConflictModalOpen(true);
+        return; // ❌ STOP - Don't proceed
+      }
+
+      // ✅ 2. Validate Driver Availability
       const driverConflict = allActiveRequests.some(req =>
         req.fromDate === selectedRequest.fromDate &&
         (req.status === "Accepted" || req.status === "Pending") &&
         req.driver_name?.trim() === formValues.driver.trim()
-      );
-
-      const vehicleConflict = allActiveRequests.some(req =>
-        req.fromDate === selectedRequest.fromDate &&
-        (req.status === "Accepted" || req.status === "Pending") &&
-        req.plate_no?.trim() === formValues.plateNo.trim()
       );
 
       if (driverConflict) {
@@ -244,6 +282,14 @@ export default function NotificationBar({ onRequestUpdate }) {
         setIsConflictModalOpen(true);
         return;
       }
+
+      // ✅ 3. Validate Vehicle Availability
+      const vehicleConflict = allActiveRequests.some(req =>
+        req.fromDate === selectedRequest.fromDate &&
+        (req.status === "Accepted" || req.status === "Pending") &&
+        req.plate_no?.trim() === formValues.plateNo.trim()
+      );
+
       if (vehicleConflict) {
         setConflictMessage("This vehicle is already assigned on this date.");
         setIsConflictModalOpen(true);
@@ -485,18 +531,17 @@ export default function NotificationBar({ onRequestUpdate }) {
 
             {/* Driver & Vehicle */}
             <SelectInput
-              label="Driver *"
+              label="Driver"
               name="driver"
               value={formValues.driver}
               onChange={handleInputChange}
               options={availableDrivers}
               required
-              className="mb-2"
             />
 
-            <div className="grid grid-cols-2 gap-2 mb-2">
+            <div className="grid grid-cols-2 gap-2 mb-2 mt-2">
               <SelectInput
-                label="Type *"
+                label="Type"
                 name="vehicleType"
                 value={formValues.vehicleType}
                 onChange={handleInputChange}
@@ -504,7 +549,7 @@ export default function NotificationBar({ onRequestUpdate }) {
                 required
               />
               <SelectInput
-                label="Plate *"
+                label="Plate"
                 name="plateNo"
                 value={formValues.plateNo}
                 onChange={handleInputChange}
@@ -576,6 +621,7 @@ export default function NotificationBar({ onRequestUpdate }) {
       )}
 
       {/* Conflict / Error Modal (replaces alert) */}
+      {/* ✅ Conflict / Error Modal */}
       {isConflictModalOpen && (
         <div 
           className="fixed inset-0 flex items-center justify-center z-50  bg-opacity-20 backdrop-blur-[1px]"
@@ -589,8 +635,8 @@ export default function NotificationBar({ onRequestUpdate }) {
               <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <AlertTriangle className="w-6 h-6 text-amber-600" />
               </div>
-              <h3 className="font-bold text-gray-800 text-lg mb-2">Notice</h3>
-              <p className="text-sm text-gray-600 mb-4">{conflictMessage}</p>
+              <h3 className="font-bold text-gray-800 text-lg mb-2">Validation Error</h3>
+              <p className="text-sm text-gray-600 mb-4 whitespace-pre-line">{conflictMessage}</p>
               <button
                 onClick={() => setIsConflictModalOpen(false)}
                 className="px-4 py-2 bg-green-800 text-white text-sm rounded-md hover:bg-green-700 transition focus:outline-none focus:ring-2 focus:ring-green-500"
