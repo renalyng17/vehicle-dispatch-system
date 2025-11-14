@@ -24,7 +24,7 @@ const Register = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
-  const [successMessage, setSuccessMessage] = useState(''); // ✅ New: success state
+  const [successMessage, setSuccessMessage] = useState(''); // New: success state
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -76,11 +76,11 @@ const Register = () => {
       const response = await axios.post('/api/auth/register', dataToSend);
 
       if (response.status === 201) {
-        // ✅ Show success message
+        //  Show success message
         setSuccessMessage('Registration successful! Redirecting to login...');
         setLoading(false);
 
-        // ✅ Wait 2 seconds, then redirect
+        //  Wait 2 seconds, then redirect
         setTimeout(() => {
           navigate('/login', {
             state: {
@@ -114,7 +114,7 @@ const Register = () => {
         <div className="rounded-xl p-8 w-full max-w-md">
           <h1 className="text-xl font-semibold mb-6 text-center text-green-700">Register</h1>
 
-          {/* ✅ Success Message */}
+          {/* Success Message */}
           {successMessage && (
             <div className="p-3 mb-4 text-green-700 bg-green-100 rounded-md text-xs">
               {successMessage}

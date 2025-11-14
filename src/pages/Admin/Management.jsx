@@ -33,6 +33,18 @@ export default function Management() {
     email: "",
   });
 
+  // PREVENT PAGE SCROLL
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    return () => {
+      document.body.style.overflow = 'auto';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    };
+  }, []);
+
   // Prevent background scroll when modals are open
   useEffect(() => {
     const hasModalOpen = showModal || duplicateModal.show || confirmDelete.type;

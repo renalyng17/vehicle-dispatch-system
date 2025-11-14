@@ -8,6 +8,18 @@ const Calendar = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [events, setEvents] = useState([]);
 
+  // PREVENT PAGE SCROLL
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    return () => {
+      document.body.style.overflow = 'auto';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    };
+  }, []);
+
   // Fetch accepted requests
   useEffect(() => {
     const fetchAcceptedRequests = async () => {
@@ -104,7 +116,7 @@ const Calendar = () => {
           <div className="w-[80px]"></div>
         </div>
 
-        {/* ✅ NO SCROLLBAR — Fixed height, always fits */}
+        {/* NO SCROLLBAR — Fixed height, always fits */}
         <div className="border border-gray-300 rounded-lg shadow-sm bg-white overflow-hidden">
           {/* Calendar Header */}
           <div className="grid grid-cols-7 gap-px bg-green-600 text-white text-xs font-semibold uppercase tracking-wide">

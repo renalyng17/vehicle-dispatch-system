@@ -465,7 +465,7 @@ export default function NotificationBar({ onRequestUpdate }) {
                               <span className="text-xs text-gray-500">
                                 Passengers: {request.names?.length || 1}
                               </span>
-                              {/* ✅ Show reason if Declined */}
+                              {/* Show reason if Declined */}
                               {request.status === "Declined" && request.reason_for_decline && (
                                 <span className="block text-xs text-red-600 mt-1">
                                   Reason: {request.reason_for_decline}
@@ -475,14 +475,14 @@ export default function NotificationBar({ onRequestUpdate }) {
                           </div>
                           <div className="flex flex-col items-end gap-1">
                             <span className="text-xs text-gray-500 whitespace-nowrap">
-                              {/* ✅ Use updated_at for display if available, otherwise created_at */}
+                              {/* Use updated_at for display if available, otherwise created_at */}
                               {formatDate(request.updated_at || request.createdAt)}
                             </span>
-                            {/* ✅ Update status indicator */}
+                            {/* Update status indicator */}
                             <span className={`w-2 h-2 rounded-full ${request.status === "Accepted" ? "bg-green-500" : "bg-red-500"}`}></span>
                           </div>
                         </div>
-                        {/* ✅ Hide action buttons for processed requests */}
+                        {/* Hide action buttons for processed requests */}
                         {/* <div className="mt-3 flex justify-end gap-2">
                           <button
                             onClick={(e) => handleButtonClick(e, "decline", request)}
@@ -618,7 +618,7 @@ export default function NotificationBar({ onRequestUpdate }) {
                 v.plateNo?.trim().toUpperCase() === normalizedPlate
               );
 
-              const totalSeats = vehicle?.capacity || 0; // ✅ FIXED: Use 'capacity'
+              const totalSeats = vehicle?.capacity || 0; 
 
               const assignedToThisVehicle = allActiveRequests
                 .filter(req => 
@@ -650,7 +650,7 @@ export default function NotificationBar({ onRequestUpdate }) {
   );
 }
 
-// Add this CSS to your global styles or component
+// CSS Style for components
 const styles = `
 .custom-scrollbar {
   scrollbar-width: none; /* Firefox */

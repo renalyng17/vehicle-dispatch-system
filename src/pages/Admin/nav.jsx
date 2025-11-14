@@ -106,7 +106,7 @@ export default function Nav() {
           {fullName}
         </Link>
         <button
-          onClick={confirmLogout} // 👈 Now opens modal
+          onClick={confirmLogout} // Now opens modal
           className="text-white hover:text-lime-300 transition"
           aria-label="Logout"
         >
@@ -114,7 +114,7 @@ export default function Nav() {
         </button>
       </div>
 
-      {/* ✅ Logout Confirmation Modal with Blur */}
+      {/* Logout Confirmation Modal with Blur */}
       {showLogoutModal && (
         <div 
           className="fixed inset-0 bg-black-10 bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50"

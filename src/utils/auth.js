@@ -8,7 +8,7 @@ export const refreshToken = async () => {
         ? `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`
         : "http://localhost:3001/api/auth/refresh",
       {},
-      { withCredentials: true } // ✅ send refresh token cookie
+      { withCredentials: true } // send refresh token cookie
     );
 
     return res.data?.accessToken; // return new token

@@ -14,7 +14,7 @@ const axiosInstance = axios.create({
   baseURL,
   timeout: 10000,
   headers: { "Content-Type": "application/json" },
-  withCredentials: true, // ✅ send cookies (refresh token/session)
+  withCredentials: true, // send cookies (refresh token/session)
 });
 
 // Request interceptor: attach token

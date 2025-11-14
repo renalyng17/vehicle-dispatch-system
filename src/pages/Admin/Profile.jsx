@@ -59,7 +59,7 @@ function Profile() {
     }));
   };
 
-  // ✅ Updated handleSave to actually save to backend
+  // Updated handleSave to actually save to backend
   const handleSave = async () => {
     try {
       setIsLoading(true);
@@ -236,7 +236,7 @@ function Profile() {
                     )}
                   </div>
 
-                  {/* ✅ EMAIL: Read-only (never editable) */}
+                  {/* EMAIL: Read-only (never editable) */}
                   <div className="space-y-1">
                     <label className="block text-sm font-medium text-gray-600">
                       Email Address

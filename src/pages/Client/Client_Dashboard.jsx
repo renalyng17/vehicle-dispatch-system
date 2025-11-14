@@ -1,15 +1,13 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
-import Client_Nav from "./Client_nav";
+import Client_Nav from "./Client_nav"; // This imports Client_Nav
 import Client_NotificationBar from "./Client_NotificationBar";
 
 const Client_Dashboard = () => {
   return (
     <div className="flex min-h-screen">
-      <Client_Nav />
+      <Client_Nav /> {/* Correct usage */}
       {/* Client Navigation Sidebar */}
-      <Client_nav />
-      
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
         <Client_NotificationBar />

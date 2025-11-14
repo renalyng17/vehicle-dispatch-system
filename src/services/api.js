@@ -1,11 +1,11 @@
 const API_BASE_URL = 'http://localhost:3001/api';
 
-// 🔑 Helper: Get auth token
+// Helper: Get auth token
 const getAuthToken = () => {
   return localStorage.getItem('token');
 };
 
-// 🌐 Enhanced API request handler
+// Enhanced API request handler
 const apiRequest = async (endpoint, options = {}) => {
   const token = getAuthToken();
   const headers = {
@@ -31,7 +31,7 @@ const apiRequest = async (endpoint, options = {}) => {
     }
 
     if (!response.ok) {
-      // ✅ Use the backend's error message directly if available
+      // Use the backend's error message directly if available
       let errorMessage = 'An unknown error occurred';
       
       if (typeof data === 'object' && data !== null && data.error) {
@@ -62,21 +62,21 @@ const apiRequest = async (endpoint, options = {}) => {
   }
 };
 
-// 🚀 Export all API methods
+// Export all API methods
 export const api = {
-  // 🔐 Authentication
+  // Authentication
   login: (credentials) => apiRequest('/auth/login', { method: 'POST', body: JSON.stringify(credentials) }),
   register: (userData) => apiRequest('/auth/register', { method: 'POST', body: JSON.stringify(userData) }),
   logout: () => apiRequest('/auth/logout', { method: 'POST' }),
   getProfile: () => apiRequest('/auth/profile'),
   resetPassword: (data) => apiRequest('/auth/reset-password', { method: 'POST', body: JSON.stringify(data) }),
 
-  // 📝 REQUESTS
+  // REQUESTS
   getRequests: () => apiRequest('/requests'),
   getRequest: (id) => apiRequest(`/requests/${id}`),
   createRequest: (data) => apiRequest('/requests', { method: 'POST', body: JSON.stringify(data) }),
   
-  // ✅ FIXED: Match backend route (PUT /requests/:id)
+  // FIXED: Match backend route (PUT /requests/:id)
   updateRequestStatus: (id, data) => {
     const payload = {
       status: data.status,
@@ -90,7 +90,7 @@ export const api = {
   
   deleteRequest: (id) => apiRequest(`/requests/${id}`, { method: 'DELETE' }),
 
-  // 🔔 NOTIFICATIONS
+  // NOTIFICATIONS
   getNotifications: () => apiRequest('/notifications'),
   markNotificationAsRead: (id) => 
     apiRequest(`/notifications/${id}/read`, { method: 'PUT' }),
@@ -98,7 +98,7 @@ export const api = {
   markAllNotificationsAsRead: () => 
     apiRequest('/notifications/mark-all-read', { method: 'PUT' }),
 
-  // 🚗 VEHICLES
+  // VEHICLES
   getVehicles: async () => {
     try {
       const data = await apiRequest('/vehicles');
@@ -122,7 +122,7 @@ export const api = {
     }
   },
 
-  // 👨‍✈️ DRIVERS
+  // DRIVERS
   getDrivers: async () => {
     try {
       const data = await apiRequest('/drivers');

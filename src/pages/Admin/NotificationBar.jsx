@@ -575,7 +575,7 @@ export default function NotificationBar({ onRequestUpdate }) {
         </div>
       )}
 
-      {/* ✅ Conflict / Error Modal (replaces alert) */}
+      {/* Conflict / Error Modal (replaces alert) */}
       {isConflictModalOpen && (
         <div 
           className="fixed inset-0 flex items-center justify-center z-50  bg-opacity-20 backdrop-blur-[1px]"

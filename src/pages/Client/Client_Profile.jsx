@@ -61,7 +61,7 @@ function Profile() {
         throw new Error("Authentication token missing");
       }
 
-      // ✅ Call your secure backend route
+      // Call your secure backend route
       const response = await fetch("http://localhost:3001/profile", {
         method: "PATCH",
         headers: {
@@ -231,7 +231,7 @@ function Profile() {
                     )}
                   </div>
 
-                  {/* ✅ EMAIL: Always read-only — never editable */}
+                  {/* EMAIL: Always read-only — never editable */}
                   <div className="space-y-1">
                     <label className="block text-sm font-medium text-gray-600">
                       Email Address

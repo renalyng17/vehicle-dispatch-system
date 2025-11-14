@@ -9,7 +9,7 @@ function Requests() {
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
 
-  // 🌐 FETCH REQUESTS FROM BACKEND
+  // FETCH REQUESTS FROM BACKEND
   useEffect(() => {
     const fetchRequests = async () => {
       try {
@@ -17,7 +17,7 @@ function Requests() {
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
 
-        // ✅ Normalize data to match UI expectations
+        // Normalize data to match UI expectations
         const normalizedData = data.map(req => ({
           ...req,
           name: req.names?.[0] || 'Unknown',           // Use first name as requester
@@ -40,12 +40,12 @@ function Requests() {
     fetchRequests();
   }, []);
 
-  // 🔁 SYNC WITH LOCALSTORAGE (optional cache/fallback)
+  // SYNC WITH LOCALSTORAGE (optional cache/fallback)
   useEffect(() => {
     localStorage.setItem('vehicleRequests', JSON.stringify(requests));
   }, [requests]);
 
-  // 🚫 PREVENT PAGE SCROLL
+  // PREVENT PAGE SCROLL
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     document.body.style.position = 'fixed';
@@ -57,14 +57,14 @@ function Requests() {
     };
   }, []);
 
-  // 🚫 ALSO PREVENT SCROLL WHEN NOTIFICATION IS VISIBLE
+  // ALSO PREVENT SCROLL WHEN NOTIFICATION IS VISIBLE
   useEffect(() => {
     if (notification) {
       document.body.style.overflow = 'hidden';
     }
   }, [notification]);
 
-  // ➕ HANDLE NEW ACCEPTED/DECLINED REQUEST — UPDATE VIA BACKEND
+  // HANDLE NEW ACCEPTED/DECLINED REQUEST — UPDATE VIA BACKEND
   useEffect(() => {
     if (newRequest && newRequest.id) {
       const updateRequestStatus = async () => {
@@ -106,14 +106,14 @@ function Requests() {
             status: updatedRequest.status === "Decline" ? "Declined" : updatedRequest.status,
           };
 
-          // ✅ Update local state with fresh data from backend
+          // Update local state with fresh data from backend
           setRequests(prev => 
             prev.map(req => 
               req.id === normalizedUpdated.id ? normalizedUpdated : req
             )
           );
 
-          // ✅ Show notification
+          // Show notification
           setNotification({
             type: action === 'accept' ? 'success' : 'error',
             message: `Request ${action === 'accept' ? 'accepted' : 'declined'} successfully`
@@ -134,7 +134,7 @@ function Requests() {
     }
   }, [newRequest, action]);
 
-  // 🌀 SHOW LOADING STATE
+  // SHOW LOADING STATE
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
