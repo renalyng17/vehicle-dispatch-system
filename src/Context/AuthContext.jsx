@@ -105,6 +105,29 @@ export const AuthProvider = ({ children }) => {
     }).catch(console.error);
   };
 
+  // ✅ NEW: Update user data in context and storage
+  const updateUser = (updatedUserData) => {
+    // Normalize to match expected user shape
+    const normalizedUser = {
+      id: updatedUserData.user_id || updatedUserData.id,
+      user_id: updatedUserData.user_id || updatedUserData.id,
+      user_type: updatedUserData.user_type,
+      email: updatedUserData.email,
+      first_name: updatedUserData.first_name,
+      last_name: updatedUserData.last_name,
+      ...updatedUserData
+    };
+
+    setUser(normalizedUser);
+
+    // Persist to whichever storage is active
+    if (localStorage.getItem('user')) {
+      localStorage.setItem('user', JSON.stringify(normalizedUser));
+    } else {
+      sessionStorage.setItem('user', JSON.stringify(normalizedUser));
+    }
+  };
+
   const isAuthenticated = () => {
     return !!(user && (user.id || user.user_id));
   };
@@ -113,6 +136,7 @@ export const AuthProvider = ({ children }) => {
     user,
     login,
     logout,
+    updateUser, // ✅ Expose it
     loading,
     isAuthenticated
   };

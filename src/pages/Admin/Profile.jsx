@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import profile from "../../assets/profile2.png";
 
 function Profile() {
-  const { user, loading: authLoading } = useAuth();
+const { user, loading: authLoading, updateUser } = useAuth();
   const navigate = useNavigate();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -59,49 +59,51 @@ function Profile() {
     }));
   };
 
-  // ✅ Updated handleSave to actually save to backend
-  const handleSave = async () => {
-    try {
-      setIsLoading(true);
+const handleSave = async () => {
+  try {
+    setIsLoading(true);
 
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      if (!token) {
-        throw new Error("Authentication required");
-      }
-
-      const response = await fetch("http://localhost:3001/profile", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          first_name: userData.firstName,
-          last_name: userData.lastName,
-          contact_no: userData.contact,
-          office: userData.office,
-          // ❌ Email is NOT included → cannot be changed
-        }),
-      });
-
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to update profile");
-      }
-
-      // Update local storage
-      const storage = localStorage.getItem("user") ? localStorage : sessionStorage;
-      storage.setItem("user", JSON.stringify(result.user));
-
-      setIsEditing(false);
-      setShowPopup(true);
-    } catch (error) {
-      console.error("Profile save error:", error);
-      alert("Failed to save changes: " + error.message);
-    } finally {
-      setIsLoading(false);
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (!token) {
+      throw new Error("Authentication required");
     }
-  };
+
+    const response = await fetch("http://localhost:3001/profile", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        first_name: userData.firstName,
+        last_name: userData.lastName,
+        contact_no: userData.contact,
+        office: userData.office,
+      }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || "Failed to update profile");
+    }
+
+    // ✅ THIS IS THE PART TO CHANGE:
+    // OLD:
+    // const storage = localStorage.getItem("user") ? localStorage : sessionStorage;
+    // storage.setItem("user", JSON.stringify(result.user));
+
+    // NEW:
+    updateUser(result.user);
+
+    setIsEditing(false);
+    setShowPopup(true);
+  } catch (error) {
+    console.error("Profile save error:", error);
+    alert("Failed to save changes: " + error.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   if (isLoading || authLoading) {
     return (
