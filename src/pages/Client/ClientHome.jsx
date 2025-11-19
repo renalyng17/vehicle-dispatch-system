@@ -1,11 +1,58 @@
+// src/pages/Client/ClientHome.jsx
 import { useEffect, useState } from "react";
-import { CalendarCheck2, CalendarX2, CalendarClock, ChevronRight, MapPin, Clock, User, Car, AlertCircle, TrendingUp, TrendingDown } from "lucide-react";
+import {
+  CalendarCheck2,
+  CalendarClock,
+  ChevronRight,
+  MapPin,
+  Clock,
+  User,
+  Car,
+  AlertCircle,
+  RefreshCw
+} from "lucide-react";
+import { useTimeAgo } from "../../hooks/useTimeAgo";
+import { formatDate, getStatusColor } from "../../utils/dateUtils";
 
-export default function Client_Home() {
+function RequestItem({ request }) {
+  const timeAgo = useTimeAgo(request.date);
+
+  return (
+    <div className="border-b border-gray-100 pb-5 last:border-b-0 last:pb-0">
+      <div className="flex justify-between items-start">
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="font-medium text-gray-900">{request.id}</span>
+            <span className={getStatusColor(request.status)}>
+              {request.status}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+            <MapPin className="w-4 h-4" />
+            <span>{request.destination}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Clock className="w-4 h-4" />
+            <span>{timeAgo}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function ClientHome() {
   const [recentRequests, setRecentRequests] = useState([]);
   const [upcomingTrips, setUpcomingTrips] = useState([]);
+  const [stats, setStats] = useState({
+    totalRequests: 0,
+    pendingApproval: 0,
+    completedTrips: 0,
+    thisMonth: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Prevent page scroll
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -13,70 +60,99 @@ export default function Client_Home() {
     };
   }, []);
 
-  // Fetch data from database
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        
-        // In a real application, these would be actual API endpoints
-        // For demo purposes, we'll use the mock data directly
-        setTimeout(() => {
-          setRecentRequests([
-            { id: "TR-001", status: "approved", destination: "Airport Terminal 3", date: "2024-03-15 09:00" },
-            { id: "TR-002", status: "pending", destination: "Downtown Office", date: "2024-03-15 14:00" },
-            { id: "TR-003", status: "completed", destination: "Client Meeting - Plaza", date: "2024-03-16 10:00" }
-          ]);
-          setUpcomingTrips([
-            { id: "TR-001", status: "Confirmed", destination: "Airport Terminal 3", date: "2024-03-15 09:00", car: "Toyota Camry (V-101)", driver: "Robert Chen" }
-          ]);
-          setStats({ accepted: 30, declined: 20, pending: 20 });
-          setLoading(false);
-        }, 1000);
-      } catch (err) {
-        setError(err.message);
-        console.error('Error fetching data:', err);
-        setLoading(false);
-      }
-    };
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-    fetchData();
-  }, []);
+      const response = await fetch('http://localhost:3001/api/requests');
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      
+      const allRequests = await response.json();
 
-  // Helper function to format date
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + 
-           " at " + 
-           date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  };
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth();
 
-  // Helper function to determine status color
-  const getStatusColor = (status) => {
-    switch(status.toLowerCase()) {
-      case 'approved':
-      case 'completed':
-      case 'confirmed':
-        return 'text-green-600 bg-green-100 px-2 py-1 rounded-full text-xs';
-      case 'pending':
-        return 'text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full text-xs';
-      default:
-        return 'text-gray-600 bg-gray-100 px-2 py-1 rounded-full text-xs';
+      setStats({
+        totalRequests: allRequests.length,
+        pendingApproval: allRequests.filter(req => req.status === "Pending").length,
+        completedTrips: allRequests.filter(req => req.status === "Accepted").length,
+        thisMonth: allRequests.filter(req => {
+          if (req.status !== "Accepted" || !req.created_at) return false;
+          const createdAt = new Date(req.created_at);
+          return createdAt.getFullYear() === currentYear && createdAt.getMonth() === currentMonth;
+        }).length
+      });
+
+      const sortedRequests = [...allRequests]
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .slice(0, 3)
+        .map(req => ({
+          id: req.id,
+          status: req.status === "Accepted" ? "approved" : 
+                 req.status === "Pending" ? "pending" : "completed",
+          destination: req.destination || "—",
+          date: req.created_at
+        }));
+
+      setRecentRequests(sortedRequests);
+
+      const trips = allRequests
+        .filter(req => 
+          req.status === "Accepted" && 
+          req.fromDate && 
+          new Date(req.fromDate) > new Date()
+        )
+        .sort((a, b) => new Date(a.fromDate) - new Date(b.fromDate))
+        .map(req => ({
+          id: req.id,
+          status: "Confirmed",
+          destination: req.destination || "—",
+          date: req.fromDate + "T" + (req.fromTime || "00:00"),
+          car: `${req.vehicleType} (${req.plateNo})`,
+          driver: req.driver || "TBD"
+        }))
+        .slice(0, 3);
+
+      setUpcomingTrips(trips);
+      setLoading(false);
+    } catch (err) {
+      console.error('Fetch error:', err);
+      setError(err.message || 'Failed to load data');
+      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (error) {
+    return (
+      <div className="bg-[#F9FFF5] min-h-screen p-6">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6 flex items-center">
+          <AlertCircle className="w-6 h-6 mr-2" />
+          <span>Error: {error}</span>
+        </div>
+        <h1 className="text-3xl font-bold mb-6">Home</h1>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#F9FFF5] min-h-screen p-6">
       <h1 className="text-3xl font-bold mb-6">Home</h1>
 
-      {/* Statistics Cards - Updated to match the image */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        {/* Total Requests Card */}
         <div className="bg-white rounded-xl shadow p-6">
           <div className="flex justify-between items-start">
             <div>
               <p className="text-gray-500 text-sm">Total Requests</p>
-              <h2 className="text-3xl font-bold mt-1">12</h2>
+              <h2 className="text-3xl font-bold mt-1">{stats.totalRequests}</h2>
             </div>
             <div className="bg-blue-100 p-2 rounded-lg">
               <CalendarCheck2 className="w-6 h-6 text-blue-600" />
@@ -84,12 +160,11 @@ export default function Client_Home() {
           </div>
         </div>
 
-        {/* Pending Approval Card */}
         <div className="bg-white rounded-xl shadow p-6">
           <div className="flex justify-between items-start">
             <div>
               <p className="text-gray-500 text-sm">Pending Approval</p>
-              <h2 className="text-3xl font-bold mt-1">3</h2>
+              <h2 className="text-3xl font-bold mt-1">{stats.pendingApproval}</h2>
             </div>
             <div className="bg-yellow-100 p-2 rounded-lg">
               <CalendarClock className="w-6 h-6 text-yellow-600" />
@@ -97,12 +172,11 @@ export default function Client_Home() {
           </div>
         </div>
 
-        {/* Completed Trips Card */}
         <div className="bg-white rounded-xl shadow p-6">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-gray-500 text-sm">Completed Trips</p>
-              <h2 className="text-3xl font-bold mt-1">8</h2>
+              <p className="text-gray-500 text-sm">Approved Trips</p>
+              <h2 className="text-3xl font-bold mt-1">{stats.completedTrips}</h2>
             </div>
             <div className="bg-green-100 p-2 rounded-lg">
               <CalendarCheck2 className="w-6 h-6 text-green-600" />
@@ -110,12 +184,11 @@ export default function Client_Home() {
           </div>
         </div>
 
-        {/* This Month Card */}
         <div className="bg-white rounded-xl shadow p-6">
           <div className="flex justify-between items-start">
             <div>
               <p className="text-gray-500 text-sm">This Month</p>
-              <h2 className="text-3xl font-bold mt-1">5</h2>
+              <h2 className="text-3xl font-bold mt-1">{stats.thisMonth}</h2>
             </div>
             <div className="bg-purple-100 p-2 rounded-lg">
               <CalendarCheck2 className="w-6 h-6 text-purple-600" />
@@ -124,47 +197,33 @@ export default function Client_Home() {
         </div>
       </div>
 
-      {/* Content Section */}
+      {/* Content */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Requests */}
         <div className="bg-white rounded-xl shadow p-6 flex flex-col min-h-[400px]">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">Recent Request</h2>
-            <button className="text-green-600 text-sm font-medium flex items-center">
-              View All <ChevronRight className="w-4 h-4" />
+            <h2 className="text-xl font-semibold">Recent Requests</h2>
+            <button 
+              onClick={fetchData}
+              className="text-blue-600 hover:text-blue-800"
+              title="Refresh"
+            >
+              <RefreshCw className="w-4 h-4" />
             </button>
           </div>
           
-          {recentRequests.length === 0 ? (
+          {loading ? (
             <div className="flex-1 flex items-center justify-center">
-              <p className="text-gray-500 text-center py-4">No recent requests found</p>
+              <RefreshCw className="w-6 h-6 animate-spin text-green-600" />
+            </div>
+          ) : recentRequests.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-gray-500 text-center py-4">No recent requests</p>
             </div>
           ) : (
             <div className="space-y-5">
               {recentRequests.map((request) => (
-                <div key={request.id} className="border-b border-gray-100 pb-5 last:border-b-0 last:pb-0">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="font-medium text-gray-900">{request.id}</span>
-                        <span className={getStatusColor(request.status)}>
-                          {request.status}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-                        <MapPin className="w-4 h-4" />
-                        <span>{request.destination}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <Clock className="w-4 h-4" />
-                        <span>{formatDate(request.date)}</span>
-                      </div>
-                    </div>
-                    <button className="text-green-600 hover:text-green-700 text-sm font-medium flex items-center">
-                      Details
-                    </button>
-                  </div>
-                </div>
+                <RequestItem key={request.id} request={request} />
               ))}
             </div>
           )}
@@ -174,14 +233,22 @@ export default function Client_Home() {
         <div className="bg-white rounded-xl shadow p-6 flex flex-col min-h-[400px]">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold">Upcoming Trips</h2>
-            <button className="text-green-600 text-sm font-medium flex items-center">
-              View All <ChevronRight className="w-4 h-4" />
+            <button 
+              onClick={fetchData}
+              className="text-blue-600 hover:text-blue-800"
+              title="Refresh"
+            >
+              <RefreshCw className="w-4 h-4" />
             </button>
           </div>
           
-          {upcomingTrips.length === 0 ? (
+          {loading ? (
             <div className="flex-1 flex items-center justify-center">
-              <p className="text-gray-500 text-center py-4">No upcoming trips found</p>
+              <RefreshCw className="w-6 h-6 animate-spin text-green-600" />
+            </div>
+          ) : upcomingTrips.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-gray-500 text-center py-4">No upcoming trips</p>
             </div>
           ) : (
             <div className="space-y-5">
