@@ -272,6 +272,7 @@ export default function Home() {
   availableSeats: v.availableSeats || (v.capacity ?? 4)
 })));
                 } catch (err) {
+                  console.error('Vehicle refresh failed:', err);
                   setError('Failed to refresh vehicles');
                 }
               }}
