@@ -3,10 +3,11 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../../Context/AuthContext";
 import profile from "../../assets/profile2.png";
 
-function Profile() {
-  const { user, loading: authLoading } = useAuth();
+  function Profile() {
+    const { user, loading: authLoading } = useAuth();
 
   // 👇 Prevent background scrolling
+  
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => {
@@ -313,35 +314,21 @@ function Profile() {
 
       {/* Success Popup */}
       {showPopup && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-30 backdrop-blur-sm">
-          <div className="bg-white p-8 rounded-xl shadow-xl max-w-md w-full animate-fade-in">
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-opacity-30 backdrop-blur-m">
+          <div className="bg-white p-8 rounded-xl shadow-xl max-w-xs w-full">
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-50 mb-4">
-                <svg
-                  className="h-8 w-8 text-green-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M5 13l4 4L19 7"
-                  />
+                <svg className="h-8 w-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                Profile Updated Successfully
-              </h3>
-              <p className="text-gray-500 mb-6">
-                Your changes have been saved.
-              </p>
+              <h3 className="text-m font-semibold text-gray-800 mb-2">Profile Updated Successfully</h3>
+              <p className="text-gray-500 mb-6">Your changes have been saved.</p>
               <button
                 onClick={() => setShowPopup(false)}
-                className="w-full max-w-xs mx-auto py-2.5 px-6 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-sm transition-all font-medium"
-              >
-                Continue
+                 className="w-full max-w-[100px] mx-auto py-2.5 px-4 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-sm text-sm font-medium flex items-center justify-center"
+                  >
+                  Continue
               </button>
             </div>
           </div>

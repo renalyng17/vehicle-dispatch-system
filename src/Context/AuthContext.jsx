@@ -105,9 +105,8 @@ export const AuthProvider = ({ children }) => {
     }).catch(console.error);
   };
 
-  // ✅ NEW: Update user data in context and storage
+  // ✅ IMPROVED: Update user data in context and persist to the correct storage
   const updateUser = (updatedUserData) => {
-    // Normalize to match expected user shape
     const normalizedUser = {
       id: updatedUserData.user_id || updatedUserData.id,
       user_id: updatedUserData.user_id || updatedUserData.id,
@@ -120,8 +119,8 @@ export const AuthProvider = ({ children }) => {
 
     setUser(normalizedUser);
 
-    // Persist to whichever storage is active
-    if (localStorage.getItem('user')) {
+    // Determine active storage based on where the token is stored
+    if (localStorage.getItem('token') !== null) {
       localStorage.setItem('user', JSON.stringify(normalizedUser));
     } else {
       sessionStorage.setItem('user', JSON.stringify(normalizedUser));
@@ -136,7 +135,7 @@ export const AuthProvider = ({ children }) => {
     user,
     login,
     logout,
-    updateUser, // ✅ Expose it
+    updateUser,
     loading,
     isAuthenticated
   };
