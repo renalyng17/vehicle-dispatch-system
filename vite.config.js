@@ -1,14 +1,23 @@
+// vite.config.js
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { nodePolyfills } from 'vite-plugin-node-polyfills'; // Add this import
 
 export default defineConfig({
   plugins: [
     tailwindcss(),
-    react()
+    react(),
+    nodePolyfills({ // Add the plugin here
+      // Enable global polyfills
+      globals: {
+        process: true, // This is crucial for Google Maps
+        Buffer: true,
+      },
+    }),
   ],
   
-  // Add these server configurations
+  // Keep your existing server configurations
   server: {
     host: 'localhost',
     port: 5173,
@@ -24,7 +33,7 @@ export default defineConfig({
     }
   },
   
-  // Optional: Improve build configuration
+  // Keep your existing build configurations
   build: {
     chunkSizeWarningLimit: 1600,
     rollupOptions: {

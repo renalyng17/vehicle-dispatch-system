@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { api } from "../../services/api";
 
-// Unified Input Component (Read-only)
+
 const Input = ({ label, value, className = "" }) => (
   <div className={className}>
     <label className="block font-medium text-xs text-gray-500 mb-1">{label}</label>
@@ -14,7 +14,7 @@ const Input = ({ label, value, className = "" }) => (
   </div>
 );
 
-// Unified SelectInput with animated chevron
+
 const SelectInput = ({ label, name, value, onChange, options, required = false }) => {
   const selectRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -78,7 +78,7 @@ const SelectInput = ({ label, name, value, onChange, options, required = false }
   );
 };
 
-// Improved date formatting function
+// Date formatting function
 const formatDate = (dateString) => {
   if (!dateString) return 'Just now';
 
@@ -102,7 +102,6 @@ const formatDate = (dateString) => {
     } else if (diffDays < 7) {
       return `${diffDays}d ago`;
     } else {
-      // Show date like "Nov 13", or "Nov 13, 2025" if different year
       const isSameYear = date.getFullYear() === now.getFullYear();
       return date.toLocaleDateString('en-US', {
         month: 'short',
@@ -381,13 +380,7 @@ export default function NotificationBar({ onRequestUpdate }) {
     return 'bg-white border border-gray-200'; // fallback for other statuses
   };
 
-  // Mark all as read handler (optional: implement server-side logic later)
-  const handleMarkAllAsRead = () => {
-    // You can add API call here to mark all as read
-    // For now, just close the dropdown
-    setIsOpen(false);
-    // Optionally: reset notifications state if needed
-  };
+  
 
   return (
     <>
@@ -421,13 +414,7 @@ export default function NotificationBar({ onRequestUpdate }) {
         >
           {/* Header Bar - Matches your image */}
           <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200 bg-white rounded-t-lg">
-            <h3 className="font-semibold text-lg text-gray-800">Notifications</h3>
-            <button
-              onClick={handleMarkAllAsRead}
-              className="text-sm text-gray-500 hover:text-gray-700 font-medium transition"
-            >
-              Mark all as read
-            </button>
+            <h3 className="font-semibold text-lg text-gray-800">Notifications</h3>   
           </div>
 
           <div className="p-4 pt-2">

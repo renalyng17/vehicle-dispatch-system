@@ -8,6 +8,7 @@ export default function Management() {
   const [showFuelTypeDropdown, setShowFuelTypeDropdown] = useState(false);
   const [showFleetCardDropdown, setShowFleetCardDropdown] = useState(false);
   const [showRfidDropdown, setShowRfidDropdown] = useState(false);
+
   // Main states
   const [activeTab, setActiveTab] = useState("vehicle");
   const [showModal, setShowModal] = useState(false);
@@ -19,6 +20,7 @@ export default function Management() {
   const [duplicateModal, setDuplicateModal] = useState({ show: false, type: "" });
   const [isSubmittingVehicle, setIsSubmittingVehicle] = useState(false);
   const [isSubmittingDriver, setIsSubmittingDriver] = useState(false);
+
   const [vehicleForm, setVehicleForm] = useState({
     vehicleType: "",
     plateNo: "",
@@ -27,6 +29,7 @@ export default function Management() {
     fleetCard: "",
     rfid: "",
   });
+
   const [driverForm, setDriverForm] = useState({
     name: "",
     contact: "",
@@ -313,26 +316,23 @@ export default function Management() {
               Driver Information
             </button>
           </div>
-
           <div className="p-4">
             {/* VEHICLE TABLE */}
             {activeTab === "vehicle" && (
               <div className="border border-gray-200 rounded-lg overflow-hidden">
-                <table className="w-full divide-y divide-gray-200 table-fixed">
-                  <thead className="bg-green-600">
-                    <tr>
-                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/5">Vehicle</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/6">Plate No.</th>
-                      <th className="px-3 py-2 text-center text-[10px] font-medium text-white uppercase tracking-wider w-1/12">Capacity</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/6">Fuel Type</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/6">Fleet Card</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/6">RFID</th>
-                      <th className="px-3 py-2 text-right text-[10px] font-medium text-white uppercase tracking-wider w-20">Actions</th>
-                    </tr>
-                  </thead>
-                </table>
                 <div className="max-h-[60vh] overflow-y-auto">
                   <table className="w-full divide-y divide-gray-200 table-fixed">
+                    <thead className="bg-green-600 sticky top-0">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/5">Vehicle</th>
+                        <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/6">Plate No.</th>
+                        <th className="px-3 py-2 text-center text-[10px] font-medium text-white uppercase tracking-wider w-1/12">Capacity</th>
+                        <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/6">Fuel Type</th>
+                        <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/6">Fleet Card</th>
+                        <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/6">RFID</th>
+                        <th className="px-3 py-2 text-right text-[10px] font-medium text-white uppercase tracking-wider w-20"></th>
+                      </tr>
+                    </thead>
                     <tbody className="bg-white">
                       {vehicles.length === 0 ? (
                         <tr>
@@ -379,7 +379,7 @@ export default function Management() {
                                 onClick={() => handleDeleteVehicle(idx)}
                               >
                                 <Archive size={14} />
-                                <span>Archive</span>
+                                <span></span>
                               </button>
                             </td>
                           </tr>
@@ -394,19 +394,17 @@ export default function Management() {
             {/* DRIVER TABLE */}
             {activeTab === "driver" && (
               <div className="border border-gray-200 rounded-lg overflow-hidden">
-                <table className="w-full divide-y divide-gray-200 table-fixed">
-                  <thead className="bg-green-600">
-                    <tr>
-                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/4">Name</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/5">Contact No.</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/4">Email Address</th>
-                      <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/6">Status</th>
-                      <th className="px-3 py-2 text-right text-[10px] font-medium text-white uppercase tracking-wider w-20">Actions</th>
-                    </tr>
-                  </thead>
-                </table>
                 <div className="max-h-[60vh] overflow-y-auto">
                   <table className="w-full divide-y divide-gray-200 table-fixed">
+                    <thead className="bg-green-600 sticky top-0">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/4">Name</th>
+                        <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/5">Contact No.</th>
+                        <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/4">Email Address</th>
+                        <th className="px-3 py-2 text-left text-[10px] font-medium text-white uppercase tracking-wider w-1/6">Status</th>
+                        <th className="px-3 py-2 text-right text-[10px] font-medium text-white uppercase tracking-wider w-20"></th>
+                      </tr>
+                    </thead>
                     <tbody className="bg-white">
                       {drivers.length === 0 ? (
                         <tr>
@@ -437,7 +435,7 @@ export default function Management() {
                                 onClick={() => handleDeleteDriver(idx)}
                               >
                                 <Archive size={14} />
-                                <span>Archive</span>
+                                <span></span>
                               </button>
                             </td>
                           </tr>
@@ -462,21 +460,19 @@ export default function Management() {
                       <p className="text-gray-500 text-center py-4 text-sm">No archived vehicles</p>
                     ) : (
                       <div className="border border-gray-200 rounded-lg overflow-hidden">
-                        <table className="w-full divide-y divide-gray-200 table-fixed">
-                          <thead className="bg-gray-50">
-                            <tr>
-                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/5">Vehicle</th>
-                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/6">Plate No.</th>
-                              <th className="px-3 py-2 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/12">Capacity</th>
-                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/6">Fuel Type</th>
-                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/6">Fleet Card</th>
-                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/6">RFID</th>
-                              <th className="px-3 py-2 text-right text-[10px] font-medium text-gray-500 uppercase tracking-wider w-20">Actions</th>
-                            </tr>
-                          </thead>
-                        </table>
                         <div className="max-h-[200px] overflow-y-auto">
                           <table className="w-full divide-y divide-gray-200 table-fixed">
+                            <thead className="bg-gray-50 sticky top-0">
+                              <tr>
+                                <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/5">Vehicle</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/6">Plate No.</th>
+                                <th className="px-3 py-2 text-center text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/12">Capacity</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/6">Fuel Type</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/6">Fleet Card</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/6">RFID</th>
+                                <th className="px-3 py-2 text-right text-[10px] font-medium text-gray-500 uppercase tracking-wider w-20"></th>
+                              </tr>
+                            </thead>
                             <tbody className="bg-white">
                               {archivedVehicles.map((v, idx) => (
                                 <tr key={idx} className="hover:bg-gray-50">
@@ -530,19 +526,17 @@ export default function Management() {
                       <p className="text-gray-500 text-center py-4 text-sm">No archived drivers</p>
                     ) : (
                       <div className="border border-gray-200 rounded-lg overflow-hidden">
-                        <table className="w-full divide-y divide-gray-200 table-fixed">
-                          <thead className="bg-gray-50">
-                            <tr>
-                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/4">Name</th>
-                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/5">Contact No.</th>
-                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/4">Email Address</th>
-                              <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/6">Status</th>
-                              <th className="px-3 py-2 text-right text-[10px] font-medium text-gray-500 uppercase tracking-wider w-20">Actions</th>
-                            </tr>
-                          </thead>
-                        </table>
                         <div className="max-h-[200px] overflow-y-auto">
                           <table className="w-full divide-y divide-gray-200 table-fixed">
+                            <thead className="bg-gray-50 sticky top-0">
+                              <tr>
+                                <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/4">Name</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/5">Contact No.</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/4">Email Address</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider w-1/6">Status</th>
+                                <th className="px-3 py-2 text-right text-[10px] font-medium text-gray-500 uppercase tracking-wider w-20"></th>
+                              </tr>
+                            </thead>
                             <tbody className="bg-white">
                               {archivedDrivers.map((d, idx) => (
                                 <tr key={idx} className="hover:bg-gray-50">
@@ -598,7 +592,7 @@ export default function Management() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Type</label>
                     <input
                       type="text"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
                       value={vehicleForm.vehicleType}
                       onChange={(e) => setVehicleForm({ ...vehicleForm, vehicleType: e.target.value })}
                       onFocus={() => {
@@ -614,7 +608,7 @@ export default function Management() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Plate No.</label>
                       <input
                         type="text"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-black-300"
                         value={vehicleForm.plateNo}
                         onChange={(e) => {
                           let val = e.target.value.toUpperCase().replace(/[^A-Z0-9\- ]/g, "");
@@ -631,7 +625,7 @@ export default function Management() {
                         <input
                           type="text"
                           inputMode="numeric"
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-center focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-center focus:ring-black-300"
                           value={vehicleForm.capacity}
                           onChange={(e) => {
                             let val = e.target.value.replace(/[^0-9]/g, "").slice(0, 2);
@@ -672,7 +666,7 @@ export default function Management() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Fuel Type</label>
                     <button
                       type="button"
-                      className={`w-full border ${showFuelTypeDropdown ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-300'} rounded-lg px-3 py-2 flex items-center justify-between`}
+                      className={`w-full border ${showFuelTypeDropdown ? 'border-black-100 ring-1' : 'border-gray-300'} rounded-lg px-3 py-2 flex items-center justify-between`}
                       onClick={(e) => {
                         e.stopPropagation();
                         setShowFuelTypeDropdown(!showFuelTypeDropdown);
@@ -708,7 +702,7 @@ export default function Management() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Fleet Card</label>
                     <button
                       type="button"
-                      className={`w-full border ${showFleetCardDropdown ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-300'} rounded-lg px-3 py-2 flex items-center justify-between`}
+                      className={`w-full border ${showFleetCardDropdown ? 'border-black-100 ring-1' : 'border-gray-300'} rounded-lg px-3 py-2 flex items-center justify-between`}
                       onClick={(e) => {
                         e.stopPropagation();
                         setShowFleetCardDropdown(!showFleetCardDropdown);
@@ -744,7 +738,7 @@ export default function Management() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">RFID</label>
                     <button
                       type="button"
-                      className={`w-full border ${showRfidDropdown ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-300'} rounded-lg px-3 py-2 flex items-center justify-between`}
+                      className={`w-full border ${showRfidDropdown ? 'border-black-100 ring-1 ring-black-200' : 'border-gray-300'} rounded-lg px-3 py-2 flex items-center justify-between`}
                       onClick={(e) => {
                         e.stopPropagation();
                         setShowRfidDropdown(!showRfidDropdown);
@@ -814,7 +808,7 @@ export default function Management() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                     <input
                       type="text"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-black-500"
                       value={driverForm.name}
                       onChange={(e) => setDriverForm({ ...driverForm, name: e.target.value })}
                       required
@@ -834,7 +828,7 @@ export default function Management() {
                       <div className="flex-1">
                         <input
                           type="text"
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-black-500"
                           value={driverForm.contact.replace('+63 ', '')}
                           onChange={handleContactChange}
                           placeholder="912 345 6789"
@@ -847,7 +841,7 @@ export default function Management() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                     <input
                       type="email"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-black-500"
                       value={driverForm.email}
                       onChange={(e) => setDriverForm({ ...driverForm, email: e.target.value })}
                       required

@@ -102,10 +102,13 @@ export default function NotificationBar({ onRequestUpdate }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [drivers, setDrivers] = useState([]);
   const [vehicles, setVehicles] = useState([]);
+  
+  const previousNotificationsRef = useRef([]);
+  const [newNotificationCount, setNewNotificationCount] = useState(0);
 
   const navigate = useNavigate();
 
-  // Fetch requests
+  // Fetch requests - RUNS IMMEDIATELY AND EVERY 5 SECONDS
   useEffect(() => {
     const fetchRequests = async () => {
       try {
@@ -114,7 +117,26 @@ export default function NotificationBar({ onRequestUpdate }) {
         const active = allRequests.filter(
           (req) => req.status === "Pending" || req.status === "Accepted"
         );
-        setNotifications(pending);
+        
+        // Sort by creation date (newest first)
+        const sortedPending = pending.sort((a, b) => 
+          new Date(b.createdAt) - new Date(a.createdAt)
+        );
+        
+        // Calculate new notifications
+        const previousIds = new Set(previousNotificationsRef.current.map(n => n.id));
+        const newNotifications = sortedPending.filter(n => !previousIds.has(n.id));
+        
+        setNotifications(sortedPending);
+        
+        // Update new notification count
+        if (previousNotificationsRef.current.length > 0) {
+          setNewNotificationCount(prev => prev + newNotifications.length);
+        }
+        
+        // Update ref with current notifications
+        previousNotificationsRef.current = sortedPending;
+        
         setAllActiveRequests(active);
       } catch (error) {
         console.error("Failed to fetch notifications:", error);
@@ -123,8 +145,11 @@ export default function NotificationBar({ onRequestUpdate }) {
       }
     };
 
+    // Initial fetch
     fetchRequests();
-    const interval = setInterval(fetchRequests, 30000);
+    
+    // Set up interval to fetch every 5 seconds
+    const interval = setInterval(fetchRequests, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -167,6 +192,13 @@ export default function NotificationBar({ onRequestUpdate }) {
     }
   }, [isAcceptModalOpen]);
 
+  // Reset new notification count when dropdown opens
+  useEffect(() => {
+    if (isOpen) {
+      setNewNotificationCount(0);
+    }
+  }, [isOpen]);
+
   const handleButtonClick = (e, action, request) => {
     e.stopPropagation();
     setSelectedRequest(request);
@@ -180,7 +212,7 @@ export default function NotificationBar({ onRequestUpdate }) {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     
-    // 🔄 AUTO-SYNC: When plate number changes, auto-fill correct vehicle type
+    // AUTO-SYNC: When plate number changes, auto-fill correct vehicle type
     if (name === "plateNo") {
       const selectedVehicle = vehicles.find(v => 
         (v.plateNo || v.plate_no)?.trim() === value.trim()
@@ -200,7 +232,7 @@ export default function NotificationBar({ onRequestUpdate }) {
     setFormValues((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Compute booked resources using ALL active requests
+  // Compute booked resources using ALL active requests FOR THE SELECTED REQUEST'S DATE ONLY
   const { bookedDrivers, bookedVehicles } = useMemo(() => {
     if (!selectedRequest) {
       return { bookedDrivers: new Set(), bookedVehicles: new Set() };
@@ -210,6 +242,7 @@ export default function NotificationBar({ onRequestUpdate }) {
     const bookedDrivers = new Set();
     const bookedVehicles = new Set();
 
+    // FILTER BY DATE: Only consider requests on the SAME DATE as the selected request
     allActiveRequests.forEach((req) => {
       if (req.fromDate === date && (req.status === "Accepted" || req.status === "Pending")) {
         if (req.driver_name) bookedDrivers.add(req.driver_name.trim());
@@ -218,7 +251,7 @@ export default function NotificationBar({ onRequestUpdate }) {
     });
 
     return { bookedDrivers, bookedVehicles };
-  }, [selectedRequest, allActiveRequests]);
+  }, [selectedRequest, allActiveRequests]); // Dependencies remain the same
 
   const availableDrivers = drivers
     .filter((d) => !bookedDrivers.has(d.name?.trim()))
@@ -240,12 +273,19 @@ export default function NotificationBar({ onRequestUpdate }) {
 
   const isAcceptFormValid = formValues.driver && formValues.vehicleType && formValues.plateNo;
 
+  // Helper function to convert time to minutes
+  const timeToMinutes = (timeStr) => {
+    if (!timeStr) return 0;
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+
   const handleProcess = async (action) => {
     if (!selectedRequest?.id) return;
 
-    // 🔒 CRITICAL VALIDATION BEFORE SUBMISSION
     if (action === "accept") {
-      // ✅ 1. Validate Vehicle Type matches Plate Number
+      // CRITICAL VALIDATION BEFORE SUBMISSION
+      // 1. Validate Vehicle Type matches Plate Number
       const selectedVehicle = vehicles.find(v => 
         (v.plateNo || v.plate_no)?.trim().toLowerCase() === formValues.plateNo.trim().toLowerCase()
       );
@@ -267,31 +307,87 @@ export default function NotificationBar({ onRequestUpdate }) {
           `Please select the correct vehicle type for this plate number.`
         );
         setIsConflictModalOpen(true);
-        return; // ❌ STOP - Don't proceed
+        return;
       }
 
-      // ✅ 2. Validate Driver Availability
-      const driverConflict = allActiveRequests.some(req =>
-        req.fromDate === selectedRequest.fromDate &&
+      // 2. Find ALL existing active requests for this driver on the same date
+      const driverConflicts = allActiveRequests.filter(req =>
+        req.fromDate === selectedRequest.fromDate && // Same date
         (req.status === "Accepted" || req.status === "Pending") &&
-        req.driver_name?.trim() === formValues.driver.trim()
+        req.driver_name?.trim() === formValues.driver.trim() &&
+        req.id !== selectedRequest.id // Exclude the current request itself
       );
 
-      if (driverConflict) {
-        setConflictMessage("This driver is already assigned to another trip on this date.");
+      if (driverConflicts.length > 0) {
+        // Check if the new request is for the EXACT SAME TRIP (date, dest, driver, vehicle)
+        const isSameTrip = driverConflicts.some(req =>
+          req.destination === selectedRequest.destination &&
+          req.plate_no?.trim() === formValues.plateNo.trim()
+        );
+
+        if (!isSameTrip) {
+          // If it's NOT the same trip, reject it because driver is already assigned to a different trip
+          const conflictingTrip = driverConflicts[0]; // Show details of the first conflicting trip
+          setConflictMessage(
+            `❌ Driver Conflict!\n\n` +
+            `Driver "${formValues.driver}" is already assigned to another trip on ${selectedRequest.fromDate}.\n\n` +
+            `Existing Trip Details:\n` +
+            `Destination: ${conflictingTrip.destination}\n` +
+            `Time: ${conflictingTrip.fromTime} - ${conflictingTrip.toTime}\n` +
+            `Vehicle: ${conflictingTrip.plate_no}\n\n` +
+            `A driver can only be assigned to ONE trip per day.`
+          );
+          setIsConflictModalOpen(true);
+          return;
+        }
+        // If it IS the same trip, proceed to capacity check (step 3)
+      }
+
+      // 3. Validate Vehicle Assignment - A vehicle can only be assigned to one driver per day
+      const vehicleAssignedToDifferentDriver = allActiveRequests.some(req =>
+        req.fromDate === selectedRequest.fromDate && // CRUCIAL: Filter by date
+        (req.status === "Accepted" || req.status === "Pending") &&
+        req.plate_no?.trim() === formValues.plateNo.trim() &&
+        req.driver_name?.trim() !== formValues.driver.trim() &&
+        req.id !== selectedRequest.id // Exclude the current request itself
+      );
+
+      if (vehicleAssignedToDifferentDriver) {
+        setConflictMessage(
+          `❌ Vehicle Assignment Conflict!\n\n` +
+          `The vehicle "${formValues.plateNo}" is already assigned to another driver on ${selectedRequest.fromDate}.\n\n` +
+          `A vehicle can only be assigned to ONE driver per day.`
+        );
         setIsConflictModalOpen(true);
         return;
       }
 
-      // ✅ 3. Validate Vehicle Availability
-      const vehicleConflict = allActiveRequests.some(req =>
-        req.fromDate === selectedRequest.fromDate &&
-        (req.status === "Accepted" || req.status === "Pending") &&
-        req.plate_no?.trim() === formValues.plateNo.trim()
-      );
+      // 4. Check vehicle capacity for the specific trip (same destination/date/driver/vehicle)
+      // Calculate total passengers for this exact trip (same date, destination, driver, vehicle)
+      const assignedToSameTrip = allActiveRequests
+        .filter(req => 
+          req.plate_no?.trim().toUpperCase() === formValues.plateNo.trim().toUpperCase() && 
+          req.fromDate === selectedRequest.fromDate &&
+          req.destination === selectedRequest.destination &&
+          req.driver_name === formValues.driver &&
+          req.id !== selectedRequest.id // Exclude the current request itself
+        )
+        .reduce((sum, req) => sum + (req.names?.length || 1), 0);
 
-      if (vehicleConflict) {
-        setConflictMessage("This vehicle is already assigned on this date.");
+      const currentPassengers = selectedRequest.names?.length || 1;
+      const totalPassengers = assignedToSameTrip + currentPassengers;
+      const availableSeats = (selectedVehicle.capacity || 0) - totalPassengers;
+
+      if (availableSeats < 0) {
+        setConflictMessage(
+          `❌ Capacity Exceeded!\n\n` +
+          `Vehicle: ${formValues.plateNo}\n` +
+          `Destination: ${selectedRequest.destination}\n` +
+          `Available Seats: ${(selectedVehicle.capacity || 0) - assignedToSameTrip}\n` +
+          `Requested Seats: ${currentPassengers}\n` +
+          `Total Required: ${totalPassengers}\n\n` +
+          `Not enough seats available for this trip.`
+        );
         setIsConflictModalOpen(true);
         return;
       }
@@ -363,8 +459,13 @@ export default function NotificationBar({ onRequestUpdate }) {
         aria-label={`Notifications${notifications.length > 0 ? `, ${notifications.length} new` : ''}`}
       >
         <Bell className="w-6 h-6" />
-        {notifications.length > 0 && (
+        {(notifications.length > 0 || newNotificationCount > 0) && (
           <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-green-500" />
+        )}
+        {newNotificationCount > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+            {newNotificationCount > 9 ? '9+' : newNotificationCount}
+          </span>
         )}
       </button>
 
@@ -382,66 +483,87 @@ export default function NotificationBar({ onRequestUpdate }) {
           onClick={(e) => e.stopPropagation()}
         >
           <div className="p-4">
-            <h3 className="font-semibold text-lg text-gray-800 mb-4">Notifications</h3>
+            <h3 className="font-semibold text-lg text-gray-800 mb-4">
+              Notifications
+              {newNotificationCount > 0 && (
+                <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                  {newNotificationCount} new
+                </span>
+              )}
+            </h3>
             {notifications.length > 0 ? (
               <div className="space-y-3 max-h-96 overflow-y-auto">
-                {notifications.map((request) => (
-                  <div
-                    key={request.id}
-                    className={`p-3 rounded-lg ${getNotificationStyle()} ring-1 ring-white`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 mt-0.5">
-                        {getNotificationIcon()}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="font-medium text-sm text-green-700">
-                              New Travel Request
-                            </div>
-                            <div className="text-xs text-gray-600 mt-1">
-                              <p className="text-gray-700">
-                                From: {request.names?.join(", ")} ({request.requestingOffice})
-                              </p>
-                              <span className="font-medium block mt-1">
-                                To: {request.destination}
-                              </span>
-                              <span className="block">
-                                Date: {request.fromDate} – {request.toDate}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                Passengers: {request.names?.length || 1}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-end gap-1">
-                            <span className="text-xs text-gray-500 whitespace-nowrap">
-                              {formatDate(request.createdAt)}
-                            </span>
-                            <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                          </div>
+                {notifications.map((request) => {
+                  const isNew = previousNotificationsRef.current.slice(0, newNotificationCount)
+                    .some(n => n.id === request.id);
+                  
+                  return (
+                    <div
+                      key={request.id}
+                      className={`p-3 rounded-lg ${getNotificationStyle()} ring-1 ring-white ${
+                        isNew ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 mt-0.5">
+                          {getNotificationIcon()}
                         </div>
-                        <div className="mt-3 flex justify-end gap-2">
-                          <button
-                            onClick={(e) => handleButtonClick(e, "decline", request)}
-                            className="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 disabled:opacity-50"
-                            disabled={isProcessing}
-                          >
-                            Decline
-                          </button>
-                          <button
-                            onClick={(e) => handleButtonClick(e, "accept", request)}
-                            className="px-3 py-1 bg-green-800 text-white text-xs rounded hover:bg-green-700 disabled:opacity-50"
-                            disabled={isProcessing}
-                          >
-                            Accept
-                          </button>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="font-medium text-sm text-green-700">
+                                New Travel Request
+                                {isNew && (
+                                  <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full">
+                                    NEW
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs text-gray-600 mt-1">
+                                <p className="text-gray-700">
+                                  From: {request.names?.join(", ")} ({request.requestingOffice})
+                                </p>
+                                <span className="font-medium block mt-1">
+                                  To: {request.destination}
+                                </span>
+                                <span className="block">
+                                  Date: {request.fromDate} – {request.toDate}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  Passengers: {request.names?.length || 1}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-end gap-1">
+                              <span className="text-xs text-gray-500 whitespace-nowrap">
+                                {formatDate(request.createdAt)}
+                              </span>
+                              {isNew && (
+                                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="mt-3 flex justify-end gap-2">
+                            <button
+                              onClick={(e) => handleButtonClick(e, "decline", request)}
+                              className="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 disabled:opacity-50"
+                              disabled={isProcessing}
+                            >
+                              Decline
+                            </button>
+                            <button
+                              onClick={(e) => handleButtonClick(e, "accept", request)}
+                              className="px-3 py-1 bg-green-800 text-white text-xs rounded hover:bg-green-700 disabled:opacity-50"
+                              disabled={isProcessing}
+                            >
+                              Accept
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center text-sm text-gray-500 py-8">
@@ -565,27 +687,34 @@ export default function NotificationBar({ onRequestUpdate }) {
                 {(() => {
                   const normalizedPlate = formValues.plateNo.trim().toUpperCase();
                   const vehicle = vehicles.find(v => 
-                    v.plateNo?.trim().toUpperCase() === normalizedPlate
+                    (v.plateNo || v.plate_no)?.trim().toUpperCase() === normalizedPlate
                   );
 
                   const totalSeats = vehicle?.capacity || 0;
-                  const assignedToThisVehicle = allActiveRequests
+                  
+                  // Count passengers for the same trip (same destination, date, driver)
+                  const assignedToSameTrip = allActiveRequests
                     .filter(req => 
-                      req.plate_no?.trim().toUpperCase() === normalizedPlate && 
+                      (req.plate_no || req.plate_no)?.trim().toUpperCase() === normalizedPlate && 
                       req.fromDate === selectedRequest.fromDate &&
-                      req.status === "Accepted"
+                      req.destination === selectedRequest.destination &&
+                      req.driver_name === formValues.driver
                     )
                     .reduce((sum, req) => sum + (req.names?.length || 1), 0);
 
                   const currentPassengers = selectedRequest.names?.length || 1;
-                  const usedSeats = assignedToThisVehicle + currentPassengers;
+                  const usedSeats = assignedToSameTrip + currentPassengers; // Include current request
                   const available = Math.max(0, totalSeats - usedSeats);
 
                   return (
                     <>
-                      <div>{usedSeats} / {totalSeats} seats used</div>
-                      <div className={`mt-1 ${available > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {available > 0 ? `${available} left` : 'No seats left!'}
+                      <div>{usedSeats} / {totalSeats} seats used for this specific trip</div>
+                      <div className={`mt-1 ${available >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {available > 0 
+                          ? `${available} seats available` 
+                          : available === 0 
+                            ? 'No seats left!' 
+                            : `Over capacity by ${Math.abs(available)} seats`}
                       </div>
                     </>
                   );
@@ -620,8 +749,7 @@ export default function NotificationBar({ onRequestUpdate }) {
         </div>
       )}
 
-      {/* Conflict / Error Modal (replaces alert) */}
-      {/* ✅ Conflict / Error Modal */}
+      {/* Conflict / Error Modal */}
       {isConflictModalOpen && (
         <div 
           className="fixed inset-0 flex items-center justify-center z-50  bg-opacity-20 backdrop-blur-[1px]"

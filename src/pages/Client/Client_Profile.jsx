@@ -6,7 +6,7 @@ import profile from "../../assets/profile2.png";
 function Profile() {
   const { user, loading: authLoading } = useAuth();
 
-  // 👇 Prevent background scrolling
+  // Prevent background scrolling
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => {
@@ -205,7 +205,7 @@ function Profile() {
                         name="firstName"
                         value={userData.firstName}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-black-300 focus:border-transparent transition-all"
                         placeholder="Enter your first name"
                       />
                     ) : (
@@ -223,7 +223,7 @@ function Profile() {
                         name="lastName"
                         value={userData.lastName}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-black-300 focus:border-transparent transition-all"
                         placeholder="Enter your last name"
                       />
                     ) : (
@@ -249,7 +249,7 @@ function Profile() {
                         name="contact"
                         value={userData.contact}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-black-300 focus:border-transparent transition-all"
                         placeholder="Enter your phone number"
                       />
                     ) : (

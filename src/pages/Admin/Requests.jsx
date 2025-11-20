@@ -201,96 +201,90 @@ function Requests() {
                   <th className="py-3 px-6 text-left text-xs font-medium text-white uppercase tracking-wider">Status & Details</th>
                 </tr>
               </thead>
-            </table>
-
-            {/* 👇 FIXED: No more cutoff — responsive height */}
-            <div className="max-h-[calc(100vh-240px)] overflow-y-auto pr-2 custom-scroll">
-              <table className="w-full">
-                <tbody className="divide-y divide-green-600">
-                  {requests.map((req) => (
-                    <tr key={req.id} className="hover:bg-green-100 transition-colors">
-                      <td className="py-4 px-6">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500">
-                            {req.name?.charAt(0) || '?'}
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{req.name}</div>
-                            <div className="text-sm text-gray-500">{req.destination || 'N/A'}</div>
-                          </div>
+              <tbody className="divide-y divide-green-600">
+                {requests.map((req) => (
+                  <tr key={req.id} className="hover:bg-green-100 transition-colors">
+                    <td className="py-4 px-6">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500">
+                          {req.name?.charAt(0) || '?'}
                         </div>
-                      </td>
-                      <td className="py-4 px-6 text-sm text-gray-600">{req.department}</td>
-                      <td className="py-4 px-6 text-sm text-gray-600">
-                        {req.vehicleType && req.plateNo 
-                          ? `${req.vehicleType} (${req.plateNo})`
-                          : req.vehicle || 'Not Assigned'}
-                      </td>
-                      <td className="py-4 px-6 text-sm text-gray-600">
-                        <div className="flex flex-col">
-                          <span className="font-medium">
-                            {req.fromDate 
-                              ? new Date(req.fromDate).toLocaleDateString("en-US", {
-                                  month: "short",
-                                  day: "numeric",
-                                  year: "numeric"
-                                })
-                              : 'Invalid Date'}
-                            {req.toDate && req.toDate !== req.fromDate && (
-                              <span className="font-normal">
-                                {" "} - {new Date(req.toDate).toLocaleDateString("en-US", {
-                                  month: "short",
-                                  day: "numeric"
-                                })}
-                              </span>
-                            )}
-                          </span>
-                          <span className="text-gray-500">
-                            {req.fromTime || 'N/A'} → {req.toTime || 'N/A'}
-                          </span>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">{req.name}</div>
+                          <div className="text-sm text-gray-500">{req.destination || 'N/A'}</div>
                         </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="flex flex-col gap-1.5">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium w-fit ${
-                            req.status === "Accepted"
-                              ? "bg-green-100 text-green-800"
-                              : req.status === "Declined"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}>
-                            {req.status}
-                          </span>
-                          <div className="text-xs text-gray-600 leading-tight">
-                            <span className="font-medium text-gray-700">By:</span> {req.name} • {req.department}
-                          </div>
-                          {req.status !== "Pending" && req.processedDate && (
-                            <div className="text-xs text-gray-600 leading-tight">
-                              <span className="font-medium text-gray-700">
-                                {req.status === "Accepted" ? "Accepted" : "Declined"} on:
-                              </span>{" "}
-                              {new Date(req.processedDate).toLocaleDateString("en-US", {
+                      </div>
+                    </td>
+                    <td className="py-4 px-6 text-sm text-gray-600">{req.department}</td>
+                    <td className="py-4 px-6 text-sm text-gray-600">
+                      {req.vehicleType && req.plateNo 
+                        ? `${req.vehicleType} (${req.plateNo})`
+                        : req.vehicle || 'Not Assigned'}
+                    </td>
+                    <td className="py-4 px-6 text-sm text-gray-600">
+                      <div className="flex flex-col">
+                        <span className="font-medium">
+                          {req.fromDate 
+                            ? new Date(req.fromDate).toLocaleDateString("en-US", {
                                 month: "short",
                                 day: "numeric",
-                                year: "numeric",
+                                year: "numeric"
+                              })
+                            : 'Invalid Date'}
+                          {req.toDate && req.toDate !== req.fromDate && (
+                            <span className="font-normal">
+                              {" "} - {new Date(req.toDate).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric"
                               })}
-                            </div>
+                            </span>
                           )}
+                        </span>
+                        <span className="text-gray-500">
+                          {req.fromTime || 'N/A'} → {req.toTime || 'N/A'}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex flex-col gap-1.5">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium w-fit ${
+                          req.status === "Accepted"
+                            ? "bg-green-100 text-green-800"
+                            : req.status === "Declined"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}>
+                          {req.status}
+                        </span>
+                        <div className="text-xs text-gray-600 leading-tight">
+                          <span className="font-medium text-gray-700">By:</span> {req.name} • {req.department}
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                        {req.status !== "Pending" && req.processedDate && (
+                          <div className="text-xs text-gray-600 leading-tight">
+                            <span className="font-medium text-gray-700">
+                              {req.status === "Accepted" ? "Accepted" : "Declined"} on:
+                            </span>{" "}
+                            {new Date(req.processedDate).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-          {requests.length === 0 && (
-            <div className="p-12 text-center">
-              <h3 className="text-lg font-medium text-gray-900">No requests</h3>
-              <p className="mt-1 text-sm text-gray-500">Get started by approving new vehicle requests.</p>
-            </div>
-          )}
+            {requests.length === 0 && (
+              <div className="p-12 text-center">
+                <h3 className="text-lg font-medium text-gray-900">No requests</h3>
+                <p className="mt-1 text-sm text-gray-500">Get started by approving new vehicle requests.</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
