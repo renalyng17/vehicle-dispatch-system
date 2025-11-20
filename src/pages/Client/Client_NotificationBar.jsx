@@ -1,7 +1,7 @@
 // Client_NotificationBar.js
 import { Bell, ChevronDown } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { api } from "../../services/api";
 
 
@@ -132,7 +132,7 @@ export default function NotificationBar({ onRequestUpdate }) {
   const [drivers, setDrivers] = useState([]);
   const [vehicles, setVehicles] = useState([]);
 
-  const navigate = useNavigate();
+  
   const location = useLocation(); // Added for navigation detection
   const bellRef = useRef(null);
   const dropdownRef = useRef(null);
@@ -242,7 +242,7 @@ export default function NotificationBar({ onRequestUpdate }) {
     }
   }, [isAcceptModalOpen]);
 
-  const handleButtonClick = (e, action, request) => {
+  /*const handleButtonClick = (e, action, request) => {
     e.stopPropagation();
     setSelectedRequest(request);
     if (action === "decline") {
@@ -250,7 +250,7 @@ export default function NotificationBar({ onRequestUpdate }) {
     } else {
       setIsAcceptModalOpen(true);
     }
-  };
+  };*/
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -295,7 +295,7 @@ export default function NotificationBar({ onRequestUpdate }) {
         .filter(Boolean)
     : [];
 
-  const isAcceptFormValid = formValues.driver && formValues.vehicleType && formValues.plateNo;
+  //const isAcceptFormValid = formValues.driver && formValues.vehicleType && formValues.plateNo;
 
   const handleProcess = async (action) => {
     if (!selectedRequest?.id) return;
