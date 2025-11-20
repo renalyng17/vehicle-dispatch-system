@@ -274,11 +274,11 @@ export default function NotificationBar({ onRequestUpdate }) {
   const isAcceptFormValid = formValues.driver && formValues.vehicleType && formValues.plateNo;
 
   // Helper function to convert time to minutes
-  const timeToMinutes = (timeStr) => {
-    if (!timeStr) return 0;
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    return hours * 60 + minutes;
-  };
+ // const timeToMinutes = (timeStr) => {
+   // if (!timeStr) return 0;
+    //const [hours, minutes] = timeStr.split(':').map(Number);
+    //return hours * 60 + minutes;
+  //};
 
   const handleProcess = async (action) => {
     if (!selectedRequest?.id) return;
