@@ -17,7 +17,6 @@ export default defineConfig({
     }),
   ],
   
-  // Keep your existing server configurations
   server: {
     host: 'localhost',
     port: 5173,
@@ -30,10 +29,17 @@ export default defineConfig({
     },
     watch: {
       usePolling: true
+    },
+    // ✅ PROXY TO YOUR EXPRESS BACKEND ON PORT 3001
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false
+      }
     }
   },
   
-  // Keep your existing build configurations
   build: {
     chunkSizeWarningLimit: 1600,
     rollupOptions: {

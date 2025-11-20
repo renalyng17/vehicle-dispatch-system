@@ -128,7 +128,7 @@ export default function Nav() {
             <p className="text-gray-600 mb-4">
               Are you sure you want to log out?
             </p>
-            <div className="flex justify-end space-x-3">
+            <div className="flex justify-center space-x-3">
               <button
                 onClick={() => setShowLogoutModal(false)}
                 className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition border border-gray-300"

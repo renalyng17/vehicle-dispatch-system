@@ -105,6 +105,28 @@ export const AuthProvider = ({ children }) => {
     }).catch(console.error);
   };
 
+  // ✅ IMPROVED: Update user data in context and persist to the correct storage
+  const updateUser = (updatedUserData) => {
+    const normalizedUser = {
+      id: updatedUserData.user_id || updatedUserData.id,
+      user_id: updatedUserData.user_id || updatedUserData.id,
+      user_type: updatedUserData.user_type,
+      email: updatedUserData.email,
+      first_name: updatedUserData.first_name,
+      last_name: updatedUserData.last_name,
+      ...updatedUserData
+    };
+
+    setUser(normalizedUser);
+
+    // Determine active storage based on where the token is stored
+    if (localStorage.getItem('token') !== null) {
+      localStorage.setItem('user', JSON.stringify(normalizedUser));
+    } else {
+      sessionStorage.setItem('user', JSON.stringify(normalizedUser));
+    }
+  };
+
   const isAuthenticated = () => {
     return !!(user && (user.id || user.user_id));
   };
@@ -113,6 +135,7 @@ export const AuthProvider = ({ children }) => {
     user,
     login,
     logout,
+    updateUser,
     loading,
     isAuthenticated
   };

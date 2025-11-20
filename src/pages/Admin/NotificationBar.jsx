@@ -1,7 +1,7 @@
 // NotificationBar.js
 import { Bell, AlertTriangle } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+
 import { api } from "../../services/api";
 
 // Unified Input Component (Read-only)
@@ -106,7 +106,7 @@ export default function NotificationBar({ onRequestUpdate }) {
   const previousNotificationsRef = useRef([]);
   const [newNotificationCount, setNewNotificationCount] = useState(0);
 
-  const navigate = useNavigate();
+
 
   // Fetch requests - RUNS IMMEDIATELY AND EVERY 5 SECONDS
   useEffect(() => {

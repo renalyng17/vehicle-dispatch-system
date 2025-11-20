@@ -1,6 +1,6 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
-import Client_Nav from "./Client_nav"; // This imports Client_Nav
+import Client_nav from "./Client_nav";
 import Client_NotificationBar from "./Client_NotificationBar";
 
 const Client_Dashboard = () => {

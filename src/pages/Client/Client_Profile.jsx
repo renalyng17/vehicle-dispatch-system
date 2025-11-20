@@ -6,7 +6,7 @@ import profile from "../../assets/profile2.png";
 function Profile() {
   const { user, loading: authLoading } = useAuth();
 
-  // Prevent background scrolling
+  // 👇 Prevent background scrolling
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => {
@@ -61,7 +61,7 @@ function Profile() {
         throw new Error("Authentication token missing");
       }
 
-      // Call your secure backend route
+      // ✅ Call your secure backend route
       const response = await fetch("http://localhost:3001/profile", {
         method: "PATCH",
         headers: {
@@ -205,7 +205,7 @@ function Profile() {
                         name="firstName"
                         value={userData.firstName}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-black-300 focus:border-transparent transition-all"
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                         placeholder="Enter your first name"
                       />
                     ) : (
@@ -223,7 +223,7 @@ function Profile() {
                         name="lastName"
                         value={userData.lastName}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-black-300 focus:border-transparent transition-all"
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                         placeholder="Enter your last name"
                       />
                     ) : (
@@ -231,7 +231,7 @@ function Profile() {
                     )}
                   </div>
 
-                  {/* EMAIL: Always read-only — never editable */}
+                  {/* ✅ EMAIL: Always read-only — never editable */}
                   <div className="space-y-1">
                     <label className="block text-sm font-medium text-gray-600">
                       Email Address
@@ -249,7 +249,7 @@ function Profile() {
                         name="contact"
                         value={userData.contact}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-black-300 focus:border-transparent transition-all"
+                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                         placeholder="Enter your phone number"
                       />
                     ) : (
@@ -313,22 +313,12 @@ function Profile() {
 
       {/* Success Popup */}
       {showPopup && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-30 backdrop-blur-sm">
-          <div className="bg-white p-8 rounded-xl shadow-xl max-w-md w-full animate-fade-in">
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-opacity-30 backdrop-blur-m">
+          <div className="bg-white p-8 rounded-xl shadow-xl max-w-xs w-full">
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-50 mb-4">
-                <svg
-                  className="h-8 w-8 text-green-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M5 13l4 4L19 7"
-                  />
+                <svg className="h-8 w-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                 </svg>
               </div>
               <h3 className="text-xl font-semibold text-gray-800 mb-2">
@@ -339,9 +329,9 @@ function Profile() {
               </p>
               <button
                 onClick={() => setShowPopup(false)}
-                className="w-full max-w-xs mx-auto py-2.5 px-6 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-sm transition-all font-medium"
-              >
-                Continue
+                 className="w-full max-w-[100px] mx-auto py-2.5 px-4 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-sm text-sm font-medium flex items-center justify-center"
+                  >
+                  Continue
               </button>
             </div>
           </div>
