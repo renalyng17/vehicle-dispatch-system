@@ -82,7 +82,7 @@ export default function Client_nav() {
         <div className="ml-2 flex items-center space-x-3 p-2 border-t-2 border-white">
           <img src={profile} alt="User" className="w-5 h-5 rounded-full" />
           <Link
-            to="/admin/profile"
+            to="/client/profile"
             className="flex-1 text-md font-semibold hover:text-lime-300 transition truncate"
           >
             {fullName}

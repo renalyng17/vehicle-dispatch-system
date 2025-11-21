@@ -70,10 +70,12 @@ export default function ClientHome() {
       
       const allRequests = await response.json();
 
+      // ✅ Define 'now' ONCE
       const now = new Date();
       const currentYear = now.getFullYear();
       const currentMonth = now.getMonth();
 
+      // === Stats ===
       setStats({
         totalRequests: allRequests.length,
         pendingApproval: allRequests.filter(req => req.status === "Pending").length,
@@ -85,6 +87,7 @@ export default function ClientHome() {
         }).length
       });
 
+      // === Recent Requests ===
       const sortedRequests = [...allRequests]
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
         .slice(0, 3)
@@ -98,19 +101,20 @@ export default function ClientHome() {
 
       setRecentRequests(sortedRequests);
 
+      // === Upcoming Trips (FIXED) ===
       const trips = allRequests
         .filter(req => 
           req.status === "Accepted" && 
-          req.fromDate && 
-          new Date(req.fromDate) > new Date()
+          req.departure_time && 
+          new Date(req.departure_time) > now  // ✅ Uses 'now' declared above
         )
-        .sort((a, b) => new Date(a.fromDate) - new Date(b.fromDate))
+        .sort((a, b) => new Date(a.departure_time) - new Date(b.departure_time))
         .map(req => ({
           id: req.id,
           status: "Confirmed",
           destination: req.destination || "—",
-          date: req.fromDate + "T" + (req.fromTime || "00:00"),
-          car: `${req.vehicleType} (${req.plateNo})`,
+          date: req.departure_time,
+          car: req.plateNo ? `${req.vehicleType} (${req.plateNo})` : "TBD",
           driver: req.driver || "TBD"
         }))
         .slice(0, 3);
@@ -175,7 +179,7 @@ export default function ClientHome() {
         <div className="bg-white rounded-xl shadow p-6">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-gray-500 text-sm">Approved Trips</p>
+              <p className="text-gray-500 text-sm">Completed Trips</p>
               <h2 className="text-3xl font-bold mt-1">{stats.completedTrips}</h2>
             </div>
             <div className="bg-green-100 p-2 rounded-lg">
